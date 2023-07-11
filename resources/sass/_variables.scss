@@ -1,0 +1,33 @@
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+$body-bg: #f8fafc;
+
+// Typography
+$font-family-sans-serif: 'Nunito', sans-serif;
+$font-size-base: 0.9rem;
+$line-height-base: 1.6;
+$enable-shadows: true;
+
+// Bootstrap custom colors
+$grisSidebar:    #EBEDEF !default;
+$secundario:    #47EAB5 !default;
+$principal: black !default;
+
+
+$colors: (
+  "blue":       $blue,
+  "indigo":     $indigo,
+  "purple":     $purple,
+  "pink":       $pink,
+  "red":        $red,
+  "orange":     $orange,
+  "yellow":     $yellow,
+  "green":      $green,
+  "teal":       $teal,
+  "cyan":       $cyan,
+  "black":      $black,
+  "white":      $white,
+  "light-gray": $gray-200,
+  "gray":       $gray-600,
+  "gray-dark":  $gray-800
+);
