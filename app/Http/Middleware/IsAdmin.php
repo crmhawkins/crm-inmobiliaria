@@ -18,9 +18,14 @@ class IsAdmin
     public function handle($request, Closure $next)
     {
         if (Auth::user() && Auth::user()->role == 'admin') {
-            return $next($request);
-        }
+            if ($request->session()->has('inmobiliaria')) {
+                return $next($request);
+            } else {
+                return redirect()->route('seleccion');
+            }
+        } else{
+            return redirect()->route('login');
 
-        return redirect()->route('inicio'); // If user is not an admin.
+        }
     }
 }

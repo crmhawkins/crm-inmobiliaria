@@ -30,15 +30,16 @@
     }
 
     body {
-        background-color: #d9d9d9;
+        background-color: #333;
     }
 </style>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-lg">
     @mobile
         <div class="container-fluid">
             <div class="navbar-brand">
-                <a href="/../home/"><img class="img-fluid" src="{{ asset('images/logo.png') }}" alt="Logo"></a>
+                <img class="img-fluid" src="{{ asset('images/logo' . Request::session()->get('inmobiliaria') . '.png') }}"
+                    alt="Logo">
                 <button class="navbar-toggler float-end !important" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                     aria-label="Toggle navigation">
@@ -48,174 +49,184 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav justify-content-around w-100 py-2">
                     <li class="nav-item mx-2">
-                        @if (Request::is('admin/presupuestos'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/presupuestos">
-                                <i class="fas fa-book"></i>
-                                <strong>Presupuestos</strong>
+                        @if (Request::is('admin/inmuebles'))
+                            <a class="btn btn-md btn-dark text-light d-block w-100 p-2" href="/admin/inmuebles">
+                                <i class="fas fa-house"></i>
+                                <strong>Inmuebles</strong>
                             </a>
                         @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/presupuestos">
-                                <i class="fas fa-book"></i>
-                                <strong>Presupuestos</strong>
+                            <a class="btn btn-md btn-outline-dark d-block w-100 p-2" href="/admin/inmuebles">
+                                <i class="fas fa-house"></i>
+                                <strong>Inmuebles</strong>
                             </a>
                         @endif
                     </li>
                     <li class="nav-item mx-2">
-                        @if (Request::is('admin/productos'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/productos">
-                                <i class="fas fa-boxes-stacked"></i>
-                                <strong>Inventario</strong>
+                        @if (Request::is('admin/clientes'))
+                            <a class="btn btn-md btn-dark text-light d-block w-100 p-2" href="/admin/clientes">
+                                <i class="fas fa-user"></i>
+                                <strong>Clientes</strong>
                             </a>
                         @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/productos">
-                                <i class="fas fa-boxes-stacked"></i>
-                                <strong>Inventario</strong>
+                            <a class="btn btn-md btn-outline-dark d-block w-100 p-2" href="/admin/clientes">
+                                <i class="fas fa-user"></i>
+                                <strong>Clientes</strong>
                             </a>
                         @endif
                     </li>
                     <li class="nav-item mx-2">
-                        @if (Request::is('admin/orden-trabajo'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/orden-trabajo">
-                                <i class="fas fa-wrench"></i>
-                                <strong>Tareas</strong>
-                            </a>
-                        @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/orden-trabajo">
-                                <i class="fas fa-wrench"></i>
-                                <strong>Tareas</strong>
-                            </a>
-                        @endif
-                    </li>
-                    <li class="nav-item mx-2">
-                        @if (Request::is('admin/facturas'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/facturas">
-                                <i class="fas fa-wallet"></i>
+                        @if (Request::is('admin/facturacion'))
+                            <a class="btn btn-md btn-dark text-light d-block w-100 p-2" href="/admin/facturacion">
+                                <i class="fas fa-file-invoice"></i>
                                 <strong>Facturación</strong>
                             </a>
                         @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/facturas">
-                                <i class="fas fa-wallet"></i>
+                            <a class="btn btn-md btn-outline-dark d-block w-100 p-2" href="/admin/facturacion">
+                                <i class="fas fa-file-invoice"></i>
                                 <strong>Facturación</strong>
                             </a>
                         @endif
                     </li>
-                    <li class="nav-item mx-2">
-                        @if (Request::is('admin/informes'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/informes">
-                                <i class="fas fa-file-invoice"></i>
-                                <strong>Informes</strong>
-                            </a>
-                        @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/informes">
-                                <i class="fas fa-file-invoice"></i>
-                                <strong>Informes</strong>
-                            </a>
-                        @endif
-                    </li>
-                    <li class="nav-item mx-2">
-                        @if (Request::is('admin/caja'))
-                            <a class="btn btn-md btn-light text-dark d-block w-100 p-2" href="/admin/caja">
-                                <i class="fas fa-cart-shopping"></i>
-                                <strong>Caja</strong>
-                            </a>
-                        @else
-                            <a class="btn btn-md btn-outline-light d-block w-100 p-2" href="/admin/caja">
-                                <i class="fas fa-cart-shopping"></i>
-                                <strong>Caja</strong>
-                            </a>
-                        @endif
 
+                    <li class="nav-item mx-2">
+                        @if (Request::is('admin/agenda') || Request::is('home'))
+                            <a class="btn btn-md btn-dark text-light d-block w-100 p-2" href="/admin/agenda">
+                                <i class="fas fa-book"></i>
+                                <strong>Agenda</strong>
+                            </a>
+                        @else
+                            <a class="btn btn-md btn-outline-dark d-block w-100 p-2" href="/admin/agenda">
+                                <i class="fas fa-book"></i>
+                                <strong>Agenda</strong>
+                            </a>
+                        @endif
                     </li>
+                    @if (Request::session()->get('inmobiliaria') == 'sayco')
+                        <li class="ms-auto nav-item mx-2">
+                            @if (Request::is('seleccion'))
+                                <a class="btn btn-md btn-dark text-light d-block w-100 p-2"
+                                    href="{{ route('home', ['boton' => 'sancer']) }}">
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    <strong>Ir a SANCER</strong>
+                                </a>
+                            @else
+                                <a class="btn btn-md btn-outline-dark d-block w-100 p-2"
+                                    href="{{ route('home', ['boton' => 'sancer']) }}">
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    <strong>Ir a SANCER</strong>
+                                </a>
+                            @endif
+                        </li>
+                    @else
+                        <li class="ms-auto nav-item mx-2">
+                            @if (Request::is('seleccion'))
+                                <a class="btn btn-md btn-dark text-light d-block w-100 p-2"
+                                    href="{{ route('home', ['boton' => 'sayco']) }}">
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    <strong>Ir a SAYCO</strong>
+                                </a>
+                            @else
+                                <a class="btn btn-md btn-outline-dark d-block w-100 p-2"
+                                    href="{{ route('home', ['boton' => 'sayco']) }}">
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    <strong>Ir a SAYCO</strong>
+                                </a>
+                            @endif
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>
     @elsemobile
         <div class="container-fluid col-12">
             <div class="navbar-brand col order-1">
-                <a href="/../home/"><img class="img-fluid" src="{{ asset('images/logo.png') }}" alt="Logo"></a>
+                <img class="img-fluid" src="{{ asset('images/logo' . Request::session()->get('inmobiliaria') . '.png') }}"
+                    alt="Logo">
             </div>
             <ul class="navbar-nav me-auto mb-0 mb-lg-0 col order-2">
-                <li class="nav-item">
-                    @if (Request::is('admin/presupuestos'))
-                    <a class="btn btn-light text-dark" href="/admin/presupuestos">
-                        <i class="fas fa-book"></i>
-                        <strong>Presupuestos</strong>
-                    </a>
+                <li class="ms-auto nav-item">
+                    @if (Request::is('admin/inmuebles'))
+                        <a class="btn btn-dark text-light" href="/admin/inmuebles">
+                            <i class="fas fa-house"></i>
+                            <strong>Inmuebles</strong>
+                        </a>
                     @else
-                    <a class="btn btn-outline-light" href="/admin/presupuestos">
-                        <i class="fas fa-book"></i>
-                        <strong>Presupuestos</strong>
-                    </a>
+                        <a class="btn btn-outline-dark" href="/admin/inmuebles">
+                            <i class="fas fa-house"></i>
+                            <strong>Inmuebles</strong>
+                        </a>
                     @endif
 
                 </li>
                 <li class="nav-item">
-                    @if (Request::is('admin/productos'))
-                    <a class="btn btn-light text-dark" href="/admin/productos">
-                        <i class="fas fa-boxes-stacked"></i>
-                        <strong>Inventario</strong>
-                    </a>
+                    @if (Request::is('admin/clientes'))
+                        <a class="btn btn-dark text-light" href="/admin/clientes">
+                            <i class="fas fa-user"></i>
+                            <strong>Clientes</strong>
+                        </a>
                     @else
-                    <a class="btn btn-outline-light" href="/admin/productos">
-                        <i class="fas fa-boxes-stacked"></i>
-                        <strong>Inventario</strong>
-                    </a>
+                        <a class="btn btn-outline-dark" href="/admin/clientes">
+                            <i class="fas fa-user"></i>
+                            <strong>Clientes</strong>
+                        </a>
                     @endif
                 </li>
                 <li class="nav-item">
-                    @if (Request::is('admin/orden-trabajo'))
-                    <a class="btn btn-light text-dark" href="/admin/orden-trabajo">
-                        <i class="fas fa-wrench"></i>
-                        <strong>Tareas</strong>
-                    </a>
+                    @if (Request::is('admin/facturacion'))
+                        <a class="btn btn-dark text-light" href="/admin/facturacion">
+                            <i class="fas fa-file-invoice"></i>
+                            <strong>Facturación</strong>
+                        </a>
                     @else
-                    <a class="btn btn-outline-light" href="/admin/orden-trabajo">
-                        <i class="fas fa-wrench"></i>
-                        <strong>Tareas</strong>
-                    </a>
+                        <a class="btn btn-outline-dark" href="/admin/facturacion">
+                            <i class="fas fa-file-invoice"></i>
+                            <strong>Facturación</strong>
+                        </a>
                     @endif
 
                 </li>
                 <li class="nav-item">
-                    @if (Request::is('admin/facturas'))
-                    <a class="btn btn-light text-dark" href="/admin/facturas">
-                        <i class="fas fa-wallet"></i>
-                        <strong>Facturación</strong>
-                    </a>
+                    @if (Request::is('admin/agenda') || Request::is('home'))
+                        <a class="btn btn-dark text-light" href="/admin/agenda">
+                            <i class="fas fa-book"></i>
+                            <strong>Agenda</strong>
+                        </a>
                     @else
-                    <a class="btn btn-outline-light" href="/admin/facturas">
-                        <i class="fas fa-wallet"></i>
-                        <strong>Facturación</strong>
-                    </a>
+                        <a class="btn btn-outline-dark" href="/admin/agenda">
+                            <i class="fas fa-book"></i>
+                            <strong>Agenda</strong>
+                        </a>
                     @endif
                 </li>
-                <li class="nav-item">
-                    @if (Request::is('admin/informes'))
-                    <a class="btn btn-light text-dark" href="/admin/informes">
-                        <i class="fas fa-file-invoice"></i>
-                        <strong>Informes</strong>
-                    </a>
-                    @else
-                    <a class="btn btn-outline-light" href="/admin/informes">
-                        <i class="fas fa-file-invoice"></i>
-                        <strong>Informes</strong>
-                    </a>
-                    @endif
-
-                </li>
-                <li class="nav-item">
-                    @if (Request::is('admin/caja'))
-                    <a class="btn btn-light text-dark" href="/admin/caja">
-                        <i class="fas fa-cart-shopping"></i>
-                        <strong>Caja</strong>
-                    </a>
-                    @else
-                    <a class="btn btn-outline-light" href="/admin/caja">
-                        <i class="fas fa-cart-shopping"></i>
-                        <strong>Caja</strong>
-                    </a>
-                    @endif
-                </li>
+                @if (Request::session()->get('inmobiliaria') == 'sayco')
+                    <li class="ms-auto nav-item">
+                        @if (Request::is('seleccion'))
+                            <a class="btn btn-dark text-light" href="{{ route('home', ['boton' => 'sancer']) }}">
+                                <i class="fas fa-arrows-rotate"></i>
+                                <strong>Ir a SANCER</strong>
+                            </a>
+                        @else
+                            <a class="btn btn-outline-dark" href="{{ route('home', ['boton' => 'sancer']) }}">
+                                <i class="fas fa-arrows-rotate"></i>
+                                <strong>Ir a SANCER</strong>
+                            </a>
+                        @endif
+                    </li>
+                @else
+                    <li class="ms-auto nav-item">
+                        @if (Request::is('seleccion'))
+                            <a class="btn btn-dark text-light" href="{{ route('home', ['boton' => 'sayco']) }}">
+                                <i class="fas fa-arrows-rotate"></i>
+                                <strong>Ir a SAYCO</strong>
+                            </a>
+                        @else
+                            <a class="btn btn-outline-dark" href="{{ route('home', ['boton' => 'sayco']) }}">
+                                <i class="fas fa-arrows-rotate"></i>
+                                <strong>Ir a SAYCO</strong>
+                            </a>
+                        @endif
+                    </li>
+                @endif
             </ul>
         </div>
         </div>

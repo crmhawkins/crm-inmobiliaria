@@ -4,23 +4,23 @@
     "src": "resources/image/background-login-3.svg",
     "isEntry": true
   },
-  "resources/image/pic-login-3.svg": {
-    "file": "assets/pic-login-3.3a843ab5.js",
-    "src": "resources/image/pic-login-3.svg",
-    "isEntry": true
-  },
   "resources/image/IVAN.jpg": {
     "file": "assets/IVAN.700ba807.js",
     "src": "resources/image/IVAN.jpg",
     "isEntry": true
   },
+  "resources/image/pic-login-3.svg": {
+    "file": "assets/pic-login-3.3a843ab5.js",
+    "src": "resources/image/pic-login-3.svg",
+    "isEntry": true
+  },
   "resources/js/app.js": {
-    "file": "assets/app.1fa8332f.js",
+    "file": "assets/app.9f5a7b33.js",
     "src": "resources/js/app.js",
     "isEntry": true
   },
   "resources/js/bootstrap.js": {
-    "file": "assets/bootstrap.bfd089e7.js",
+    "file": "assets/bootstrap.0d04a5d2.js",
     "src": "resources/js/bootstrap.js",
     "isEntry": true
   },
@@ -35,7 +35,7 @@
     "isEntry": true
   },
   "resources/sass/app.scss": {
-    "file": "assets/app.7d07b009.css",
+    "file": "assets/app.7f77af5f.css",
     "src": "resources/sass/app.scss",
     "isEntry": true
   }

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('surname')->nullable();
             $table->string('role')->nullable();
+            $table->boolean('inmobiliaria')->nullable();
             $table->string('username');
             $table->string('email')->unique();
             $table->string('image')->nullable();
