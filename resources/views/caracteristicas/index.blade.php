@@ -22,5 +22,5 @@
 @section('encabezado', 'Características de inmueble')
 @section('subtitulo', 'Consulta y creación de características de inmueble')
 
-@livewire('vendedores.tabs-component')
+@livewire('caracteristicas.tabs-component')
 @endsection

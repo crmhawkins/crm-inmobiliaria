@@ -6,6 +6,7 @@ use App\Models\TipoVivienda;
 use App\Models\Inmuebles;
 use App\Models\Intereses;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -46,16 +47,7 @@ class Create extends Component
     {
         $this->password = Hash::make($this->password);
 
-        if ($this->inmobiliaria == null) {
-            if (request()->session()->get('inmobiliaria') == 'sayco') {
-                $this->inmobiliaria = true;
-            } else {
-                $this->inmobiliaria = false;
-            }
-        } else {
-            $this->inmobiliaria = null;
-        }
-
+       $this->inmobiliaria = Auth::user()->inmobiliaria;
 
         $validatedData = $this->validate(
             [

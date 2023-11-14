@@ -33,16 +33,16 @@ Route::get('/', function () {
     } else {
         return Redirect::route('login');
     }
-});
+})->name('/');
 
-Route::name('seleccion')->get('/seleccion', function () {
-    return view('seleccion');
-});
+Route::get('/seleccion', [App\Http\Controllers\HomeController::class, 'index'])->name('seleccion');
+
 
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');
+Route::get('/cambio', [App\Http\Controllers\HomeController::class, 'cambio'])->name('cambio');
 
 // Route::get('/clients', [App\Http\Controllers\ClientController::class, 'index'])->name('clients.index');
 

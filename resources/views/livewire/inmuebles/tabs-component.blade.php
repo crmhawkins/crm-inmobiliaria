@@ -8,24 +8,28 @@
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
-                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab5')">Ver detalles</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab3')">Buscar</button>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab4')">Opciones</button>
                         </div>
@@ -34,31 +38,36 @@
                 </div>
                 <br>
 
-                @livewire('inmuebles.create')
+                @livewire('inmuebles.create', key('tab1'))
             @elseif ($tab == 'tab2')
                 <div style="border-bottom: 1px solid black !important;">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-primary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab5')">Ver detalles</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab3')">Buscar</button>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab4')">Opciones</button>
                         </div>
@@ -74,24 +83,29 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab5')">Ver detalles</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-primary btn-block"
                                 wire:click="cambioTab('tab3')">Buscar</button>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab4')">Opciones</button>
                         </div>
@@ -100,31 +114,36 @@
                 </div>
                 <br>
 
-                @livewire('inmuebles.index')
+                @livewire('inmuebles.index', key('tab3'))
             @elseif ($tab == 'tab4')
                 <div style="border-bottom: 1px solid black !important;">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab5')">Ver detalles</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-outline-primary btn-block"
                                 wire:click="cambioTab('tab3')">Buscar</button>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
+                        <div class="ms-auto col-4 d-grid gap-2">
                             <button type="button" class="btn btn-primary btn-block"
                                 wire:click="cambioTab('tab4')">Opciones</button>
                         </div>
@@ -132,6 +151,43 @@
                     <br>
                 </div>
                 <br>
+            @elseif ($tab == 'tab5')
+                <div style="border-bottom: 1px solid black !important;">
+                    @if (
+                        (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
+                            (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
+                        </div>
+                        <br>
+                    @endif
+                    <div class="row">
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-primary btn-block" wire:click="cambioTab('tab5')">Ver
+                                detalles</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab3')">Buscar</button>
+                        </div>
+                        <div class="ms-auto col-4 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-block"
+                                wire:click="cambioTab('tab4')">Opciones</button>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+                <br>
+                @livewire('inmuebles.show', ['identificador' => $inmueble], key('tab5'))
             @endif
         @else
             @if ($tab == 'tab1')
@@ -140,17 +196,18 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
                         <div class="ms-auto col-6 d-grid gap-2">
@@ -173,17 +230,18 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
                         <div class="ms-auto col-6 d-grid gap-2">
@@ -206,17 +264,18 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <div class="row">
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-block"
-                                wire:click="cambioTab('tab1')">Alta</button>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <div class="row">
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-block"
+                                    wire:click="cambioTab('tab1')">Alta</button>
+                            </div>
+                            <div class="ms-auto col-6 d-grid gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-block"
+                                    wire:click="cambioTab('tab2')">Editar</button>
+                            </div>
                         </div>
-                        <div class="ms-auto col-6 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-block"
-                                wire:click="cambioTab('tab2')">Editar</button>
-                        </div>
-                    </div>
-                    <br>
+                        <br>
                     @endif
                     <div class="row">
                         <div class="ms-auto col-6 d-grid gap-2">
@@ -250,17 +309,22 @@
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
-                    <li class="nav-item">
-                        <button class="nav-link active" wire:click.prevent="cambioTab('tab1')">
-                            <h3>Alta</h3>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                        <li class="nav-item">
+                            <button class="nav-link active" wire:click.prevent="cambioTab('tab1')">
+                                <h3>Alta</h3>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')">
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
                             <h5>Buscar</h5>
@@ -273,24 +337,30 @@
                     </li>
                 </ul>
 
-                @livewire('inmuebles.create')
+                @livewire('inmuebles.create', key('tab1'))
             @elseif ($tab == 'tab2')
                 <ul class="nav nav-tabs nav-fill">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Alta</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link active" wire:click.prevent="cambioTab('tab2')">
-                            <h3>Editar</h3>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link active" wire:click.prevent="cambioTab('tab2')">
+                                <h3>Editar</h3>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')">
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
                             <h5>Buscar</h5>
@@ -304,7 +374,7 @@
                 </ul>
                 <br>
 
-                @livewire('inmuebles.edit', ['identificador' => $inmueble], key('tab3'))
+                @livewire('inmuebles.edit', ['identificador' => $inmueble], key('tab2'))
 
                 <br>
             @elseif ($tab == 'tab3')
@@ -313,17 +383,23 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Alta</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')">
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item active">
                         <button class="nav-link active" wire:click.prevent="cambioTab('tab3')">
                             <h3>Buscar</h3>
@@ -337,24 +413,30 @@
                 </ul>
                 <br>
 
-                @livewire('inmuebles.index')
+                @livewire('inmuebles.index', key('tab3'))
             @elseif ($tab == 'tab4')
                 <ul class="nav nav-tabs nav-fill">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Alta</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')">
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
                             <h5>Buscar</h5>
@@ -368,7 +450,44 @@
                 </ul>
                 <br>
 
-                @livewire('inmuebles.index')
+                @livewire('inmuebles.index', key('tab3'))
+            @elseif ($tab == 'tab5')
+                <ul class="nav nav-tabs nav-fill">
+                    @if (
+                        (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
+                            (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
+                    @endif
+                    <li class="nav-item">
+                        <button class="nav-link active" wire:click.prevent="cambioTab('tab5')">
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
+                            <h5>Buscar</h5>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab4')">
+                            <h3>Opciones</h3>
+                        </button>
+                    </li>
+                </ul>
+                <br>
+
+                @livewire('inmuebles.show', ['identificador' => $inmueble], key('tab5'))
             @endif
         @else
             @if ($tab == 'tab1')
@@ -377,17 +496,23 @@
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link active" wire:click.prevent="cambioTab('tab1')">
-                            <h3>Alta</h3>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link active" wire:click.prevent="cambioTab('tab1')">
+                                <h3>Alta</h3>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')" disabled>
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
                             <h5>Buscar</h5>
@@ -401,24 +526,30 @@
                 </ul>
                 <br>
 
-                @livewire('inmuebles.create')
+                @livewire('inmuebles.create', key('tab1'))
             @elseif ($tab == 'tab3')
                 <ul class="nav nav-tabs nav-fill">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Alta</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')" disabled>
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item active">
                         <button class="nav-link active" wire:click.prevent="cambioTab('tab3')">
                             <h3>Buscar</h3>
@@ -431,24 +562,30 @@
                     </li>
                 </ul>
                 <br>
-                @livewire('inmuebles.index')
+                @livewire('inmuebles.index', key('tab3'))
             @elseif ($tab == 'tab4')
                 <ul class="nav nav-tabs nav-fill">
                     @if (
                         (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
                             (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
                             (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Alta</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
-                            <h5>Editar</h5>
-                        </button>
-                    </li>
+                            (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                                <h5>Alta</h5>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" wire:click.prevent="cambioTab('tab2')" disabled>
+                                <h5>Editar</h5>
+                            </button>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <button class="nav-link" wire:click.prevent="cambioTab('tab5')" disabled>
+                            <h5>Ver detalles</h5>
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
                             <h5>Buscar</h5>

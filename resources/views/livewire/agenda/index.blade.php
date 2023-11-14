@@ -98,7 +98,15 @@
                         id: '{{ $evento->id }}'
                     },
                     @endforeach
-                ]
+                ],
+                eventDidMount: function(info) {
+                    var tooltip = new bootstrap.Tooltip(info.el, {
+                        title: info.event.title + ': ' + info.event.extendedProps.description,
+                        placement: 'top',
+                        trigger: 'hover',
+                        html: true
+                    });
+                },
             });
 
             calendar.render();

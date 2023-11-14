@@ -47,17 +47,9 @@ class Edit extends Component
     public function update()
     {
 
-        if ($this->inmobiliaria == null) {
-            if (request()->session()->get('inmobiliaria') == 'sayco') {
-                $this->inmobiliaria = true;
-            } else {
-                $this->inmobiliaria = false;
-            }
-        } else {
-            $this->inmobiliaria = null;
+        if($this->password != null){
+            $this->password = Hash::make($this->password);
         }
-
-        $this->password = Hash::make($this->password);
 
         $validatedData = $this->validate(
             [
@@ -68,7 +60,7 @@ class Edit extends Component
                 'password' => 'nullable',
                 'telefono' => 'required',
                 'email' => 'required',
-                'inmobiliaria' => 'required',
+                'inmobiliaria' => 'nullable',
             ],
             // Mensajes de error
             [

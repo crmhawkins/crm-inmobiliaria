@@ -1,11 +1,36 @@
 <div>
     <h5 class="card-header">
-        Contrato de arras
+        Administrar contrato ya subido
     </h5>
 
     <div class="card-body">
         @if($contratoArras != null)
             <li><a href="{{$contratoArras}}" class="btn btn-primary"> Ver contrato de arras</a></li>
+		            <li><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalContrato">
+ Enviar contrato</button>
+<div class="modal fade" id="modalContrato" tabindex="-1" aria-labelledby="modalLabelContrato" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabelContrato">Selecciona un cliente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <select class="form-control" wire:model="cliente_id">
+                    @foreach($clientes as $cliente)
+                        <option value="{{ $cliente->id }}">{{ $cliente->nombre_completo }}</option>
+                    @endforeach
+                </select>
+            </div>
+			<div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" wire:click.prevent="enviarCorreo( '{{$contratoArras}}' )">Enviar correo</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div> </li>
+
         @endif
     </div>
     <h5 class="card-header">

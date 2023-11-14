@@ -24,8 +24,11 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $previousUrl = URL::previous();
+        return view('seleccion');
+    }
 
+    public function home(Request $request)
+    {
         $boton = $request->query('boton');
 
         if ($boton == 'sayco') {
@@ -34,14 +37,20 @@ class HomeController extends Controller
             $request->session()->put('inmobiliaria', 'sancer');
         }
 
-        if (str_contains($previousUrl, '/seleccion') || str_contains($previousUrl, '/home') || str_contains($previousUrl, '/home')) {
-            $user = $request->user();
-            return view('agenda.index', compact('user'));
-        } else if (str_contains($previousUrl, '/home') || str_contains($previousUrl, '/home')) {
-            $user = $request->user();
-            return redirect()->route('seleccion', compact('user'));
-        } else {
-            return redirect()->back();
+        $user = $request->user();
+        return view('agenda.index', compact('user'));
+
+    }
+
+    public function cambio(Request $request)
+    {
+        $boton = $request->query('boton');
+
+        if ($boton == 'sayco') {
+            $request->session()->put('inmobiliaria', 'sayco');
+        } else if ($boton == 'sancer') {
+            $request->session()->put('inmobiliaria', 'sancer');
         }
+            return redirect()->back();
     }
 }

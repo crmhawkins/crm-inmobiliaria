@@ -3,16 +3,27 @@
 namespace App\Http\Livewire\Inmuebles;
 
 use App\Models\DocInmueble;
+use App\Models\Inmuebles;
+use App\Models\Clientes;
 use Livewire\Component;
+use Illuminate\Support\Facades\Mail;
 
 class DocumentosCreate extends Component
 {
     public $inmueble_id;
+	public $cliente_id = 1;
     public $documento;
     public $docs;
 
     public function mount($inmueble_id = null){
-        $this->inmueble_id = $inmueble_id;
+ 		if (request()->session()->get('inmobiliaria') == 'sayco') {
+            $this->clientes = Clientes::where('inmobiliaria', true)->orWhere('inmobiliaria', null)->get();
+        } else {
+            $this->clientes = Clientes::where('inmobiliaria', false)->orWhere('inmobiliaria', null)->get();
+        }        
+		
+		$this->inmueble_id = $inmueble_id;
+		
         if($inmueble_id != null){
             if (DocInmueble::where('inmueble_id', $this->inmueble_id)->exists()) {
                 $this->docs = DocInmueble::where('inmueble_id', $this->inmueble_id)->first();
@@ -61,4 +72,28 @@ class DocumentosCreate extends Component
             $docInmueble->save();
         }
     }
+	
+	public function enviarCorreo($documento){
+		
+    $inmueble = Inmuebles::where('id', $this->inmueble_id)->first();
+    $cliente = Clientes::where('id', $this->cliente_id)->first();
+    
+    if (request()->session()->get('inmobiliaria') == 'sayco') {
+        $nombre_inmobiliaria = "INMOBILIARIA SAYCO";
+    } else {
+        $nombre_inmobiliaria = "INMOBILIARIA SANCER";
+    }
+		
+    
+    $texto = 'Buenas, ' . $cliente->nombre_completo .'. Te enviamos un documento perteneciente al inmueble  ' . $inmueble->titulo;
+
+Mail::raw($texto, function ($message) use ($cliente, $nombre_inmobiliaria, $inmueble, $documento) {
+    $message->from('admin@grupocerban.com', $nombre_inmobiliaria);
+    $message->to($cliente->email, $cliente->nombre_completo);
+	$message->to(env('MAIL_USERNAME'));
+    $message->subject($nombre_inmobiliaria . " - Documento del inmueble " . $inmueble->titulo);
+	$message->attach($documento);
+
+});
+}
 }

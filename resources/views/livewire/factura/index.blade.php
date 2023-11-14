@@ -29,25 +29,8 @@
                                 <td>{{ $factura->total }}</td>
                                 <td>
                                     <ul>
-                                        <li><button type="button"
-                                                @if (
-                                                    (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null)) class="btn btn-primary boton-producto"
-                                        onclick="Livewire.emit('seleccionarProducto', {{ $factura->id }});"
-                                        @else                                         class="btn btn-secondary boton-producto" disabled @endif>Ver/Editar</button>
-                                        </li>
                                         <li><a href="{{ '../' . $factura->ruta_pdf }}"
                                                 class="btn btn-primary boton-producto">Ver documento</a></li>
-                                        <li><button type="button"
-                                                @if (
-                                                    (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                                                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null)) class="btn btn-secondary boton-producto" wire:click="enviarCorreo('{{ $factura->id }}')" disabled
-                                            @else                                         class="btn btn-secondary boton-producto" disabled @endif>Enviar
-                                                por correo</button></li>
                                     </ul>
                                 </td>
                             </tr>

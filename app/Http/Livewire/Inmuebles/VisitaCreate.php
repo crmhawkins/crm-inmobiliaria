@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class VisitaCreate extends Component
 {
@@ -23,7 +24,7 @@ class VisitaCreate extends Component
     public $fecha;
     public $ruta;
     public $firma;
-    public $cliente_id;
+    public $cliente_id = 1;
     public $signature;
 
     protected $listeners = ['saveSignature'];
@@ -110,6 +111,8 @@ class VisitaCreate extends Component
 
         // Añade la ruta del PDF a los datos validados.
         $this->ruta = $rutaDirectorio . '/' . $this->cliente_id . "-" . $this->inmueble_id . "-" . $this->fecha . '.pdf';
+		
+		$rutaMail = $this->ruta;
 
         $eventoSave = Evento::create([
             'titulo' => 'Cita con ' .  $clientePDF->nombre_completo,
@@ -121,6 +124,23 @@ class VisitaCreate extends Component
             'inmueble_id' => $this->inmueble_id,
             'inmobiliaria' => $inmueblePDF->inmobiliaria,
         ]);
+		
+		if (request()->session()->get('inmobiliaria') == 'sayco') {
+        $nombre_inmobiliaria = "INMOBILIARIA SAYCO";
+    } else {
+        $nombre_inmobiliaria = "INMOBILIARIA SANCER";
+    }
+		
+		$texto = 'Buenas, ' . $clientePDF->nombre_completo . ". Se le adjunta la hoja de visita del inmueble que ha firmado."; 
+		
+		Mail::raw($texto, function ($message) use ($clientePDF, $nombre_inmobiliaria, $inmueblePDF, $rutaMail) {
+    $message->from('admin@grupocerban.com', $nombre_inmobiliaria);
+    $message->to($clientePDF->email, $clientePDF->nombre_completo);
+	$message->to(env('MAIL_USERNAME'));
+    $message->subject($nombre_inmobiliaria . " - Hoja de visita del inmueble " . $inmueblePDF->titulo);
+	$message->attach($rutaMail);
+
+});
 
         $validatedData = $this->validate(
             [

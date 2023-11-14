@@ -50,43 +50,45 @@
             <div class="page-wrapper chiller-theme toggled" style="background-color: #d9d9d9;">
                 <div class="container-fluid " style="background-color: #d9d9d9  ; margin-top:30px; min-height:100%;">
                     <div class="container-fluid shadow-lg rounded-4" style="background-color: #fcfcfc; min-height:100%">
-
-
-            @else
-                @include('layouts.header')
-                <div class="page-wrapper chiller-theme toggled" style="background-color: #333;">
-                    <div class="container-fluid" style="background-color: #333  ; margin-top:30px; min-height:100%;">
-                        <div class="container-fluid shadow-lg rounded-4" style="background-color: #fcfcfc; min-height:100%">
-
-
+                    @else
+                        @include('layouts.header')
+                        <div class="page-wrapper chiller-theme toggled" style="background-color: #333;">
+                            <div class="container-fluid"
+                                style="background-color: #333  ; margin-top:30px; min-height:100%;">
+                                <div class="container-fluid shadow-lg rounded-4"
+                                    style="background-color: #fcfcfc; min-height:100%">
         @endif
         {{-- @yield('content-factura')
                 @hasSection('content-producto') --}}
-                <div style="border-bottom: 1px solid black; margin-bottom:10px;">
-                    <br>
-                    <div class="row">
-                        <h1 style="border-bottom:0px !important">@yield('encabezado')</h1>
-                        <h2 style="text-align:left;">@yield('subtitulo')</h2>
-                    </div>
-                </div>
-                <div>
-                    @yield('content')
-                </div>
+        <div style="border-bottom: 1px solid black; margin-bottom:10px;">
+            <br>
+            <div class="row">
+                <h1 style="border-bottom:0px !important">@yield('encabezado')</h1>
+                <h2 style="text-align:left;">@yield('subtitulo')</h2>
             </div>
         </div>
-        {{-- @else
+        <div>
+            @yield('content')
+        </div>
+    </div>
+    </div>
+    {{-- @else
                     @livewire('container-component')
                 @endif --}}
 
-        {{-- @yield('content') --}}
+    {{-- @yield('content') --}}
     </div>
     </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.3/viewer.min.js"
         integrity="sha512-f8kZwYACKF8unHuRV7j/5ILZfflRncxHp1f6y/PKuuRpCVgpORNZMne1jrghNzTVlXabUXIg1iJ5PvhuAaau6Q=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>

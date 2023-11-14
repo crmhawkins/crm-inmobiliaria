@@ -105,13 +105,13 @@
                         <li class="ms-auto nav-item mx-2">
                             @if (Request::is('seleccion'))
                                 <a class="btn btn-md btn-dark text-light d-block w-100 p-2"
-                                    href="{{ route('home', ['boton' => 'sancer']) }}">
+                                    href="{{ route('cambio', ['boton' => 'sancer']) }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                     <strong>Ir a SANCER</strong>
                                 </a>
                             @else
                                 <a class="btn btn-md btn-outline-dark d-block w-100 p-2"
-                                    href="{{ route('home', ['boton' => 'sancer']) }}">
+                                    href="{{ route('cambio', ['boton' => 'sancer']) }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                     <strong>Ir a SANCER</strong>
                                 </a>
@@ -121,13 +121,13 @@
                         <li class="ms-auto nav-item mx-2">
                             @if (Request::is('seleccion'))
                                 <a class="btn btn-md btn-dark text-light d-block w-100 p-2"
-                                    href="{{ route('home', ['boton' => 'sayco']) }}">
+                                    href="{{ route('cambio', ['boton' => 'sayco']) }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                     <strong>Ir a SAYCO</strong>
                                 </a>
                             @else
                                 <a class="btn btn-md btn-outline-dark d-block w-100 p-2"
-                                    href="{{ route('home', ['boton' => 'sayco']) }}">
+                                    href="{{ route('cambio', ['boton' => 'sayco']) }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                     <strong>Ir a SAYCO</strong>
                                 </a>
@@ -201,12 +201,12 @@
                 @if (Request::session()->get('inmobiliaria') == 'sayco')
                     <li class="ms-auto nav-item">
                         @if (Request::is('seleccion'))
-                            <a class="btn btn-dark text-light" href="{{ route('home', ['boton' => 'sancer']) }}">
+                            <a class="btn btn-dark text-light" href="{{ route('cambio', ['boton' => 'sancer']) }}">
                                 <i class="fas fa-arrows-rotate"></i>
                                 <strong>Ir a SANCER</strong>
                             </a>
                         @else
-                            <a class="btn btn-outline-dark" href="{{ route('home', ['boton' => 'sancer']) }}">
+                            <a class="btn btn-outline-dark" href="{{ route('cambio', ['boton' => 'sancer']) }}">
                                 <i class="fas fa-arrows-rotate"></i>
                                 <strong>Ir a SANCER</strong>
                             </a>
@@ -215,12 +215,12 @@
                 @else
                     <li class="ms-auto nav-item">
                         @if (Request::is('seleccion'))
-                            <a class="btn btn-dark text-light" href="{{ route('home', ['boton' => 'sayco']) }}">
+                            <a class="btn btn-dark text-light" href="{{ route('cambio', ['boton' => 'sayco']) }}">
                                 <i class="fas fa-arrows-rotate"></i>
                                 <strong>Ir a SAYCO</strong>
                             </a>
                         @else
-                            <a class="btn btn-outline-dark" href="{{ route('home', ['boton' => 'sayco']) }}">
+                            <a class="btn btn-outline-dark" href="{{ route('cambio', ['boton' => 'sayco']) }}">
                                 <i class="fas fa-arrows-rotate"></i>
                                 <strong>Ir a SAYCO</strong>
                             </a>

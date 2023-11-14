@@ -11,6 +11,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
+use Illuminate\Support\Facades\Mail;
+
 
 class Create extends Component
 {
@@ -155,6 +157,26 @@ class Create extends Component
 
         // Añade la ruta del PDF a los datos validados.
         $validatedData['ruta_pdf'] = $rutaPdf;
+		
+		$numeroFactMail = $this->numero_factura; 
+		
+		if (request()->session()->get('inmobiliaria') == 'sayco') {
+        $nombre_inmobiliaria = "INMOBILIARIA SAYCO";
+    } else {
+        $nombre_inmobiliaria = "INMOBILIARIA SANCER";
+    }
+		
+		$texto = 'Buenas, ' . $clientePDF->nombre_completo . ". Se ha adjuntado el documento de su factura a este correo."; 
+		
+		Mail::raw($texto, function ($message) use ($clientePDF, $nombre_inmobiliaria, $numeroFactMail, $rutaPdf) {
+    $message->from('admin@grupocerban.com', $nombre_inmobiliaria);
+    $message->to($clientePDF->email, $clientePDF->nombre_completo);
+	$message->to(env('MAIL_USERNAME'));
+    $message->subject($nombre_inmobiliaria . " - Factura " . $numeroFactMail);
+	$message->attach($rutaPdf);
+
+});
+
 
         // Guardar datos validados
         $facturasSave = Factura::create($validatedData);

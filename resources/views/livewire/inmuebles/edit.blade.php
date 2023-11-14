@@ -45,7 +45,7 @@
                             <label for="valor_referencia" class="col-sm-4 col-form-label"> <strong>Valor de
                                     referencia</strong></label>
                             <div class="col-sm-12">
-                                <input type="text" wire:model="valor_referencia" class="form-control"
+                                <input type="number" step="0.01" wire:model="valor_referencia" class="form-control"
                                     name="valor_referencia" id="valor_referencia"
                                     placeholder="Valor de referencia del inmueble">
                                 @error('valor_referencia')

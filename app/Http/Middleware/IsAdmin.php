@@ -19,13 +19,13 @@ class IsAdmin
     {
         if (Auth::user() && Auth::user()->role == 'admin') {
             if ($request->session()->has('inmobiliaria')) {
-                return $next($request);
-            } else {
-                return redirect()->route('seleccion');
+
+            }else{
+                $request->session()->put('inmobiliaria', 'sayco');
             }
+                return $next($request);
         } else{
             return redirect()->route('login');
-
         }
     }
 }

@@ -45,7 +45,7 @@
                             <label for="valor_referencia" class="col-sm-4 col-form-label"> <strong>Valor de
                                     referencia</strong></label>
                             <div class="col-sm-12">
-                                <input type="text" wire:model="valor_referencia" class="form-control"
+                                <input type="number" step="0.01" wire:model="valor_referencia" class="form-control"
                                     name="valor_referencia" id="valor_referencia"
                                     placeholder="Valor de referencia del inmueble">
                                 @error('valor_referencia')
@@ -271,7 +271,7 @@
                     <div class="card-body">
                         <div class="mb-3 row d-flex align-items-center">
                             <label for="vendedor" class="col-sm-3 col-form-label">
-                                <strong>Cliente:</strong></label>
+                                <strong>Vendedor:</strong></label>
                             <div x-data="" x-init="$('#select2-vendedor-create').select2();
                             $('#select2-vendedor-create').on('change', function(e) {
                                 var data = $('#select2-vendedor-create').select2('val');
@@ -280,7 +280,7 @@
                             });">
                                 <div class="col" wire:ignore>
                                     <select class="form-control" id="select2-vendedor-create">
-                                        <option value="">-- Elige un cliente --</option>
+                                        <option value="">-- Elige un vendedor --</option>
                                         @foreach ($vendedores as $vendedor)
                                             <option value={{ $vendedor->id }}>
                                                 {{ $vendedor->nombre_completo }}
@@ -354,11 +354,9 @@
                     <h5 class="card-header">
                         Añadir imagen a galería
                     </h5>
-                    <div class="card-body">
-
+                    <div class="card-body text-center">
                         @if (!empty($ruta_imagenes))
-                            <img src="{{ $ruta_imagenes }}" style="max-width: 50%; max-height: 50%"
-                                class="self-center">
+                            <img class="mb-2" src="{{ $ruta_imagenes }}" style="max-width: 50%; max-height: 50%">
                         @endif
 
                         <div class="input-group">
@@ -373,7 +371,7 @@
                         </div>
                         <img id="holder" style="margin-top:15px;max-height:100px;margin-bottom:5px;">
                         @if (!empty($ruta_imagenes))
-                            <button class="btn btn-primary" wire:click.prevent="addGaleria">Añadir a
+                            <button class="btn btn-primary w-100 mt-3" wire:click.prevent="addGaleria">Añadir a
                                 galería</button>
                         @endif
                     </div>
@@ -422,7 +420,7 @@
                 return false;
             });
         </script>
-        <div class="mb-3 row d-flex align-items-center">
+        <div class="mb-5 row d-flex align-items-center">
             <button type="submit" class="btn btn-primary">Guardar</button>
         </div>
     </form>
