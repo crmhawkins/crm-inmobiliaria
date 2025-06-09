@@ -63,6 +63,14 @@
                                 </p>
                             </div>
                         </div>
+                        <div class="col-12">
+                            @if ($publicado == true)
+                            <button class="btn btn-outline-primary" wire:click="apiPut()">Modificar</button>
+                            <button class="btn btn-outline-danger" wire:click="apiDelete()">Eliminar pulbicación</button>
+                            @else
+                            <button class="btn btn-outline-primary" wire:click="apiPost()">Publicar</button>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
