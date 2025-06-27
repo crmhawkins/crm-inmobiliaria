@@ -15,7 +15,7 @@
         "knplabs/knp-snappy": "^1.4",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
-        "laravel/tinker": "^2.7",
+        "laravel/tinker": "^2.10",
         "laravel/ui": "^4.0",
         "livewire/livewire": "^2.10",
         "maatwebsite/excel": "^1.1",
