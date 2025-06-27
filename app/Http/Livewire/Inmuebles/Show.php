@@ -9,6 +9,10 @@ use Livewire\Component;
 use App\Models\Inmuebles;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use App\Models\Clientes;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use PhpParser\Node\Expr\Empty_;
+
 class Show extends Component
 {
     use LivewireAlert;
@@ -50,11 +54,14 @@ class Show extends Component
     public $imagenes_correo = [];
     public $galeriaArray = [];
     public $galeria;
-public $clientes;
+    public $clientes;
     protected $listeners = ['fileSelected'];
+    public $key;
+    public $data;
+    public $publicado;
 
     public function mount()
-    {
+    {   $this->key = env('Api_key');
         $this->inmuebles = Inmuebles::find($this->identificador);
         $this->tipos_vivienda = TipoVivienda::all();
         $this->vendedores = User::all();
@@ -102,6 +109,122 @@ public $clientes;
             $this->vendedor_ubicacion  = $vendedor->ubicacion;
             $this->vendedor_telefono = $vendedor->telefono;
             $this->vendedor_correo = $vendedor->email;
+        }
+
+        $this->data = [
+            "ExternalId" => "1519",        //The unique identifier for a property                                                          string
+            "AgencyReference" => "1634",         //Reference given by the agency to the property                                                 string
+            "TypeId" => 1,                      //Identifies the type of the property within the following enumeration                          id de DIC_Building_Type
+            "SubTypeId" => 9,                   //Optional, Indicates the subtype of the property from the value selected in 'TypeId' field     id de DIC_Building_Subtype
+            "ContactTypeId" => 3,               // Defines the type of contact provided                                                         id de DIC_ContactType
+            "PropertyAddress" => [              //Defines where is exactly located the property                                                 array
+                [
+                    "ZipCode" => "39700",       //ZIP Code (not required if x and y are specified)                                              string
+                    "FloorId" => 6,
+                    "x" => -3.21288689804,
+                    "y" => 43.3397409074,
+                    "VisibilityModeId" => 1,
+                    "Street" => "Siempre Viva", //Free text. The name of the street                                                             string
+                    "Number" => "27",            //Number of the street                                                                         string
+                ]
+            ],
+            "PropertyDocument" =>[
+                [
+                    "TypeId" => 1,
+                    "Url" => "https://grupocerban.com/storage/photos/1/imagentest1.jpg",
+                    "SortingId" => 1,
+                ],
+                [
+                    "TypeId" => 1,
+                    "Url" => "https://grupocerban.com/storage/photos/1/imagentest2.jpg",
+                    "SortingId" => 2,
+                ],
+                [
+                    "TypeId" => 1,
+                    "Url" => "https://grupocerban.com/storage/photos/1/imagentest3.jpg",
+                    "SortingId" => 3,
+                ]
+                ],
+            "PropertyFeature" => [
+                [
+                    "FeatureId" => 1,
+                    "DecimalValue" => 58,
+                ],
+                [
+                    "FeatureId" => 2,
+                    "TextValue" => "Inmueble 1."
+                ],
+                [
+                    "FeatureId" => 3,
+                    "TextValue" => "Inmobiliaria vende piso reformado en la zona de Brazomar. La vivienda se distribuye en 2 habitaciones, 1 baño, cocina equipada y un amplio salón comedor con salida a una terraza."
+                ],
+                [
+                    "FeatureId" => 323,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 324,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 325,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 326,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 327,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 249,
+                    "DecimalValue" => 1,
+                ],
+                [
+                    "FeatureId" => 11,
+                    "DecimalValue" => 5,
+                ],
+                [
+                    "FeatureId" => 12,
+                    "DecimalValue" => 2,
+                ],
+                [
+                    "FeatureId" => 30,
+                    "BoolValue" => true,
+                ],
+            ],
+            "PropertyContactInfo" => [
+                [
+                    "TypeId" => 1,
+                    "Value" => "demo@adevinta.com",
+                ],
+                [
+                    "TypeId" => 2,
+                    "Value" => "942862711",
+                ]
+            ],
+            "PropertyTransaction" => [
+                [
+                    "TransactionTypeId" => 1,
+                    "Price" => 160000,
+                    "ShowPrice" => true
+                ]
+            ]
+
+        ];
+
+        $this->publicado = false;
+        $publicaciones = json_decode($this->apiGet());
+        if (!empty($publicaciones)) {
+            foreach ($publicaciones as $publicacion) {
+               // dd($publicacion);
+                if ($publicacion->ExternalId ==  $this->data['ExternalId']) {
+                    $this->publicado = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -337,4 +460,80 @@ public $clientes;
     {
         $this->imagenes_correo[] = $key;
     }
+
+
+    public function apiGet()
+    {
+        $url = "https://api.inmofactory.com/api/property";
+        $response = Http::withHeaders([
+            "X-Source" =>"12ad21a2-b568-4751-a34e-f5533db78c4c",
+            'Inmofactory-Api-Key' =>  $this->key,
+        ])->withoutVerifying()->get($url);
+
+        $this->saveResponseToFile('get_response.txt', $response->body());
+
+        return $response->json();
+    }
+
+    /**
+     * Ejecuta una solicitud POST a la API de Inmofactory.
+     */
+    public function apiPost()
+    {
+        $url = "https://api.inmofactory.com/api/property";
+        $response = Http::withHeaders([
+            "X-Source" =>"12ad21a2-b568-4751-a34e-f5533db78c4c",
+            'Inmofactory-Api-Key' =>  $this->key,
+        ])->withoutVerifying()->post($url, $this->data);
+        $responseBody = $response->json(); // Esto te dará el array de la respuesta
+        $jsonResponse = json_encode($responseBody, JSON_PRETTY_PRINT); // Convierte a cadena JSON
+
+        // Guarda los datos de la solicitud y la respuesta en archivos
+        $this->saveResponseToFile('post_json.txt', json_encode($this->data, JSON_PRETTY_PRINT)); // También conviertes a string
+        $this->saveResponseToFile('post_response.txt', $jsonResponse); // Aquí ya guardas el JSON como string
+
+        return $response->json();
+    }
+
+    /**
+     * Ejecuta una solicitud PUT a la API de Inmofactory.
+     */
+    public function apiPut()
+    {
+        $url = "https://api.inmofactory.com/api/property";
+        $response = Http::withHeaders([
+            "X-Source" =>"12ad21a2-b568-4751-a34e-f5533db78c4c",
+            'Inmofactory-Api-Key' =>  $this->key,
+        ])->withoutVerifying()->put($url, $this->data);
+        $responseBody = $response->json(); // Esto te dará el array de la respuesta
+        $jsonResponse = json_encode($responseBody, JSON_PRETTY_PRINT); // Convierte a cadena JSON
+
+        // Guarda los datos de la solicitud y la respuesta en archivos
+        $this->saveResponseToFile('put_json.txt', json_encode($this->data, JSON_PRETTY_PRINT)); // También conviertes a string
+        $this->saveResponseToFile('put_response.txt', $jsonResponse); // Aquí ya guardas el JSON como string
+
+        return $response->json();
+    }
+
+    /**
+     * Ejecuta una solicitud DELETE a la API de Inmofactory.
+     */
+    public function apiDelete()
+    {
+        $url = "https://api.inmofactory.com/api/v2/property/" . base64_encode($this->data['ExternalId']);
+        $response = Http::withHeaders([
+            "X-Source" =>"12ad21a2-b568-4751-a34e-f5533db78c4c",
+            'Inmofactory-Api-Key' =>  $this->key,
+        ])->withoutVerifying()->delete($url);
+
+        $this->saveResponseToFile('delete_response.txt', $response->body());
+
+        return $response->json();
+    }
+
+    public function saveResponseToFile($filename, $content)
+    {
+        Storage::disk('local')->put($filename, $content);
+    }
+
 }
