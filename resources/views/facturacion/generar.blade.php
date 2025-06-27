@@ -155,21 +155,22 @@
     <div class="table-section bill-tbl w-100 mt-10">
         <table class="table w-100 mt-10">
             <tr>
-                <th class="w-50">#</th>
-                <th class="w-50">Artículo</th>
-                <th class="w-50">Precio</th>
-                <th class="w-50">IVA</th>
-                <th class="w-50">Total</th>
-            </tr>
-            @foreach (json_decode($factura['articulos'], true) as $id => $item)
-                <tr>
-                    <td>{{ $id }}</td>
-                    <td>{{ $item['descripcion'] }}</td>
-                    <td>{{ $item['importe'] }} €</td>
-                    <td>0,{{ $item['impuesto'] }} %</td>
-                    <td>{{ $item['importe'] * ($item['impuesto'] / 100) }} €</td>
-                </tr>
-            @endforeach
+    <th>#</th>
+    <th>Artículo</th>
+    <th>Precio</th>
+    <th>IVA</th>
+    <th>Total</th>
+</tr>
+@foreach ($factura['articulos'] as $id => $item)
+    <tr>
+        <td>{{ $id + 1 }}</td>
+        <td>{{ $item['descripcion'] }}</td>
+        <td>{{ $item['importe'] }} €</td>
+        <td>{{ $item['impuesto'] }}%</td>
+        <td>{{ number_format($item['importe'] * (1 + $item['impuesto'] / 100), 2) }} €</td>
+    </tr>
+@endforeach
+
             <tr>
                 <td colspan="7">
                     <div class="total-part">

@@ -47,12 +47,46 @@ Route::get('/cambio', [App\Http\Controllers\HomeController::class, 'cambio'])->n
 // Route::get('/clients', [App\Http\Controllers\ClientController::class, 'index'])->name('clients.index');
 
 Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
+    // Tipo de vivienda
     Route::get('tipovivienda', [TipoViviendaController::class, 'index'])->name('tipovivienda.index');
+
+    // Inmuebles
     Route::get('inmuebles', [InmueblesController::class, 'index'])->name('inmuebles.index');
+    Route::get('inmuebles/create', [InmueblesController::class, 'create'])->name('inmuebles.create');
+    Route::post('inmuebles/store', [InmueblesController::class, 'store'])->name('inmuebles.store');
+    Route::get('inmuebles/show/{inmueble}', [InmueblesController::class, 'show'])->name('inmuebles.show');
+    Route::get('inmuebles/edit/{inmueble}', [InmueblesController::class, 'edit'])->name('inmuebles.edit');
+    Route::put('inmuebles/update/{inmueble}', [InmueblesController::class, 'update'])->name('inmuebles.update');
+    Route::delete('inmuebles/destroy/{inmueble}', [InmueblesController::class, 'destroy'])->name('inmuebles.destroy');
+
+    // Clientes
     Route::get('clientes', [ClientesController::class, 'index'])->name('clientes.index');
+    Route::get('clientes/create', [ClientesController::class, 'create'])->name('clientes.create');
+    Route::post('clientes/store', [ClientesController::class, 'store'])->name('clientes.store');
+    Route::get('clientes/show/{cliente}', [ClientesController::class, 'show'])->name('clientes.show');
+    Route::get('clientes/edit/{cliente}', [ClientesController::class, 'edit'])->name('clientes.edit');
+    Route::put('clientes/update/{cliente}', [ClientesController::class, 'update'])->name('clientes.update');
+    Route::delete('clientes/destroy/{cliente}', [ClientesController::class, 'destroy'])->name('clientes.destroy');
+
+    Route::post('/clientes/filtrar-inmuebles', [ClientesController::class, 'filtrarInmuebles'])->name('clientes.filtrarInmuebles');
+
+    // Facturacion
     Route::get('facturacion', [FacturaController::class, 'index'])->name('facturacion.index');
+    Route::get('facturacion/create', [FacturaController::class, 'create'])->name('facturacion.create');
+    Route::post('facturacion/store', [FacturaController::class, 'store'])->name('facturacion.store');
+    Route::get('facturacion/show/{factura}', [FacturaController::class, 'show'])->name('facturacion.show');
+    Route::get('facturacion/edit/{factura}', [FacturaController::class, 'edit'])->name('facturacion.edit');
+    Route::put('facturacion/update/{factura}', [FacturaController::class, 'update'])->name('facturacion.update');
+    Route::delete('facturacion/destroy/{factura}', [FacturaController::class, 'destroy'])->name('facturacion.destroy');
+    Route::get('facturacion/pdf/{factura}', [FacturaController::class, 'descargarPDF'])->name('facturacion.pdf');
+
+    // Agenda
     Route::get('agenda', [AgendaController::class, 'index'])->name('agenda.index');
+
+    // Vendedores
     Route::get('vendedores', [VendedoresController::class, 'index'])->name('vendedores.index');
+
+    // Caracteristicas
     Route::get('caracteristicas', [CaracteristicasController::class, 'index'])->name('caracteristicas.index');
 });
 

@@ -9,18 +9,40 @@ class Factura extends Model
 {
     use HasFactory;
 
-    protected $table = "facturas";
-
     protected $fillable = [
-        "cliente",
-        "numero_factura",
-        "fecha",
-        "fecha_vencimiento",
-        "articulos",
-        "subtotal",
-        "total",
-        "condiciones",
-        "inmobiliaria",
-        "ruta_pdf"
+        'cliente_id',
+        'numero_factura',
+        'fecha',
+        'fecha_vencimiento',
+        'subtotal',
+        'iva_total',
+        'iva_por_seccion',
+        'total',
+        'condiciones',
+        'inmobiliaria',
+        'ruta_pdf',
     ];
+
+    protected $casts = [
+        'iva_por_seccion' => 'array',
+    ];
+
+    public function cliente()
+    {
+        return $this->belongsTo(Clientes::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(FacturaItem::class);
+    }
+
+    // App\Models\Factura.php
+protected $primaryKey = 'id';
+
+public function getRouteKeyName()
+{
+    return 'id'; // o 'uuid' si fuera el caso
+}
+
 }

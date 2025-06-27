@@ -245,20 +245,22 @@
                         <div class="mb-3 row d-flex align-items-center">
                             <label for="otras_caracteristicasArray" class="col-sm-4 col-form-label"> <strong>Otras
                                     características</strong></label>
-                            <div class="col-sm-11 border rounded-2"
-                                style="overflow-y:scroll; height:5rem; margin-left:11px;">
-                                @foreach ($caracteristicas as $caracteristica)
-                                    <div class="mb-1">
-                                        <input type="checkbox" value="{{ $caracteristica->id }}"
-                                            wire:model="otras_caracteristicasArray"
-                                            @if (in_array($caracteristica->id, $otras_caracteristicasArray)) checked @endif>
-                                        {{ $caracteristica->nombre }}
-                                    </div>
-                                @endforeach
-                                @error('otras_caracteristicas')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
+                            {{-- <label><strong>Extras y equipamiento</strong></label> --}}
+                        <div class="row">
+                            @foreach ([
+                                'amueblado'=>'Amueblado','calefaccion'=>'Calefacción',
+                                'jardin_privado'=>'Jardín','piscina_privada'=>'Piscina privada','piscina_comunitaria'=>'Piscina comunitaria',
+                                'zona_comunitaria'=>'Zona comunitaria','garaje'=>'Garaje','ascensor'=>'Ascensor',
+                                'trastero'=>'Trastero','balcon'=>'Balcón','terraza'=>'Terraza','lavadero'=>'Lavadero',
+                                'internet'=>'Internet','parquet'=>'Parquet','electrodomesticos'=>'Electrodomésticos',
+                                'aire_acondicionado'=>'Aire acondicionado','cocina_equipada'=>'Cocina','domotica'=>'Domótica','tv'=>'TV'
+                            ] as $field=>$label)
+                                <div class="col-6 mb-2"><div class="form-check">
+                                    <input type="checkbox" wire:model="{{ $field }}" id="{{ $field }}" class="form-check-input">
+                                    <label class="form-check-label" for="{{ $field }}">{{ $label }}</label>
+                                </div></div>
+                            @endforeach
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -395,6 +397,210 @@
                 </div>
             </div>
         </div>
+
+
+         <div class="row justify-content-center mt-4">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <h5 class="card-header">Datos API Fotocasa</h5>
+                    <div class="card-body">
+                        <div class="mb-3"><label><strong>ID externo</strong></label><input type="text" wire:model="external_id" class="form-control"></div>
+                        <div class="mb-3"><label><strong>Referencia agencia</strong></label><input type="text" wire:model="agency_reference" class="form-control"></div>
+                        <div class="mb-3"><label><strong>TypeId</strong></label><input type="number" wire:model="type_id" class="form-control"></div>
+                        <div class="mb-3"><label><strong>SubTypeId</strong></label><input type="number" wire:model="subtype_id" class="form-control"></div>
+                        <div class="mb-3"><label><strong>ContactTypeId</strong></label><input type="number" wire:model="contact_type_id" class="form-control"></div>
+
+                        <label><strong>Dirección completa</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="text" wire:model="street" class="form-control" placeholder="Calle"></div>
+                            <div class="col"><input type="text" wire:model="number" class="form-control" placeholder="Número"></div>
+                            <div class="col"><input type="text" wire:model="zip_code" class="form-control" placeholder="CP"></div>
+                        </div>
+
+                        <label><strong>Planta / Visibilidad</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" wire:model="floor_id" class="form-control" placeholder="FloorId"></div>
+                            <div class="col"><input type="number" wire:model="visibility_mode_id" class="form-control" placeholder="VisibilityId"></div>
+                        </div>
+
+                        <label><strong>Coordenadas</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="text" wire:model="x" class="form-control" placeholder="longitud"></div>
+                            <div class="col"><input type="text" wire:model="y" class="form-control" placeholder="latitud"></div>
+                        </div>
+
+                        <hr>
+
+                        <label><strong>Subtipo / Transacción</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" wire:model="subtipo_vivienda_id" class="form-control" placeholder="SubTypeId"></div>
+                            <div class="col"><input type="number" wire:model="tipo_transaccion_id" class="form-control" placeholder="TransactionTypeId"></div>
+                        </div>
+
+                        <label><strong>Visibilidad / Planta / Orientación</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" wire:model="visibilidad_id" class="form-control" placeholder="VisibilityId"></div>
+                            <div class="col"><input type="number" wire:model="planta_id" class="form-control" placeholder="FloorId"></div>
+                            <div class="col"><input type="number" wire:model="orientacion_id" class="form-control" placeholder="OrientationId"></div>
+                        </div>
+
+                        <label><strong>Certificado energético (escala / valores / estado)</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" wire:model="cert_consumo_eficiencia_escala" class="form-control" placeholder="Escala consumo"></div>
+                            <div class="col"><input type="number" wire:model="cert_emisiones_eficiencia_escala" class="form-control" placeholder="Escala emisiones"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" step="0.01" wire:model="cert_consumo_valor" class="form-control" placeholder="Consumo valor"></div>
+                            <div class="col"><input type="number" step="0.01" wire:model="cert_emisiones_valor" class="form-control" placeholder="Emisiones valor"></div>
+                        </div>
+                        <div class="mb-3"><input type="number" wire:model="cert_estado" class="form-control" placeholder="Estado certificado (1‑3)"></div>
+
+                        <label><strong>Conservación / Año construcción</strong></label>
+                        <div class="row mb-3">
+                            <div class="col"><input type="number" wire:model="conservacion_estado_id" class="form-control" placeholder="Estado conservación"></div>
+                            <div class="col"><input type="number" wire:model="ano_construccion" class="form-control" placeholder="Año construcción"></div>
+                        </div>
+
+                        <hr>
+
+
+
+                        <div class="mb-3 mt-3"><label><strong>Superficie terraza (m²)</strong></label><input type="number" step="0.01" wire:model="superficie_terraza" class="form-control"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATOS API FOTOCASA -->
+<div class="row justify-content-center mt-4">
+  <div class="col-12">
+    <div class="card mb-3">
+      <h5 class="card-header">Datos API Fotocasa</h5>
+      <div class="card-body">
+        <!-- TypeId -->
+        <div class="mb-3">
+          <label for="type_id"><strong>Tipo de propiedad</strong></label>
+          <select wire:model="type_id" id="type_id" class="form-control">
+            <option value="">-- Selecciona tipo --</option>
+            <option value="1">Flat</option>
+            <option value="2">House</option>
+            <option value="3">Commercial store</option>
+            <option value="4">Office</option>
+            <option value="5">Building</option>
+            <option value="6">Land</option>
+            <option value="7">Industrial building</option>
+            <option value="8">Garage</option>
+            <option value="12">Storage room</option>
+          </select>
+          @error('type_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- SubTypeId -->
+        <div class="mb-3">
+          <label for="subtype_id"><strong>Subtipo de propiedad</strong></label>
+          <select wire:model="subtype_id" id="subtype_id" class="form-control">
+            <option value="">-- Selecciona subtipo --</option>
+            <optgroup label="Flat">
+              <option value="2">Triplex</option>
+              <option value="3">Duplex</option>
+              <option value="5">Penthouse</option>
+              <option value="6">Studio</option>
+              <option value="7">Loft</option>
+              <option value="9">Flat</option>
+              <option value="10">Apartment</option>
+              <option value="11">Ground floor</option>
+            </optgroup>
+            <optgroup label="House">
+              <option value="13">House</option>
+              <option value="17">Terraced house</option>
+              <option value="19">Paired house</option>
+              <option value="20">Chalet</option>
+              <option value="24">Rustic house</option>
+              <option value="27">Bungalow</option>
+            </optgroup>
+            <!-- Puedes completar más grupos según tu necesidad -->
+          </select>
+          @error('subtype_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- TransactionTypeId -->
+        <div class="mb-3">
+          <label for="tipo_transaccion_id"><strong>Tipo de transacción</strong></label>
+          <select wire:model="tipo_transaccion_id" id="tipo_transaccion_id" class="form-control">
+            <option value="">-- Selecciona transacción --</option>
+            <option value="1">Buy</option>
+            <option value="3">Rent</option>
+            <option value="4">Transfer</option>
+            <option value="7">Share</option>
+            <option value="9">Rent with buy option</option>
+          </select>
+          @error('tipo_transaccion_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- VisibilityMode -->
+        <div class="mb-3">
+          <label for="visibility_mode_id"><strong>Modo de visibilidad</strong></label>
+          <select wire:model="visibility_mode_id" id="visibility_mode_id" class="form-control">
+            <option value="">-- Selecciona modo --</option>
+            <option value="1">Exact</option>
+            <option value="2">Street</option>
+            <option value="3">Zone</option>
+          </select>
+          @error('visibility_mode_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- FloorId -->
+        <div class="mb-3">
+          <label for="floor_id"><strong>Planta/Floor</strong></label>
+          <select wire:model="floor_id" id="floor_id" class="form-control">
+            <option value="">-- Selecciona planta --</option>
+            <option value="1">Basement</option>
+            <option value="3">Ground floor</option>
+            <option value="4">Mezzanine</option>
+            <option value="6">First</option>
+            <!-- Agrega más pisos según el diccionario -->
+          </select>
+          @error('floor_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- Orientation -->
+        <div class="mb-3">
+          <label for="orientacion_id"><strong>Orientación</strong></label>
+          <select wire:model="orientacion_id" id="orientacion_id" class="form-control">
+            <option value="">-- Selecciona orientación --</option>
+            <option value="1">North east</option>
+            <option value="2">West</option>
+            <option value="3">North</option>
+            <option value="4">South west</option>
+            <option value="5">East</option>
+            <option value="6">South east</option>
+            <option value="7">North west</option>
+            <option value="8">South</option>
+          </select>
+          @error('orientacion_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- Conservación estado -->
+        <div class="mb-3">
+          <label for="conservacion_estado_id"><strong>Estado de conservación</strong></label>
+          <select wire:model="conservacion_estado_id" id="conservacion_estado_id" class="form-control">
+            <option value="">-- Selecciona estado --</option>
+            <option value="1">Good</option>
+            <option value="2">Pretty good</option>
+            <option value="3">Almost new</option>
+            <option value="4">Needs renovation</option>
+            <option value="6">Renovated</option>
+          </select>
+          @error('conservacion_estado_id') <span class="text-danger">{{ $message }}</span>@enderror
+        </div>
+
+        <!-- Conservación de más selects según lo necesites... -->
+
+      </div>
+    </div>
+  </div>
+</div>
+
         <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
 
         <script>

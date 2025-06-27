@@ -8,50 +8,34 @@ use App\Models\TipoVivienda;
 use App\Models\User;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
-use Illuminate\Http\Request;
 
 class Create extends Component
 {
     use LivewireAlert;
 
-    public $caracteristicas;
+    // Campos base
+    public $titulo, $descripcion, $m2, $m2_construidos, $valor_referencia, $habitaciones, $banos,
+           $cod_postal, $tipo_vivienda_id, $ubicacion, $cert_energetico, $cert_energetico_elegido,
+           $inmobiliaria = null, $estado, $disponibilidad, $otras_caracteristicasArray = [],
+           $otras_caracteristicas, $referencia_catastral, $galeriaArray = [], $galeria;
 
-    public $titulo;
-    public $descripcion;
-    public $m2;
-    public $m2_construidos;
-    public $valor_referencia;
-    public $habitaciones;
-    public $banos;
-    public $cod_postal;
-    public $tipo_vivienda_id;
-    public $ubicacion;
-    public $cert_energetico;
-    public $cert_energetico_elegido;
-    public $inmobiliaria = null;
-    public $estado;
-    public $disponibilidad;
-    public $otras_caracteristicasArray = [];
+    public $vendedor_id, $vendedor_nombre, $vendedor_dni, $vendedor_ubicacion, $vendedor_telefono, $vendedor_correo;
 
-    public $otras_caracteristicas;
-    public $referencia_catastral;
+    // Selects
+    public $tipos_vivienda, $vendedores, $caracteristicas;
 
-    public $vendedores;
-    public $vendedor_id;
-    public $vendedor_nombre;
-    public $vendedor_dni;
-    public $vendedor_ubicacion;
-    public $vendedor_telefono;
-    public $vendedor_correo;
-    public $tipos_vivienda;
+    // Imagen
     public $ruta_imagenes;
 
-    public $galeriaArray = [];
-    public $galeria;
+    // Datos API Fotocasa
+    public $external_id, $agency_reference, $type_id, $subtype_id, $contact_type_id;
+    public $zip_code, $floor_id, $x, $y, $visibility_mode_id, $street, $number;
+
+    // Arrays JSON
+    public $featuresArray = [], $contact_infoArray = [], $transactionsArray = [], $publicationsArray = [], $documentosArray = [];
+    public $features, $contact_info, $transactions, $publications, $documentos;
 
     protected $listeners = ['fileSelected'];
-
-
 
     public function mount()
     {
@@ -60,7 +44,6 @@ class Create extends Component
         $this->caracteristicas = Caracteristicas::all();
     }
 
-    // Renderizado del Componente
     public function render()
     {
         return view('livewire.inmuebles.create');
@@ -68,62 +51,63 @@ class Create extends Component
 
     public function submit()
     {
-        if ($this->inmobiliaria == null) {
-            if (request()->session()->get('inmobiliaria') == 'sayco') {
-                $this->inmobiliaria = true;
-            } else {
-                $this->inmobiliaria = false;
-            }
-        } else {
-            $this->inmobiliaria = null;
-        }
-
         $this->otras_caracteristicas = json_encode($this->otras_caracteristicasArray);
         $this->galeria = json_encode($this->galeriaArray);
 
-        $validatedData = $this->validate(
-            [
-                'titulo' => 'required',
-                'descripcion' => 'required',
-                'm2' => 'required',
-                'm2_construidos' => 'required',
-                'valor_referencia' => 'required',
-                'habitaciones' => 'required',
-                'banos' => 'required',
-                'tipo_vivienda_id' => 'required',
-                'vendedor_id' => 'required',
-                'ubicacion' => 'required',
-                'cod_postal' => 'required',
-                'cert_energetico' => 'required',
-                'cert_energetico_elegido' => 'nullable',
-                'estado' => 'required',
-                'galeria' => 'nullable',
-                'disponibilidad' => 'required',
-                'otras_caracteristicas' => 'nullable',
-                'referencia_catastral' => 'required',
-                'inmobiliaria' => 'nullable',
-            ],
-            // Mensajes de error
-            [
-                'titulo.required' => 'El título es obligatorio.',
-                'descripcion.required' => 'Se requiere añadir descripción.',
-                'm2.required' => 'Indica los m2 del inmueble.',
-                'm2_construidos.required' => 'Indica los m2 construidos del inmueble.',
-                'valor_referencia.required' => 'Indica el valor de referencia del inmueble.',
-                'habitaciones.required' => 'Indica las habitaciones del inmueble.',
-                'banos.required' => 'Indica los baños del inmueble.',
-                'tipo_vivienda_id.required' => 'Indica el tipo de vivienda del inmueble.',
-                'vendedor_id.required' => 'Indica al vendedor del inmueble.',
-                'ubicacion.required' => 'Indica la ubicación del inmueble.',
-                'cod_postal.required' => 'El código postal es obligatorio.',
-                'cert_energetico.required' => 'Indica si existe un certificado energético o no.',
-            ]
-        );
+        $this->features = json_encode($this->featuresArray);
+        $this->contact_info = json_encode($this->contact_infoArray);
+        $this->transactions = json_encode($this->transactionsArray);
+        $this->publications = json_encode($this->publicationsArray);
+        $this->documentos = json_encode($this->documentosArray);
 
-        // Guardar datos validados
+        if ($this->inmobiliaria == null) {
+            $this->inmobiliaria = request()->session()->get('inmobiliaria') === 'sayco';
+        }
+
+        $validatedData = $this->validate([
+            'titulo' => 'required',
+            'descripcion' => 'required',
+            'm2' => 'required|numeric',
+            'm2_construidos' => 'required|numeric',
+            'valor_referencia' => 'required|numeric',
+            'habitaciones' => 'required|integer',
+            'banos' => 'required|integer',
+            'tipo_vivienda_id' => 'required',
+            'vendedor_id' => 'required',
+            'ubicacion' => 'required',
+            'cod_postal' => 'required',
+            'cert_energetico' => 'required',
+            'cert_energetico_elegido' => 'nullable',
+            'estado' => 'required',
+            'galeria' => 'nullable',
+            'disponibilidad' => 'required',
+            'otras_caracteristicas' => 'nullable',
+            'referencia_catastral' => 'required',
+            'inmobiliaria' => 'nullable',
+
+            // API Fotocasa
+            'external_id' => 'nullable|string',
+            'agency_reference' => 'nullable|string',
+            'type_id' => 'nullable|integer',
+            'subtype_id' => 'nullable|integer',
+            'contact_type_id' => 'nullable|integer',
+            'zip_code' => 'nullable|string',
+            'floor_id' => 'nullable|integer',
+            'x' => 'nullable|numeric',
+            'y' => 'nullable|numeric',
+            'visibility_mode_id' => 'nullable|integer',
+            'street' => 'nullable|string',
+            'number' => 'nullable|string',
+
+            'features' => 'nullable|json',
+            'contact_info' => 'nullable|json',
+            'transactions' => 'nullable|json',
+            'publications' => 'nullable|json',
+            'documentos' => 'nullable|json',
+        ]);
+
         $inmueblesSave = Inmuebles::create($validatedData);
 
-        // Alertas de guardado exitoso
         if ($inmueblesSave) {
             $this->alert('success', '¡Inmueble registrado correctamente!', [
                 'position' => 'center',
@@ -145,9 +129,7 @@ class Create extends Component
 
     public function getListeners()
     {
-        return [
-            'confirmed'
-        ];
+        return ['confirmed'];
     }
 
     public function confirmed()
@@ -157,16 +139,13 @@ class Create extends Component
 
     public function fileSelected($url)
     {
-
         $this->ruta_imagenes = $url;
-
-        // puedes realizar acciones aquí, como almacenar la URL en la base de datos
     }
 
     public function addGaleria()
     {
         if (!in_array($this->ruta_imagenes, $this->galeriaArray)) {
-            $this->galeriaArray[count($this->galeriaArray) + 1] = $this->ruta_imagenes;
+            $this->galeriaArray[] = $this->ruta_imagenes;
             $this->emit('refreshGalleryComponent', $this->galeriaArray);
         }
     }
@@ -178,19 +157,17 @@ class Create extends Component
 
     public function updated()
     {
-        if ($this->vendedor_id == "") {
-            $this->vendedor_nombre = "";
-            $this->vendedor_dni = "";
-            $this->vendedor_ubicacion = "";
-            $this->vendedor_telefono = "";
-            $this->vendedor_correo = "";
+        if (empty($this->vendedor_id)) {
+            $this->vendedor_nombre = $this->vendedor_dni = $this->vendedor_ubicacion = $this->vendedor_telefono = $this->vendedor_correo = '';
         } else {
-            $vendedor = User::where('id', $this->vendedor_id)->first();
-            $this->vendedor_nombre = $vendedor->nombre_completo;
-            $this->vendedor_dni = $vendedor->dni;
-            $this->vendedor_ubicacion  = $vendedor->ubicacion;
-            $this->vendedor_telefono = $vendedor->telefono;
-            $this->vendedor_correo = $vendedor->email;
+            $vendedor = User::find($this->vendedor_id);
+            if ($vendedor) {
+                $this->vendedor_nombre = $vendedor->nombre_completo;
+                $this->vendedor_dni = $vendedor->dni;
+                $this->vendedor_ubicacion  = $vendedor->ubicacion;
+                $this->vendedor_telefono = $vendedor->telefono;
+                $this->vendedor_correo = $vendedor->email;
+            }
         }
     }
 }
