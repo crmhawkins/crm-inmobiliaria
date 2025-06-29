@@ -318,6 +318,66 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Nuevos campos para Fotocasa -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label><strong>Escala de consumo energético</strong></label>
+                                <select name="consumption_efficiency_scale" class="form-control">
+                                    <option value="">-- Elige --</option>
+                                    <option value="A" {{ old('consumption_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
+                                    <option value="B" {{ old('consumption_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
+                                    <option value="C" {{ old('consumption_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
+                                    <option value="D" {{ old('consumption_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
+                                    <option value="E" {{ old('consumption_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
+                                    <option value="F" {{ old('consumption_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
+                                    <option value="G" {{ old('consumption_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
+                                </select>
+                                @error('consumption_efficiency_scale')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label><strong>Escala de emisiones CO₂</strong></label>
+                                <select name="emissions_efficiency_scale" class="form-control">
+                                    <option value="">-- Elige --</option>
+                                    <option value="A" {{ old('emissions_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
+                                    <option value="B" {{ old('emissions_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
+                                    <option value="C" {{ old('emissions_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
+                                    <option value="D" {{ old('emissions_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
+                                    <option value="E" {{ old('emissions_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
+                                    <option value="F" {{ old('emissions_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
+                                    <option value="G" {{ old('emissions_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
+                                </select>
+                                @error('emissions_efficiency_scale')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label><strong>Valor de consumo (kWh/m²)</strong></label>
+                                <input type="number" name="consumption_efficiency_value" value="{{ old('consumption_efficiency_value') }}"
+                                       class="form-control" min="0" step="0.1">
+                                @error('consumption_efficiency_value')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label><strong>Valor de emisiones (kg CO₂/m²)</strong></label>
+                                <input type="number" name="emissions_efficiency_value" value="{{ old('emissions_efficiency_value') }}"
+                                       class="form-control" min="0" step="0.1">
+                                @error('emissions_efficiency_value')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
