@@ -539,6 +539,427 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_private_garden" value="1"
+                                    {{ old('has_private_garden') ? 'checked' : '' }}>
+                                <label class="form-check-label">Jardín privado</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_yard" value="1"
+                                    {{ old('has_yard') ? 'checked' : '' }}>
+                                <label class="form-check-label">Patio</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_smoke_outlet" value="1"
+                                    {{ old('has_smoke_outlet') ? 'checked' : '' }}>
+                                <label class="form-check-label">Salida de humos</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_community_pool" value="1"
+                                    {{ old('has_community_pool') ? 'checked' : '' }}>
+                                <label class="form-check-label">Piscina comunitaria</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_private_pool" value="1"
+                                    {{ old('has_private_pool') ? 'checked' : '' }}>
+                                <label class="form-check-label">Piscina privada</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_loading_area" value="1"
+                                    {{ old('has_loading_area') ? 'checked' : '' }}>
+                                <label class="form-check-label">Zona de carga</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_24h_access" value="1"
+                                    {{ old('has_24h_access') ? 'checked' : '' }}>
+                                <label class="form-check-label">Acceso 24h</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_internal_transport"
+                                    value="1" {{ old('has_internal_transport') ? 'checked' : '' }}>
+                                <label class="form-check-label">Transporte interno</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_alarm" value="1"
+                                    {{ old('has_alarm') ? 'checked' : '' }}>
+                                <label class="form-check-label">Alarma</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_access_code" value="1"
+                                    {{ old('has_access_code') ? 'checked' : '' }}>
+                                <label class="form-check-label">Código de acceso</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_free_parking" value="1"
+                                    {{ old('has_free_parking') ? 'checked' : '' }}>
+                                <label class="form-check-label">Parking gratuito</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_laundry" value="1"
+                                    {{ old('has_laundry') ? 'checked' : '' }}>
+                                <label class="form-check-label">Lavandería</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_community_area" value="1"
+                                    {{ old('has_community_area') ? 'checked' : '' }}>
+                                <label class="form-check-label">Zona comunitaria</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_office_kitchen" value="1"
+                                    {{ old('has_office_kitchen') ? 'checked' : '' }}>
+                                <label class="form-check-label">Cocina de oficina</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_jacuzzi" value="1"
+                                    {{ old('has_jacuzzi') ? 'checked' : '' }}>
+                                <label class="form-check-label">Jacuzzi</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_sauna" value="1"
+                                    {{ old('has_sauna') ? 'checked' : '' }}>
+                                <label class="form-check-label">Sauna</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_tennis_court" value="1"
+                                    {{ old('has_tennis_court') ? 'checked' : '' }}>
+                                <label class="form-check-label">Pista de tenis</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_gym" value="1"
+                                    {{ old('has_gym') ? 'checked' : '' }}>
+                                <label class="form-check-label">Gimnasio</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_sports_area" value="1"
+                                    {{ old('has_sports_area') ? 'checked' : '' }}>
+                                <label class="form-check-label">Zona deportiva</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_children_area" value="1"
+                                    {{ old('has_children_area') ? 'checked' : '' }}>
+                                <label class="form-check-label">Zona infantil</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_home_automation"
+                                    value="1" {{ old('has_home_automation') ? 'checked' : '' }}>
+                                <label class="form-check-label">Domótica</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_internet" value="1"
+                                    {{ old('has_internet') ? 'checked' : '' }}>
+                                <label class="form-check-label">Internet</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_suite_bathroom" value="1"
+                                    {{ old('has_suite_bathroom') ? 'checked' : '' }}>
+                                <label class="form-check-label">Baño suite</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_home_appliances"
+                                    value="1" {{ old('has_home_appliances') ? 'checked' : '' }}>
+                                <label class="form-check-label">Electrodomésticos</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_oven" value="1"
+                                    {{ old('has_oven') ? 'checked' : '' }}>
+                                <label class="form-check-label">Horno</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_washing_machine"
+                                    value="1" {{ old('has_washing_machine') ? 'checked' : '' }}>
+                                <label class="form-check-label">Lavadora</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_microwave" value="1"
+                                    {{ old('has_microwave') ? 'checked' : '' }}>
+                                <label class="form-check-label">Microondas</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_fridge" value="1"
+                                    {{ old('has_fridge') ? 'checked' : '' }}>
+                                <label class="form-check-label">Frigorífico</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_tv" value="1"
+                                    {{ old('has_tv') ? 'checked' : '' }}>
+                                <label class="form-check-label">TV</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_parquet" value="1"
+                                    {{ old('has_parquet') ? 'checked' : '' }}>
+                                <label class="form-check-label">Parquet</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="has_stoneware" value="1"
+                                    {{ old('has_stoneware') ? 'checked' : '' }}>
+                                <label class="form-check-label">Gres</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="nearby_public_transport"
+                                    value="1" {{ old('nearby_public_transport') ? 'checked' : '' }}>
+                                <label class="form-check-label">Transporte público cercano</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Superficie de terraza -->
+                    <div class="row" id="terrace-surface-row" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label><strong>Superficie de terraza (m²)</strong></label>
+                                <input type="number" name="terrace_surface" value="{{ old('terrace_surface') }}"
+                                    class="form-control" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Superficie del terreno -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label><strong>Superficie del terreno (m²)</strong></label>
+                                <input type="number" name="land_area" value="{{ old('land_area') }}"
+                                    class="form-control" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración de Fotocasa -->
+            <div class="card mb-3">
+                <h5 class="card-header">Configuración para Fotocasa</h5>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Tipo de transacción</strong></label>
+                                <select name="transaction_type_id" class="form-control">
+                                    <option value="1" {{ old('transaction_type_id') == '1' ? 'selected' : '' }}>
+                                        Venta</option>
+                                    <option value="3" {{ old('transaction_type_id') == '3' ? 'selected' : '' }}>
+                                        Alquiler</option>
+                                    <option value="4" {{ old('transaction_type_id') == '4' ? 'selected' : '' }}>
+                                        Traspaso</option>
+                                    <option value="7" {{ old('transaction_type_id') == '7' ? 'selected' : '' }}>
+                                        Compartir</option>
+                                    <option value="9" {{ old('transaction_type_id') == '9' ? 'selected' : '' }}>
+                                        Alquiler con opción de compra</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Modo de visibilidad</strong></label>
+                                <select name="visibility_mode_id" class="form-control">
+                                    <option value="1" {{ old('visibility_mode_id') == '1' ? 'selected' : '' }}>
+                                        Exacta</option>
+                                    <option value="2" {{ old('visibility_mode_id') == '2' ? 'selected' : '' }}>Calle
+                                    </option>
+                                    <option value="3" {{ old('visibility_mode_id') == '3' ? 'selected' : '' }}>Zona
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Planta</strong></label>
+                                <select name="floor_id" class="form-control">
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="1" {{ old('floor_id') == '1' ? 'selected' : '' }}>Sótano</option>
+                                    <option value="3" {{ old('floor_id') == '3' ? 'selected' : '' }}>Planta baja
+                                    </option>
+                                    <option value="4" {{ old('floor_id') == '4' ? 'selected' : '' }}>Entresuelo
+                                    </option>
+                                    <option value="6" {{ old('floor_id') == '6' ? 'selected' : '' }}>Primera
+                                    </option>
+                                    <option value="7" {{ old('floor_id') == '7' ? 'selected' : '' }}>Segunda
+                                    </option>
+                                    <option value="8" {{ old('floor_id') == '8' ? 'selected' : '' }}>Tercera
+                                    </option>
+                                    <option value="9" {{ old('floor_id') == '9' ? 'selected' : '' }}>Cuarta</option>
+                                    <option value="10" {{ old('floor_id') == '10' ? 'selected' : '' }}>Quinta
+                                    </option>
+                                    <option value="11" {{ old('floor_id') == '11' ? 'selected' : '' }}>Sexta</option>
+                                    <option value="12" {{ old('floor_id') == '12' ? 'selected' : '' }}>Séptima
+                                    </option>
+                                    <option value="13" {{ old('floor_id') == '13' ? 'selected' : '' }}>Octava
+                                    </option>
+                                    <option value="14" {{ old('floor_id') == '14' ? 'selected' : '' }}>Novena
+                                    </option>
+                                    <option value="15" {{ old('floor_id') == '15' ? 'selected' : '' }}>Décima
+                                    </option>
+                                    <option value="16" {{ old('floor_id') == '16' ? 'selected' : '' }}>Décima en
+                                        adelante</option>
+                                    <option value="22" {{ old('floor_id') == '22' ? 'selected' : '' }}>Ático</option>
+                                    <option value="31" {{ old('floor_id') == '31' ? 'selected' : '' }}>Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Orientación</strong></label>
+                                <select name="orientation_id" class="form-control">
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="1" {{ old('orientation_id') == '1' ? 'selected' : '' }}>Noreste
+                                    </option>
+                                    <option value="2" {{ old('orientation_id') == '2' ? 'selected' : '' }}>Oeste
+                                    </option>
+                                    <option value="3" {{ old('orientation_id') == '3' ? 'selected' : '' }}>Norte
+                                    </option>
+                                    <option value="4" {{ old('orientation_id') == '4' ? 'selected' : '' }}>Suroeste
+                                    </option>
+                                    <option value="5" {{ old('orientation_id') == '5' ? 'selected' : '' }}>Este
+                                    </option>
+                                    <option value="6" {{ old('orientation_id') == '6' ? 'selected' : '' }}>Sureste
+                                    </option>
+                                    <option value="7" {{ old('orientation_id') == '7' ? 'selected' : '' }}>Noroeste
+                                    </option>
+                                    <option value="8" {{ old('orientation_id') == '8' ? 'selected' : '' }}>Sur
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Tipo de calefacción</strong></label>
+                                <select name="heating_type_id" class="form-control">
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="1" {{ old('heating_type_id') == '1' ? 'selected' : '' }}>Gas
+                                        natural</option>
+                                    <option value="2" {{ old('heating_type_id') == '2' ? 'selected' : '' }}>
+                                        Eléctrica</option>
+                                    <option value="3" {{ old('heating_type_id') == '3' ? 'selected' : '' }}>Gasóleo
+                                    </option>
+                                    <option value="4" {{ old('heating_type_id') == '4' ? 'selected' : '' }}>Butano
+                                    </option>
+                                    <option value="5" {{ old('heating_type_id') == '5' ? 'selected' : '' }}>Propano
+                                    </option>
+                                    <option value="6" {{ old('heating_type_id') == '6' ? 'selected' : '' }}>Solar
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label><strong>Tipo de agua caliente</strong></label>
+                                <select name="hot_water_type_id" class="form-control">
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="1" {{ old('hot_water_type_id') == '1' ? 'selected' : '' }}>Gas
+                                        natural</option>
+                                    <option value="2" {{ old('hot_water_type_id') == '2' ? 'selected' : '' }}>
+                                        Eléctrica</option>
+                                    <option value="3" {{ old('hot_water_type_id') == '3' ? 'selected' : '' }}>
+                                        Gasóleo</option>
+                                    <option value="4" {{ old('hot_water_type_id') == '4' ? 'selected' : '' }}>Butano
+                                    </option>
+                                    <option value="5" {{ old('hot_water_type_id') == '5' ? 'selected' : '' }}>
+                                        Propano</option>
+                                    <option value="6" {{ old('hot_water_type_id') == '6' ? 'selected' : '' }}>Solar
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="mostrar_precio" value="1"
+                                    {{ old('mostrar_precio') ? 'checked' : '' }}>
+                                <label class="form-check-label">Mostrar precio en publicaciones</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -967,6 +1388,24 @@
                 marker.setPosition(position);
                 updateCoordinates(position.lat, position.lng);
             }
+
+            // Mostrar/ocultar campo de superficie de terraza
+            const terraceCheckbox = document.querySelector('input[name="has_terrace"]');
+            const terraceSurfaceRow = document.getElementById('terrace-surface-row');
+
+            function toggleTerraceSurface() {
+                if (terraceCheckbox.checked) {
+                    terraceSurfaceRow.style.display = 'block';
+                } else {
+                    terraceSurfaceRow.style.display = 'none';
+                }
+            }
+
+            // Ejecutar al cargar la página
+            toggleTerraceSurface();
+
+            // Ejecutar cuando cambie el checkbox
+            terraceCheckbox.addEventListener('change', toggleTerraceSurface);
         });
     </script>
 @endsection

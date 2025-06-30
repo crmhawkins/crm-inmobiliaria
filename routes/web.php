@@ -109,3 +109,6 @@ Route::get('storage/photos/{folder}/{filename}', function ($folder, $filename) {
         ->header('Content-Type', $type)
         ->header('Cache-Control', 'public, max-age=31536000');
 })->where('filename', '.*');
+
+// Rutas públicas para inmuebles
+Route::get('inmueble/{inmueble}', [InmueblesController::class, 'publicShow'])->name('inmueble.public.show');

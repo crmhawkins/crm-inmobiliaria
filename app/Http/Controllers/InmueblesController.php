@@ -86,6 +86,18 @@ class InmueblesController extends Controller
 
         return view('inmuebles.show', compact('inmueble', 'caracteristicas'));
     }
+
+    public function publicShow($id)
+    {
+        $inmueble = Inmuebles::with(['tipoVivienda', 'vendedor'])->findOrFail($id);
+
+        // Decodificar otras_caracteristicas de forma segura
+        $caracteristicas_ids = json_decode($inmueble->otras_caracteristicas ?? '[]', true) ?? [];
+        $caracteristicas = Caracteristicas::whereIn('id', $caracteristicas_ids)->get();
+
+        return view('inmuebles.public-show', compact('inmueble', 'caracteristicas'));
+    }
+
     public function create()
     {
         $tipos_vivienda = TipoVivienda::all();
@@ -125,6 +137,10 @@ class InmueblesController extends Controller
             // Campos Fotocasa
             'transaction_type_id' => 'nullable|integer|min:1',
             'visibility_mode_id' => 'nullable|integer|in:1,2,3',
+            'floor_id' => 'nullable|integer|in:1,3,4,6,7,8,9,10,11,12,13,14,15,16,22,31',
+            'orientation_id' => 'nullable|integer|in:1,2,3,4,5,6,7,8',
+            'heating_type_id' => 'nullable|integer|in:1,2,3,4,5,6',
+            'hot_water_type_id' => 'nullable|integer|in:1,2,3,4,5,6',
             // Campos de eficiencia energética
             'consumption_efficiency_scale' => 'nullable|string|in:A,B,C,D,E,F,G',
             'emissions_efficiency_scale' => 'nullable|string|in:A,B,C,D,E,F,G',
@@ -143,6 +159,42 @@ class InmueblesController extends Controller
             'has_wardrobe' => 'nullable|boolean',
             'has_storage_room' => 'nullable|boolean',
             'pets_allowed' => 'nullable|boolean',
+            // Campos adicionales
+            'terrace_surface' => 'nullable|numeric|min:0',
+            'has_private_garden' => 'nullable|boolean',
+            'has_yard' => 'nullable|boolean',
+            'has_smoke_outlet' => 'nullable|boolean',
+            'has_community_pool' => 'nullable|boolean',
+            'has_private_pool' => 'nullable|boolean',
+            'has_loading_area' => 'nullable|boolean',
+            'has_24h_access' => 'nullable|boolean',
+            'has_internal_transport' => 'nullable|boolean',
+            'has_alarm' => 'nullable|boolean',
+            'has_access_code' => 'nullable|boolean',
+            'has_free_parking' => 'nullable|boolean',
+            'has_laundry' => 'nullable|boolean',
+            'has_community_area' => 'nullable|boolean',
+            'has_office_kitchen' => 'nullable|boolean',
+            'has_jacuzzi' => 'nullable|boolean',
+            'has_sauna' => 'nullable|boolean',
+            'has_tennis_court' => 'nullable|boolean',
+            'has_gym' => 'nullable|boolean',
+            'has_sports_area' => 'nullable|boolean',
+            'has_children_area' => 'nullable|boolean',
+            'has_home_automation' => 'nullable|boolean',
+            'has_internet' => 'nullable|boolean',
+            'has_suite_bathroom' => 'nullable|boolean',
+            'has_home_appliances' => 'nullable|boolean',
+            'has_oven' => 'nullable|boolean',
+            'has_washing_machine' => 'nullable|boolean',
+            'has_microwave' => 'nullable|boolean',
+            'has_fridge' => 'nullable|boolean',
+            'has_tv' => 'nullable|boolean',
+            'has_parquet' => 'nullable|boolean',
+            'has_stoneware' => 'nullable|boolean',
+            'nearby_public_transport' => 'nullable|boolean',
+            'land_area' => 'nullable|numeric|min:0',
+            'mostrar_precio' => 'nullable|boolean',
         ]);
 
         // Procesar la imagen principal si se subió
@@ -189,6 +241,10 @@ class InmueblesController extends Controller
             'building_subtype_id' => $request->building_subtype_id, // Requerido del formulario
             'transaction_type_id' => $request->transaction_type_id ?? 1, // Venta por defecto
             'visibility_mode_id' => $request->visibility_mode_id ?? 1, // Público por defecto
+            'floor_id' => $request->floor_id,
+            'orientation_id' => $request->orientation_id,
+            'heating_type_id' => $request->heating_type_id,
+            'hot_water_type_id' => $request->hot_water_type_id,
             // Campos booleanos
             'furnished' => $request->boolean('furnished'),
             'has_elevator' => $request->boolean('has_elevator'),
@@ -202,16 +258,52 @@ class InmueblesController extends Controller
             'has_wardrobe' => $request->boolean('has_wardrobe'),
             'has_storage_room' => $request->boolean('has_storage_room'),
             'pets_allowed' => $request->boolean('pets_allowed'),
+            // Campos adicionales
+            'terrace_surface' => $request->terrace_surface,
+            'has_private_garden' => $request->boolean('has_private_garden'),
+            'has_yard' => $request->boolean('has_yard'),
+            'has_smoke_outlet' => $request->boolean('has_smoke_outlet'),
+            'has_community_pool' => $request->boolean('has_community_pool'),
+            'has_private_pool' => $request->boolean('has_private_pool'),
+            'has_loading_area' => $request->boolean('has_loading_area'),
+            'has_24h_access' => $request->boolean('has_24h_access'),
+            'has_internal_transport' => $request->boolean('has_internal_transport'),
+            'has_alarm' => $request->boolean('has_alarm'),
+            'has_access_code' => $request->boolean('has_access_code'),
+            'has_free_parking' => $request->boolean('has_free_parking'),
+            'has_laundry' => $request->boolean('has_laundry'),
+            'has_community_area' => $request->boolean('has_community_area'),
+            'has_office_kitchen' => $request->boolean('has_office_kitchen'),
+            'has_jacuzzi' => $request->boolean('has_jacuzzi'),
+            'has_sauna' => $request->boolean('has_sauna'),
+            'has_tennis_court' => $request->boolean('has_tennis_court'),
+            'has_gym' => $request->boolean('has_gym'),
+            'has_sports_area' => $request->boolean('has_sports_area'),
+            'has_children_area' => $request->boolean('has_children_area'),
+            'has_home_automation' => $request->boolean('has_home_automation'),
+            'has_internet' => $request->boolean('has_internet'),
+            'has_suite_bathroom' => $request->boolean('has_suite_bathroom'),
+            'has_home_appliances' => $request->boolean('has_home_appliances'),
+            'has_oven' => $request->boolean('has_oven'),
+            'has_washing_machine' => $request->boolean('has_washing_machine'),
+            'has_microwave' => $request->boolean('has_microwave'),
+            'has_fridge' => $request->boolean('has_fridge'),
+            'has_tv' => $request->boolean('has_tv'),
+            'has_parquet' => $request->boolean('has_parquet'),
+            'has_stoneware' => $request->boolean('has_stoneware'),
+            'nearby_public_transport' => $request->boolean('nearby_public_transport'),
+            'land_area' => $request->land_area,
             // Campos de eficiencia energética
             'consumption_efficiency_scale' => $this->getEnergyScaleValue($request->consumption_efficiency_scale),
             'emissions_efficiency_scale' => $this->getEnergyScaleValue($request->emissions_efficiency_scale),
             'consumption_efficiency_value' => $request->consumption_efficiency_value,
             'emissions_efficiency_value' => $request->emissions_efficiency_value,
+            'mostrar_precio' => $request->boolean('mostrar_precio'),
         ]);
 
         // Enviar a Fotocasa
         $fotocasaResponse = $this->sendToFotocasa($inmueble);
-        dd($fotocasaResponse);
+
         // Si hay error en Fotocasa, logearlo pero continuar
         if (!$fotocasaResponse->getData()->success ?? false) {
             Log::warning('Error sending to Fotocasa', [
@@ -402,6 +494,171 @@ class InmueblesController extends Controller
                 [
                     "FeatureId" => 313, // Pets allowed
                     "BoolValue" => $safeBool($inmueble->pets_allowed)
+                ],
+                // Nuevos campos adicionales
+                [
+                    "FeatureId" => 27, // Terrace
+                    "BoolValue" => $safeBool($inmueble->has_terrace)
+                ],
+                [
+                    "FeatureId" => 62, // Terrace surface
+                    "DecimalValue" => $safeFloat($inmueble->terrace_surface ?? 0)
+                ],
+                [
+                    "FeatureId" => 298, // Private garden
+                    "BoolValue" => $safeBool($inmueble->has_private_garden)
+                ],
+                [
+                    "FeatureId" => 263, // Yard
+                    "BoolValue" => $safeBool($inmueble->has_yard)
+                ],
+                [
+                    "FeatureId" => 311, // Smoke outlet
+                    "BoolValue" => $safeBool($inmueble->has_smoke_outlet)
+                ],
+                [
+                    "FeatureId" => 300, // Community pool
+                    "BoolValue" => $safeBool($inmueble->has_community_pool)
+                ],
+                [
+                    "FeatureId" => 25, // Private pool
+                    "BoolValue" => $safeBool($inmueble->has_private_pool)
+                ],
+                [
+                    "FeatureId" => 204, // Loading area
+                    "BoolValue" => $safeBool($inmueble->has_loading_area)
+                ],
+                [
+                    "FeatureId" => 207, // 24h access
+                    "BoolValue" => $safeBool($inmueble->has_24h_access)
+                ],
+                [
+                    "FeatureId" => 208, // Internal transport
+                    "BoolValue" => $safeBool($inmueble->has_internal_transport)
+                ],
+                [
+                    "FeatureId" => 235, // Alarm
+                    "BoolValue" => $safeBool($inmueble->has_alarm)
+                ],
+                [
+                    "FeatureId" => 131, // Access code
+                    "BoolValue" => $safeBool($inmueble->has_access_code)
+                ],
+                [
+                    "FeatureId" => 206, // Free parking
+                    "BoolValue" => $safeBool($inmueble->has_free_parking)
+                ],
+                [
+                    "FeatureId" => 257, // Laundry
+                    "BoolValue" => $safeBool($inmueble->has_laundry)
+                ],
+                [
+                    "FeatureId" => 301, // Community area
+                    "BoolValue" => $safeBool($inmueble->has_community_area)
+                ],
+                [
+                    "FeatureId" => 289, // Office kitchen
+                    "BoolValue" => $safeBool($inmueble->has_office_kitchen)
+                ],
+                [
+                    "FeatureId" => 274, // Jacuzzi
+                    "BoolValue" => $safeBool($inmueble->has_jacuzzi)
+                ],
+                [
+                    "FeatureId" => 277, // Sauna
+                    "BoolValue" => $safeBool($inmueble->has_sauna)
+                ],
+                [
+                    "FeatureId" => 310, // Tennis court
+                    "BoolValue" => $safeBool($inmueble->has_tennis_court)
+                ],
+                [
+                    "FeatureId" => 309, // Gym
+                    "BoolValue" => $safeBool($inmueble->has_gym)
+                ],
+                [
+                    "FeatureId" => 302, // Sports area
+                    "BoolValue" => $safeBool($inmueble->has_sports_area)
+                ],
+                [
+                    "FeatureId" => 303, // Children area
+                    "BoolValue" => $safeBool($inmueble->has_children_area)
+                ],
+                [
+                    "FeatureId" => 142, // Home automation
+                    "BoolValue" => $safeBool($inmueble->has_home_automation)
+                ],
+                [
+                    "FeatureId" => 286, // Internet
+                    "BoolValue" => $safeBool($inmueble->has_internet)
+                ],
+                [
+                    "FeatureId" => 260, // Suite bathroom
+                    "BoolValue" => $safeBool($inmueble->has_suite_bathroom)
+                ],
+                [
+                    "FeatureId" => 259, // Home appliances
+                    "BoolValue" => $safeBool($inmueble->has_home_appliances)
+                ],
+                [
+                    "FeatureId" => 288, // Oven
+                    "BoolValue" => $safeBool($inmueble->has_oven)
+                ],
+                [
+                    "FeatureId" => 293, // Washing machine
+                    "BoolValue" => $safeBool($inmueble->has_washing_machine)
+                ],
+                [
+                    "FeatureId" => 287, // Microwave
+                    "BoolValue" => $safeBool($inmueble->has_microwave)
+                ],
+                [
+                    "FeatureId" => 292, // Fridge
+                    "BoolValue" => $safeBool($inmueble->has_fridge)
+                ],
+                [
+                    "FeatureId" => 291, // TV
+                    "BoolValue" => $safeBool($inmueble->has_tv)
+                ],
+                [
+                    "FeatureId" => 290, // Parquet
+                    "BoolValue" => $safeBool($inmueble->has_parquet)
+                ],
+                [
+                    "FeatureId" => 295, // Stoneware
+                    "BoolValue" => $safeBool($inmueble->has_stoneware)
+                ],
+                [
+                    "FeatureId" => 176, // Nearby public transport
+                    "BoolValue" => $safeBool($inmueble->nearby_public_transport)
+                ],
+                [
+                    "FeatureId" => 69, // Land area
+                    "DecimalValue" => $safeFloat($inmueble->land_area ?? 0)
+                ],
+                // Orientación
+                [
+                    "FeatureId" => 28, // Orientation
+                    "DecimalValue" => $safeFloat($inmueble->orientation_id ?? 0)
+                ],
+                // Calefacción
+                [
+                    "FeatureId" => 29, // Has heating
+                    "BoolValue" => $safeBool($inmueble->has_heating)
+                ],
+                [
+                    "FeatureId" => 320, // Heating type
+                    "DecimalValue" => $safeFloat($inmueble->heating_type_id ?? 0)
+                ],
+                // Agua caliente
+                [
+                    "FeatureId" => 321, // Hot water type
+                    "DecimalValue" => $safeFloat($inmueble->hot_water_type_id ?? 0)
+                ],
+                // Estado de conservación
+                [
+                    "FeatureId" => 249, // Conservation status
+                    "DecimalValue" => $this->getConservationStatusValue($inmueble->conservation_status)
                 ]
             ], $this->getEnergyFeatures($inmueble)),
 
@@ -562,6 +819,27 @@ class InmueblesController extends Controller
         return 0; // Valor inválido
     }
 
+    public function getConservationStatusValue($status)
+    {
+        // Convertir estado de conservación según la documentación de Fotocasa
+        $statusMap = [
+            'excelente' => 1,      // Excelente
+            'muy bueno' => 2,      // Muy bueno
+            'bueno' => 3,          // Bueno
+            'regular' => 4,        // Regular
+            'necesita reforma' => 6, // Necesita reforma
+            'renovado' => 6,       // Renovado
+            // Valores en inglés
+            'good' => 1,
+            'pretty good' => 2,
+            'almost new' => 3,
+            'needs renovation' => 4,
+            'renovated' => 6
+        ];
+
+        return $statusMap[strtolower($status)] ?? 1; // Por defecto bueno
+    }
+
     public function getPropertyDocuments(Inmuebles $inmueble)
     {
         $documents = [];
@@ -576,17 +854,38 @@ class InmueblesController extends Controller
                 foreach ($galeria as $key => $imageUrl) {
                     // Si la URL es relativa, convertirla a absoluta
                     if (!filter_var($imageUrl, FILTER_VALIDATE_URL) && strpos($imageUrl, 'http') !== 0) {
-                        $imageUrl = url($imageUrl);
+                        // Si es una ruta de storage, convertirla a URL pública
+                        if (strpos($imageUrl, 'storage/') === 0) {
+                            $imageUrl = url($imageUrl);
+                        } else {
+                            $imageUrl = url($imageUrl);
+                        }
                     }
 
-                    // Verificar que la URL sea válida
+                    // Verificar que la URL sea válida y accesible
                     if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
-                        $documents[] = [
-                            "TypeId" => 1, // Image
-                            "Url" => $imageUrl,
-                            "SortingId" => $sortingId
-                        ];
-                        $sortingId++;
+                        // Verificar que la imagen sea accesible públicamente
+                        try {
+                            $response = Http::timeout(5)->head($imageUrl);
+                            if ($response->successful()) {
+                                $documents[] = [
+                                    "TypeId" => 1, // Image
+                                    "Url" => $imageUrl,
+                                    "SortingId" => $sortingId
+                                ];
+                                $sortingId++;
+                            } else {
+                                Log::warning('Image not accessible', [
+                                    'url' => $imageUrl,
+                                    'status' => $response->status()
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Error checking image accessibility', [
+                                'url' => $imageUrl,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
                     }
                 }
             }

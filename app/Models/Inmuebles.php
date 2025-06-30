@@ -100,6 +100,7 @@ class Inmuebles extends Model
         'land_area',
         'latitude',
         'longitude',
+        'mostrar_precio',
     ];
 
     public function tipoVivienda()
