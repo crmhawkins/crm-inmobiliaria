@@ -167,7 +167,6 @@ class InmueblesController extends Controller
             'valor_referencia' => $request->valor_referencia,
             'habitaciones' => $request->habitaciones,
             'banos' => $request->banos,
-            'tipo_vivienda_id' => $request->tipo_vivienda_id,
             'ubicacion' => $request->ubicacion,
             'cod_postal' => $request->cod_postal,
             'referencia_catastral' => $request->referencia_catastral,
@@ -182,7 +181,8 @@ class InmueblesController extends Controller
             'otras_caracteristicas' => json_encode($request->otras_caracteristicas ?? []),
             'inmobiliaria' => session('inmobiliaria') === 'sayco' ? 1 : 0,
             // Campos requeridos para Fotocasa con valores por defecto
-            'building_subtype_id' => $request->building_subtype_id ?? 2, // Piso por defecto
+            'tipo_vivienda_id' => $request->tipo_vivienda_id ?? 1, // Flat por defecto
+            'building_subtype_id' => $request->building_subtype_id ?? 9, // Flat (subtype 9) por defecto
             'transaction_type_id' => $request->transaction_type_id ?? 1, // Venta por defecto
             'visibility_mode_id' => $request->visibility_mode_id ?? 1, // Público por defecto
             // Campos booleanos
@@ -205,26 +205,57 @@ class InmueblesController extends Controller
             'emissions_efficiency_value' => $request->emissions_efficiency_value,
         ]);
 
-        dd($this->sendToFotocasa($inmueble));
+        // Enviar a Fotocasa
+        $fotocasaResponse = $this->sendToFotocasa($inmueble);
+
+        // Si hay error en Fotocasa, logearlo pero continuar
+        if (!$fotocasaResponse->getData()->success ?? false) {
+            Log::warning('Error sending to Fotocasa', [
+                'inmueble_id' => $inmueble->id,
+                'response' => $fotocasaResponse->getData()
+            ]);
+        }
 
         return redirect()->route('inmuebles.index')->with('success', 'Inmueble creado correctamente.');
     }
 
     public function sendToFotocasa(Inmuebles $inmueble)
     {
-        // Diccionarios completos
+        // Función para mapear tipo_vivienda_id local a Fotocasa TypeId
+        $mapToFotocasaType = function($localTipoId) {
+            // Mapeo de tipos locales a Fotocasa
+            // Esto debería basarse en los nombres de los tipos en tu base de datos
+            $mapping = [
+                1 => 1, // Piso -> Flat
+                2 => 2, // Casa -> House
+                3 => 3, // Local -> Commercial store
+                4 => 4, // Oficina -> Office
+                5 => 5, // Edificio -> Building
+                6 => 6, // Terreno -> Land
+                7 => 7, // Nave -> Industrial building
+                8 => 8, // Garaje -> Garage
+                9 => 12, // Trastero -> Storage room
+            ];
+
+            return $mapping[$localTipoId] ?? 1; // Por defecto Flat
+        };
+
+        // Obtener el TypeId de Fotocasa
+        $fotocasaTypeId = $mapToFotocasaType($inmueble->tipo_vivienda_id);
+
+        // Diccionarios completos según la documentación de la API de Fotocasa
         $buildingTypes = [1,2,3,4,5,6,7,8,12];
 
         $buildingSubtypes = [
-            1 => [2,3,5,6,7,9,10,11],       // Pisos, áticos, dúplex, bajos, etc.
-            2 => [13,17,19,20,24,27],       // Viviendas unifamiliares
-            3 => [28,29,30,31,32,33],       // Chalets y adosados
-            4 => [34,35,36],                // Estudios, lofts
-            5 => [48,49,50,51,72],          // Locales comerciales
-            6 => [56,60,91],                // Oficinas
-            7 => [62,63],                   // Garajes y trasteros
-            8 => [68,69,70],                // Naves industriales
-            12 => [90],                     // Suelos
+            1 => [2,3,5,6,7,9,10,11],       // Flat: Triplex, Duplex, Penthouse, Studio, Loft, Flat, Apartment, Ground floor
+            2 => [13,17,19,20,24,27],       // House: House, Terraced house, Paired house, Chalet, Rustic house, Bungalow
+            3 => [48,49,50,51,72],          // Commercial store: Residential, Others, Mixed residential, Offices, Hotel
+            4 => [56,60,91],                // Office: Residential land, Industrial land, Rustic land
+            5 => [48,49,50,51,72],          // Building: Residential, Others, Mixed residential, Offices, Hotel
+            6 => [56,60,91],                // Land: Residential land, Industrial land, Rustic land
+            7 => [62,63],                   // Industrial building: Moto, Double, Individual
+            8 => [68,69,70],                // Garage: Moto, Double, Individual
+            12 => [90],                     // Storage room: Suelos
         ];
 
         $transactionTypes = [1,3,4,7,9];
@@ -236,14 +267,9 @@ class InmueblesController extends Controller
         $rules = [
             'id' => ['required'],
             'inmobiliaria' => ['nullable'],
-            'tipo_vivienda_id' => ['required','integer', function($attr, $val, $fail) use ($buildingTypes) {
-                if (!in_array($val, $buildingTypes)) {
-                    $fail("El campo $attr debe ser un tipo válido.");
-                }
-            }],
-            'building_subtype_id' => ['required','integer', function($attr, $val, $fail) use ($buildingSubtypes, $inmueble) {
-                $typeId = $inmueble->tipo_vivienda_id;
-                if (!$typeId || !isset($buildingSubtypes[$typeId]) || !in_array($val, $buildingSubtypes[$typeId])) {
+            'tipo_vivienda_id' => ['required','integer'],
+            'building_subtype_id' => ['required','integer', function($attr, $val, $fail) use ($buildingSubtypes, $fotocasaTypeId) {
+                if (!isset($buildingSubtypes[$fotocasaTypeId]) || !in_array($val, $buildingSubtypes[$fotocasaTypeId])) {
                     $fail("El campo $attr no es válido para el TypeId dado.");
                 }
             }],
@@ -322,7 +348,7 @@ class InmueblesController extends Controller
         $payload = [
             "ExternalId" => $safeString($inmueble->id),
             "AgencyReference" => $safeString($inmueble->inmobiliaria),
-            "TypeId" => $safeInt($inmueble->tipo_vivienda_id),
+            "TypeId" => $safeInt($fotocasaTypeId),
             "SubTypeId" => $safeInt($inmueble->building_subtype_id),
             "ContactTypeId" => 1, // Agency contact type
 
