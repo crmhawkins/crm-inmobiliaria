@@ -168,7 +168,15 @@
             width: 100%;
             height: 400px;
             object-fit: cover;
-            border-radius: 15px 15px 0 0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .main-image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .image-placeholder {
@@ -294,6 +302,39 @@
             margin-top: 3rem;
         }
 
+        .thumbnail-gallery {
+            margin-top: 1rem;
+        }
+
+        .thumbnail-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .thumbnail-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .gallery-thumbnail {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .thumbnail-item:hover .gallery-thumbnail {
+            border-color: var(--primary-color);
+        }
+
+        .thumbnail-item.active .gallery-thumbnail {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .property-title {
                 font-size: 2rem;
@@ -358,10 +399,31 @@
                         @if ($inmueble->galeria)
                             @php
                                 $galeria = json_decode($inmueble->galeria, true);
-                                $mainImage = $galeria['1'] ?? null;
                             @endphp
-                            @if ($mainImage)
-                                <img src="{{ $mainImage }}" alt="{{ $inmueble->titulo }}" class="main-image">
+                            @if (is_array($galeria) && count($galeria) > 0)
+                                <!-- Main Image -->
+                                <div class="main-image-container mb-3">
+                                    <img src="{{ $galeria['1'] ?? array_values($galeria)[0] }}"
+                                        alt="{{ $inmueble->titulo }}" class="main-image" id="main-gallery-image">
+                                </div>
+
+                                <!-- Thumbnail Gallery -->
+                                @if (count($galeria) > 1)
+                                    <div class="thumbnail-gallery">
+                                        <div class="row">
+                                            @foreach ($galeria as $key => $imageUrl)
+                                                <div class="col-md-2 col-sm-3 col-4 mb-2">
+                                                    <div class="thumbnail-item"
+                                                        onclick="changeMainImage('{{ $imageUrl }}')">
+                                                        <img src="{{ $imageUrl }}"
+                                                            alt="{{ $inmueble->titulo }} - Imagen {{ $key }}"
+                                                            class="img-thumbnail gallery-thumbnail">
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             @else
                                 <div class="image-placeholder">
                                     <i class="fas fa-image me-2"></i>
@@ -954,6 +1016,32 @@
             src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&callback=initMap">
         </script>
     @endif
+
+    <script>
+        function changeMainImage(imageUrl) {
+            const mainImage = document.getElementById('main-gallery-image');
+            if (mainImage) {
+                mainImage.src = imageUrl;
+
+                // Actualizar clase activa en thumbnails
+                document.querySelectorAll('.thumbnail-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Encontrar y activar el thumbnail correspondiente
+                const clickedThumbnail = event.currentTarget;
+                clickedThumbnail.classList.add('active');
+            }
+        }
+
+        // Marcar el primer thumbnail como activo al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstThumbnail = document.querySelector('.thumbnail-item');
+            if (firstThumbnail) {
+                firstThumbnail.classList.add('active');
+            }
+        });
+    </script>
 </body>
 
 </html>

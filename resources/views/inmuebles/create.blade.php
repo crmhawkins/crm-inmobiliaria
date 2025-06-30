@@ -66,6 +66,25 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <!-- Galería de imágenes -->
+                    <div class="mb-3">
+                        <label><strong>Galería de imágenes</strong></label>
+                        <input type="file" name="galeria[]" id="galeria-input" class="form-control" accept="image/*"
+                            multiple>
+                        <small class="form-text text-muted">Puedes seleccionar múltiples imágenes. Formatos permitidos: JPG,
+                            PNG, GIF. Tamaño máximo: 5MB por imagen</small>
+                        @error('galeria')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Preview de la galería -->
+                    <div id="galeria-preview" class="row mt-3" style="display: none;">
+                        <div class="col-12">
+                            <h6>Vista previa de las imágenes:</h6>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1406,6 +1425,42 @@
 
             // Ejecutar cuando cambie el checkbox
             terraceCheckbox.addEventListener('change', toggleTerraceSurface);
+
+            // Manejo de la galería de imágenes
+            const galeriaInput = document.getElementById('galeria-input');
+            const galeriaPreview = document.getElementById('galeria-preview');
+
+            galeriaInput.addEventListener('change', function(e) {
+                const files = e.target.files;
+                galeriaPreview.innerHTML =
+                    '<div class="col-12"><h6>Vista previa de las imágenes:</h6></div>';
+
+                if (files.length > 0) {
+                    galeriaPreview.style.display = 'block';
+
+                    Array.from(files).forEach((file, index) => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const previewDiv = document.createElement('div');
+                                previewDiv.className = 'col-md-3 col-sm-4 col-6 mb-3';
+                                previewDiv.innerHTML = `
+                                    <div class="card">
+                                        <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="Preview ${index + 1}">
+                                        <div class="card-body p-2">
+                                            <small class="text-muted">${file.name}</small>
+                                        </div>
+                                    </div>
+                                `;
+                                galeriaPreview.appendChild(previewDiv);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                } else {
+                    galeriaPreview.style.display = 'none';
+                }
+            });
         });
     </script>
 @endsection

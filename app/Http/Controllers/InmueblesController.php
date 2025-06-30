@@ -132,7 +132,7 @@ class InmueblesController extends Controller
             'year_built' => 'nullable|integer|min:1800|max:' . date('Y'),
             'imagen_principal' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
             'galeria' => 'nullable|array',
-            'galeria.*' => 'nullable|url',
+            'galeria.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max per image
             'otras_caracteristicas' => 'nullable|array',
             // Campos Fotocasa
             'transaction_type_id' => 'nullable|integer|min:1',
@@ -211,6 +211,28 @@ class InmueblesController extends Controller
 
             // Guardar en el formato JSON que usa el sistema
             $galeria = ['1' => $url];
+        }
+
+        // Procesar la galería de imágenes si se subieron
+        if ($request->hasFile('galeria')) {
+            $galeriaFiles = $request->file('galeria');
+            $sortingId = 1;
+
+            foreach ($galeriaFiles as $file) {
+                if ($file && $file->isValid()) {
+                    $nombreArchivo = time() . '_' . Str::random(10) . '_' . $sortingId . '.' . $file->getClientOriginalExtension();
+
+                    // Guardar la imagen en storage/app/public/photos/1/
+                    $ruta = $file->storeAs('photos/1', $nombreArchivo, 'public');
+
+                    // Crear la URL completa
+                    $url = asset('storage/' . $ruta);
+
+                    // Agregar a la galería
+                    $galeria[$sortingId] = $url;
+                    $sortingId++;
+                }
+            }
         }
 
         $inmueble = Inmuebles::create([
