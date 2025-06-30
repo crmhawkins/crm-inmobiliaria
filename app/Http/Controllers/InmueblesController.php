@@ -207,7 +207,7 @@ class InmueblesController extends Controller
 
         // Enviar a Fotocasa
         $fotocasaResponse = $this->sendToFotocasa($inmueble);
-
+        dd($fotocasaResponse);
         // Si hay error en Fotocasa, logearlo pero continuar
         if (!$fotocasaResponse->getData()->success ?? false) {
             Log::warning('Error sending to Fotocasa', [
