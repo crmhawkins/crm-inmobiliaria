@@ -85,6 +85,24 @@
                             </div>
                         </div>
                         <div class="mb-3 row d-flex align-items-center">
+                            <label for="building_subtype_id" class="col-sm-4 col-form-label"> <strong>Subtipo de
+                                    inmueble:</strong></label>
+                            <div x-data="" x-init="$('#select2-building_subtype_id-create').select2();
+                            if (!$('#select2-building_subtype_id-create').val()) {
+                                $('#select2-building_subtype_id-create').val(@this.get('building_subtype_id')).trigger('change');
+                            }
+                            $('#select2-building_subtype_id-create').on('change', function(e) {
+                                var data = $('#select2-building_subtype_id-create').select2('val');
+                                @this.set('building_subtype_id', data);
+                            });">
+                                <div class="col" wire:ignore>
+                                    <select class="form-control" id="select2-building_subtype_id-create">
+                                        <option value="">-- Elige un subtipo de inmueble --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3 row d-flex align-items-center">
                             <label for="m2" class="col-sm-1 col-form-label">
                                 <strong>M<sup>2</sup></strong></label>
                             <div class="col">
@@ -117,7 +135,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <label for="inmobiliaria" class="col-sm-4 col-form-label"> <strong>¿Este inmueble pertenece
+                            <label for="inmobiliaria" class="col-sm-4 col-form-label"> <strong>¿Este inmueble
+                                    pertenece
                                     a
                                     ambas
                                     inmobiliarias?</strong></label>
@@ -442,3 +461,225 @@
         </div>
     </form>
 </div>
+
+<script>
+    // Mapeo de tipos locales a Fotocasa y sus subtipos correspondientes
+    const buildingTypeMapping = {
+        1: { // Piso -> Flat
+            fotocasaType: 1,
+            subtypes: [{
+                    id: 2,
+                    name: 'Triplex'
+                },
+                {
+                    id: 3,
+                    name: 'Duplex'
+                },
+                {
+                    id: 5,
+                    name: 'Penthouse'
+                },
+                {
+                    id: 6,
+                    name: 'Studio'
+                },
+                {
+                    id: 7,
+                    name: 'Loft'
+                },
+                {
+                    id: 9,
+                    name: 'Piso'
+                },
+                {
+                    id: 10,
+                    name: 'Apartamento'
+                },
+                {
+                    id: 11,
+                    name: 'Bajo'
+                }
+            ]
+        },
+        2: { // Casa -> House
+            fotocasaType: 2,
+            subtypes: [{
+                    id: 13,
+                    name: 'Casa'
+                },
+                {
+                    id: 17,
+                    name: 'Casa adosada'
+                },
+                {
+                    id: 19,
+                    name: 'Casa pareada'
+                },
+                {
+                    id: 20,
+                    name: 'Chalet'
+                },
+                {
+                    id: 24,
+                    name: 'Casa rústica'
+                },
+                {
+                    id: 27,
+                    name: 'Bungalow'
+                }
+            ]
+        },
+        3: { // Local -> Commercial store
+            fotocasaType: 3,
+            subtypes: [{
+                    id: 48,
+                    name: 'Residencial'
+                },
+                {
+                    id: 49,
+                    name: 'Otros'
+                },
+                {
+                    id: 50,
+                    name: 'Residencial mixto'
+                },
+                {
+                    id: 51,
+                    name: 'Oficinas'
+                },
+                {
+                    id: 72,
+                    name: 'Hotel'
+                }
+            ]
+        },
+        4: { // Oficina -> Office
+            fotocasaType: 4,
+            subtypes: [{
+                    id: 56,
+                    name: 'Terreno residencial'
+                },
+                {
+                    id: 60,
+                    name: 'Terreno industrial'
+                },
+                {
+                    id: 91,
+                    name: 'Terreno rústico'
+                }
+            ]
+        },
+        5: { // Edificio -> Building
+            fotocasaType: 5,
+            subtypes: [{
+                    id: 48,
+                    name: 'Residencial'
+                },
+                {
+                    id: 49,
+                    name: 'Otros'
+                },
+                {
+                    id: 50,
+                    name: 'Residencial mixto'
+                },
+                {
+                    id: 51,
+                    name: 'Oficinas'
+                },
+                {
+                    id: 72,
+                    name: 'Hotel'
+                }
+            ]
+        },
+        6: { // Terreno -> Land
+            fotocasaType: 6,
+            subtypes: [{
+                    id: 56,
+                    name: 'Terreno residencial'
+                },
+                {
+                    id: 60,
+                    name: 'Terreno industrial'
+                },
+                {
+                    id: 91,
+                    name: 'Terreno rústico'
+                }
+            ]
+        },
+        7: { // Nave -> Industrial building
+            fotocasaType: 7,
+            subtypes: [{
+                    id: 62,
+                    name: 'Moto'
+                },
+                {
+                    id: 63,
+                    name: 'Doble'
+                }
+            ]
+        },
+        8: { // Garaje -> Garage
+            fotocasaType: 8,
+            subtypes: [{
+                    id: 68,
+                    name: 'Moto'
+                },
+                {
+                    id: 69,
+                    name: 'Doble'
+                },
+                {
+                    id: 70,
+                    name: 'Individual'
+                }
+            ]
+        },
+        9: { // Trastero -> Storage room
+            fotocasaType: 12,
+            subtypes: [{
+                id: 90,
+                name: 'Suelos'
+            }]
+        }
+    };
+
+    // Función para actualizar los subtipos disponibles
+    function updateSubtypes() {
+        const tipoSelect = document.getElementById('select2-tipo_vivienda_id-create');
+        const subtypeSelect = document.getElementById('select2-building_subtype_id-create');
+        const selectedTipoId = parseInt(tipoSelect.value);
+
+        // Limpiar opciones actuales
+        subtypeSelect.innerHTML = '<option value="">-- Elige subtipo --</option>';
+
+        if (selectedTipoId && buildingTypeMapping[selectedTipoId]) {
+            const subtypes = buildingTypeMapping[selectedTipoId].subtypes;
+            subtypes.forEach(subtype => {
+                const option = document.createElement('option');
+                option.value = subtype.id;
+                option.textContent = subtype.name;
+                subtypeSelect.appendChild(option);
+            });
+
+            // Reinicializar Select2
+            $(subtypeSelect).select2('destroy');
+            $(subtypeSelect).select2();
+        }
+    }
+
+    // Event listener para el cambio de tipo de vivienda
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('select2-tipo_vivienda_id-create');
+        if (tipoSelect) {
+            tipoSelect.addEventListener('change', updateSubtypes);
+
+            // Inicializar subtipos si ya hay un valor seleccionado
+            if (tipoSelect.value) {
+                updateSubtypes();
+            }
+        }
+    });
+</script>

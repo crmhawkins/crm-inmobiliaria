@@ -23,7 +23,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label><strong>Tipo de vivienda *</strong></label>
-                                <select name="tipo_vivienda_id" class="form-control" required>
+                                <select name="tipo_vivienda_id" id="tipo_vivienda_id" class="form-control" required>
                                     <option value="">-- Elige --</option>
                                     @foreach ($tipos_vivienda as $tipo)
                                         <option value="{{ $tipo->id }}"
@@ -33,6 +33,17 @@
                                     @endforeach
                                 </select>
                                 @error('tipo_vivienda_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label><strong>Subtipo de inmueble *</strong></label>
+                                <select name="building_subtype_id" id="building_subtype_id" class="form-control" required>
+                                    <option value="">-- Primero selecciona el tipo --</option>
+                                </select>
+                                @error('building_subtype_id')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -138,7 +149,8 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label><strong>Ubicación</strong></label>
-                                <input type="text" name="ubicacion" value="{{ old('ubicacion') }}" class="form-control">
+                                <input type="text" name="ubicacion" value="{{ old('ubicacion') }}"
+                                    class="form-control">
                                 @error('ubicacion')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -326,13 +338,20 @@
                                 <label><strong>Escala de consumo energético</strong></label>
                                 <select name="consumption_efficiency_scale" class="form-control">
                                     <option value="">-- Elige --</option>
-                                    <option value="A" {{ old('consumption_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
-                                    <option value="B" {{ old('consumption_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
-                                    <option value="C" {{ old('consumption_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
-                                    <option value="D" {{ old('consumption_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
-                                    <option value="E" {{ old('consumption_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
-                                    <option value="F" {{ old('consumption_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
-                                    <option value="G" {{ old('consumption_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
+                                    <option value="A"
+                                        {{ old('consumption_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
+                                    <option value="B"
+                                        {{ old('consumption_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
+                                    <option value="C"
+                                        {{ old('consumption_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
+                                    <option value="D"
+                                        {{ old('consumption_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
+                                    <option value="E"
+                                        {{ old('consumption_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
+                                    <option value="F"
+                                        {{ old('consumption_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
+                                    <option value="G"
+                                        {{ old('consumption_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
                                 </select>
                                 @error('consumption_efficiency_scale')
                                     <span class="text-danger">{{ $message }}</span>
@@ -344,13 +363,20 @@
                                 <label><strong>Escala de emisiones CO₂</strong></label>
                                 <select name="emissions_efficiency_scale" class="form-control">
                                     <option value="">-- Elige --</option>
-                                    <option value="A" {{ old('emissions_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
-                                    <option value="B" {{ old('emissions_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
-                                    <option value="C" {{ old('emissions_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
-                                    <option value="D" {{ old('emissions_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
-                                    <option value="E" {{ old('emissions_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
-                                    <option value="F" {{ old('emissions_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
-                                    <option value="G" {{ old('emissions_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
+                                    <option value="A"
+                                        {{ old('emissions_efficiency_scale') == 'A' ? 'selected' : '' }}>A</option>
+                                    <option value="B"
+                                        {{ old('emissions_efficiency_scale') == 'B' ? 'selected' : '' }}>B</option>
+                                    <option value="C"
+                                        {{ old('emissions_efficiency_scale') == 'C' ? 'selected' : '' }}>C</option>
+                                    <option value="D"
+                                        {{ old('emissions_efficiency_scale') == 'D' ? 'selected' : '' }}>D</option>
+                                    <option value="E"
+                                        {{ old('emissions_efficiency_scale') == 'E' ? 'selected' : '' }}>E</option>
+                                    <option value="F"
+                                        {{ old('emissions_efficiency_scale') == 'F' ? 'selected' : '' }}>F</option>
+                                    <option value="G"
+                                        {{ old('emissions_efficiency_scale') == 'G' ? 'selected' : '' }}>G</option>
                                 </select>
                                 @error('emissions_efficiency_scale')
                                     <span class="text-danger">{{ $message }}</span>
@@ -360,8 +386,9 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label><strong>Valor de consumo (kWh/m²)</strong></label>
-                                <input type="number" name="consumption_efficiency_value" value="{{ old('consumption_efficiency_value') }}"
-                                       class="form-control" min="0" step="0.1">
+                                <input type="number" name="consumption_efficiency_value"
+                                    value="{{ old('consumption_efficiency_value') }}" class="form-control"
+                                    min="0" step="0.1">
                                 @error('consumption_efficiency_value')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -370,8 +397,9 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label><strong>Valor de emisiones (kg CO₂/m²)</strong></label>
-                                <input type="number" name="emissions_efficiency_value" value="{{ old('emissions_efficiency_value') }}"
-                                       class="form-control" min="0" step="0.1">
+                                <input type="number" name="emissions_efficiency_value"
+                                    value="{{ old('emissions_efficiency_value') }}" class="form-control" min="0"
+                                    step="0.1">
                                 @error('emissions_efficiency_value')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -491,4 +519,227 @@
             </div>
         </form>
     </div>
+
+    <script>
+        // Mapeo de tipos locales a Fotocasa y sus subtipos correspondientes
+        const buildingTypeMapping = {
+            1: { // Piso -> Flat
+                fotocasaType: 1,
+                subtypes: [{
+                        id: 2,
+                        name: 'Triplex'
+                    },
+                    {
+                        id: 3,
+                        name: 'Duplex'
+                    },
+                    {
+                        id: 5,
+                        name: 'Penthouse'
+                    },
+                    {
+                        id: 6,
+                        name: 'Studio'
+                    },
+                    {
+                        id: 7,
+                        name: 'Loft'
+                    },
+                    {
+                        id: 9,
+                        name: 'Piso'
+                    },
+                    {
+                        id: 10,
+                        name: 'Apartamento'
+                    },
+                    {
+                        id: 11,
+                        name: 'Bajo'
+                    }
+                ]
+            },
+            2: { // Casa -> House
+                fotocasaType: 2,
+                subtypes: [{
+                        id: 13,
+                        name: 'Casa'
+                    },
+                    {
+                        id: 17,
+                        name: 'Casa adosada'
+                    },
+                    {
+                        id: 19,
+                        name: 'Casa pareada'
+                    },
+                    {
+                        id: 20,
+                        name: 'Chalet'
+                    },
+                    {
+                        id: 24,
+                        name: 'Casa rústica'
+                    },
+                    {
+                        id: 27,
+                        name: 'Bungalow'
+                    }
+                ]
+            },
+            3: { // Local -> Commercial store
+                fotocasaType: 3,
+                subtypes: [{
+                        id: 48,
+                        name: 'Residencial'
+                    },
+                    {
+                        id: 49,
+                        name: 'Otros'
+                    },
+                    {
+                        id: 50,
+                        name: 'Residencial mixto'
+                    },
+                    {
+                        id: 51,
+                        name: 'Oficinas'
+                    },
+                    {
+                        id: 72,
+                        name: 'Hotel'
+                    }
+                ]
+            },
+            4: { // Oficina -> Office
+                fotocasaType: 4,
+                subtypes: [{
+                        id: 56,
+                        name: 'Terreno residencial'
+                    },
+                    {
+                        id: 60,
+                        name: 'Terreno industrial'
+                    },
+                    {
+                        id: 91,
+                        name: 'Terreno rústico'
+                    }
+                ]
+            },
+            5: { // Edificio -> Building
+                fotocasaType: 5,
+                subtypes: [{
+                        id: 48,
+                        name: 'Residencial'
+                    },
+                    {
+                        id: 49,
+                        name: 'Otros'
+                    },
+                    {
+                        id: 50,
+                        name: 'Residencial mixto'
+                    },
+                    {
+                        id: 51,
+                        name: 'Oficinas'
+                    },
+                    {
+                        id: 72,
+                        name: 'Hotel'
+                    }
+                ]
+            },
+            6: { // Terreno -> Land
+                fotocasaType: 6,
+                subtypes: [{
+                        id: 56,
+                        name: 'Terreno residencial'
+                    },
+                    {
+                        id: 60,
+                        name: 'Terreno industrial'
+                    },
+                    {
+                        id: 91,
+                        name: 'Terreno rústico'
+                    }
+                ]
+            },
+            7: { // Nave -> Industrial building
+                fotocasaType: 7,
+                subtypes: [{
+                        id: 62,
+                        name: 'Moto'
+                    },
+                    {
+                        id: 63,
+                        name: 'Doble'
+                    }
+                ]
+            },
+            8: { // Garaje -> Garage
+                fotocasaType: 8,
+                subtypes: [{
+                        id: 68,
+                        name: 'Moto'
+                    },
+                    {
+                        id: 69,
+                        name: 'Doble'
+                    },
+                    {
+                        id: 70,
+                        name: 'Individual'
+                    }
+                ]
+            },
+            9: { // Trastero -> Storage room
+                fotocasaType: 12,
+                subtypes: [{
+                    id: 90,
+                    name: 'Suelos'
+                }]
+            }
+        };
+
+        // Función para actualizar los subtipos disponibles
+        function updateSubtypes() {
+            const tipoSelect = document.getElementById('tipo_vivienda_id');
+            const subtypeSelect = document.getElementById('building_subtype_id');
+            const selectedTipoId = parseInt(tipoSelect.value);
+
+            // Limpiar opciones actuales
+            subtypeSelect.innerHTML = '<option value="">-- Elige subtipo --</option>';
+
+            if (selectedTipoId && buildingTypeMapping[selectedTipoId]) {
+                const subtypes = buildingTypeMapping[selectedTipoId].subtypes;
+                subtypes.forEach(subtype => {
+                    const option = document.createElement('option');
+                    option.value = subtype.id;
+                    option.textContent = subtype.name;
+                    subtypeSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event listener para el cambio de tipo de vivienda
+        document.getElementById('tipo_vivienda_id').addEventListener('change', updateSubtypes);
+
+        // Inicializar subtipos si ya hay un valor seleccionado (en caso de error de validación)
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoSelect = document.getElementById('tipo_vivienda_id');
+            if (tipoSelect.value) {
+                updateSubtypes();
+
+                // Restaurar el valor seleccionado anteriormente si existe
+                const subtypeSelect = document.getElementById('building_subtype_id');
+                const oldSubtypeValue = '{{ old('building_subtype_id') }}';
+                if (oldSubtypeValue) {
+                    subtypeSelect.value = oldSubtypeValue;
+                }
+            }
+        });
+    </script>
 @endsection

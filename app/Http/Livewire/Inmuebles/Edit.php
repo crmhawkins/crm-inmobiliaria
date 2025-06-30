@@ -27,6 +27,7 @@ class Edit extends Component
     public $banos;
     public $cod_postal;
     public $tipo_vivienda_id;
+    public $building_subtype_id;
     public $ubicacion;
     public $cert_energetico;
     public $cert_energetico_elegido;
@@ -69,6 +70,7 @@ class Edit extends Component
         $this->banos = $this->inmuebles->banos;
         $this->cod_postal = $this->inmuebles->cod_postal;
         $this->tipo_vivienda_id = $this->inmuebles->tipo_vivienda_id;
+        $this->building_subtype_id = $this->inmuebles->building_subtype_id;
         $this->ubicacion = $this->inmuebles->ubicacion;
         $this->cert_energetico = $this->inmuebles->cert_energetico;
         $this->cert_energetico_elegido = $this->inmuebles->cert_energetico_elegido;
@@ -134,6 +136,7 @@ class Edit extends Component
                 'habitaciones' => 'required',
                 'banos' => 'required',
                 'tipo_vivienda_id' => 'required',
+                'building_subtype_id' => 'required|integer|min:1',
                 'vendedor_id' => 'required',
                 'ubicacion' => 'required',
                 'cod_postal' => 'required',
@@ -156,6 +159,7 @@ class Edit extends Component
                 'habitaciones.required' => 'Indica las habitaciones del inmueble.',
                 'banos.required' => 'Indica los baños del inmueble.',
                 'tipo_vivienda_id.required' => 'Indica el tipo de vivienda del inmueble.',
+                'building_subtype_id.required' => 'Indica el tipo de vivienda del inmueble.',
                 'vendedor_id.required' => 'Indica al vendedor del inmueble.',
                 'ubicacion.required' => 'Indica la ubicación del inmueble.',
                 'cod_postal.required' => 'El código postal es obligatorio.',
@@ -177,6 +181,7 @@ class Edit extends Component
             'habitaciones' => $this->habitaciones,
             'banos' => $this->banos,
             'tipo_vivienda_id' => $this->tipo_vivienda_id,
+            'building_subtype_id' => $this->building_subtype_id,
             'vendedor_id' => $this->vendedor_id,
             'ubicacion' => $this->ubicacion,
             'cod_postal' => $this->cod_postal,

@@ -105,6 +105,7 @@ class InmueblesController extends Controller
             'habitaciones' => 'nullable|integer|min:0',
             'banos' => 'nullable|integer|min:0',
             'tipo_vivienda_id' => 'required|exists:tipos_vivienda,id',
+            'building_subtype_id' => 'required|integer|min:1',
             'ubicacion' => 'nullable|string',
             'cod_postal' => 'nullable|string',
             'referencia_catastral' => 'nullable|string',
@@ -120,7 +121,6 @@ class InmueblesController extends Controller
             'galeria.*' => 'nullable|url',
             'otras_caracteristicas' => 'nullable|array',
             // Campos Fotocasa
-            'building_subtype_id' => 'nullable|integer|min:1',
             'transaction_type_id' => 'nullable|integer|min:1',
             'visibility_mode_id' => 'nullable|integer|in:1,2,3',
             // Campos de eficiencia energética
@@ -182,7 +182,7 @@ class InmueblesController extends Controller
             'inmobiliaria' => session('inmobiliaria') === 'sayco' ? 1 : 0,
             // Campos requeridos para Fotocasa con valores por defecto
             'tipo_vivienda_id' => $request->tipo_vivienda_id ?? 1, // Flat por defecto
-            'building_subtype_id' => $request->building_subtype_id ?? 9, // Flat (subtype 9) por defecto
+            'building_subtype_id' => $request->building_subtype_id, // Requerido del formulario
             'transaction_type_id' => $request->transaction_type_id ?? 1, // Venta por defecto
             'visibility_mode_id' => $request->visibility_mode_id ?? 1, // Público por defecto
             // Campos booleanos
