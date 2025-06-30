@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $inmueble->titulo }} - Inmobiliaria</title>
+    <title>{{ $inmueble->titulo }} - Sayco</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -848,11 +848,11 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-home me-2"></i>Inmobiliaria</h5>
+                    <h5><i class="fas fa-home me-2"></i>Sayco</h5>
                     <p>Tu socio de confianza en bienes raíces</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p>&copy; {{ date('Y') }} Inmobiliaria. Todos los derechos reservados.</p>
+                    <p>&copy; {{ date('Y') }} Sayco. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
