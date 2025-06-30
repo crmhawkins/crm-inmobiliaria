@@ -361,7 +361,7 @@
         <div class="container">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-home me-2"></i>
-                Inmobiliaria
+                Sayco
             </a>
         </div>
     </nav>
@@ -736,7 +736,7 @@
                             Llamar ahora
                         </a>
                         <br>
-                        <a href="mailto:info@inmobiliaria.com" class="contact-btn">
+                        <a href="mailto:info@sayco.com" class="contact-btn">
                             <i class="fas fa-envelope me-2"></i>
                             Enviar email
                         </a>
