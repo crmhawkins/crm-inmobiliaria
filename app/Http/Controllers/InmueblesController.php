@@ -205,7 +205,7 @@ class InmueblesController extends Controller
             'emissions_efficiency_value' => $request->emissions_efficiency_value,
         ]);
 
-        $this->sendToFotocasa($inmueble);
+        dd($this->sendToFotocasa($inmueble));
 
         return redirect()->route('inmuebles.index')->with('success', 'Inmueble creado correctamente.');
     }
