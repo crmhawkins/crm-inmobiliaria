@@ -109,6 +109,8 @@ class InmueblesController extends Controller
             'ubicacion' => 'nullable|string',
             'cod_postal' => 'nullable|string',
             'referencia_catastral' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'estado' => 'nullable|string',
             'disponibilidad' => 'nullable|string',
             'conservation_status' => 'nullable|string',
@@ -170,6 +172,8 @@ class InmueblesController extends Controller
             'ubicacion' => $request->ubicacion,
             'cod_postal' => $request->cod_postal,
             'referencia_catastral' => $request->referencia_catastral,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
             'estado' => $request->estado,
             'disponibilidad' => $request->disponibilidad,
             'conservation_status' => $request->conservation_status,
@@ -293,13 +297,17 @@ class InmueblesController extends Controller
             'email' => ['nullable','email'],
             'telefono' => ['nullable','string'],
 
-            'x' => ['nullable','numeric'],
-            'y' => ['nullable','numeric'],
+            'latitude' => ['required','numeric','between:-90,90'],
+            'longitude' => ['required','numeric','between:-180,180'],
         ];
 
         $validator = Validator::make($inmueble->toArray(), $rules);
 
         if ($validator->fails()) {
+            // Agregar mensaje personalizado para coordenadas
+            if ($validator->errors()->has('latitude') || $validator->errors()->has('longitude')) {
+                $validator->errors()->add('coordinates', 'Debes seleccionar una ubicación en el mapa.');
+            }
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
@@ -309,40 +317,11 @@ class InmueblesController extends Controller
         $safeString = fn($v) => is_null($v) ? '' : (string)$v;
         $safeFloat = fn($v) => is_null($v) ? null : (float)$v;
 
-        // Función para obtener coordenadas
-        $getCoordinates = function($address, $postalCode) {
-            // Si ya tenemos coordenadas válidas, usarlas
-            if (!empty($address) && !empty($postalCode)) {
-                try {
-                    // Intentar geocodificar la dirección
-                    $geocodeUrl = "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($address . ", " . $postalCode . ", Spain");
-                    $geocodeResponse = Http::withHeaders([
-                        'User-Agent' => 'CRM-Inmobiliaria/1.0'
-                    ])->get($geocodeUrl);
-
-                    if ($geocodeResponse->successful()) {
-                        $geocodeData = $geocodeResponse->json();
-                        if (!empty($geocodeData)) {
-                            return [
-                                'x' => (float)$geocodeData[0]['lon'],
-                                'y' => (float)$geocodeData[0]['lat']
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Si falla la geocodificación, continuar con coordenadas por defecto
-                }
-            }
-
-            // Coordenadas por defecto para Madrid, España
-            return [
-                'x' => -3.7038, // Longitud de Madrid
-                'y' => 40.4168  // Latitud de Madrid
-            ];
-        };
-
-        // Obtener coordenadas
-        $coordinates = $getCoordinates($inmueble->ubicacion, $inmueble->cod_postal);
+        // Obtener coordenadas desde la base de datos
+        $coordinates = [
+            'x' => $inmueble->longitude ?? -3.7038, // Longitud de Madrid por defecto
+            'y' => $inmueble->latitude ?? 40.4168   // Latitud de Madrid por defecto
+        ];
 
         // Construcción payload según el esquema de la API de Fotocasa
         $payload = [
@@ -452,23 +431,41 @@ class InmueblesController extends Controller
         // Petición HTTP a Fotocasa
         $url = 'https://imports.gw.fotocasa.pro/api/property';
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Api-Key' => env('API_KEY'),
-        ])->post($url, $payload);
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Api-Key' => env('API_KEY'),
+            ])->withOptions([
+                'verify' => false, // Deshabilitar verificación SSL para desarrollo
+                'timeout' => 30,   // Timeout de 30 segundos
+            ])->post($url, $payload);
 
-        // Retorna JSON con la respuesta de la API o error
-        if ($response->successful()) {
-            return response()->json([
-                'success' => true,
-                'data' => $response->json()
+            // Retorna JSON con la respuesta de la API o error
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $response->json()
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'status' => $response->status(),
+                    'message' => $response->body()
+                ], $response->status());
+            }
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            Log::error('Error en petición a Fotocasa API', [
+                'error' => $e->getMessage(),
+                'inmueble_id' => $inmueble->id,
+                'url' => $url
             ]);
-        } else {
+
             return response()->json([
                 'success' => false,
-                'status' => $response->status(),
-                'message' => $response->body()
-            ], $response->status());
+                'status' => 500,
+                'message' => 'Error de conexión con Fotocasa API: ' . $e->getMessage()
+            ], 500);
         }
     }
 

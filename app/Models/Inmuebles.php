@@ -98,6 +98,8 @@ class Inmuebles extends Model
         'pets_allowed',
         'nearby_public_transport',
         'land_area',
+        'latitude',
+        'longitude',
     ];
 
     public function tipoVivienda()

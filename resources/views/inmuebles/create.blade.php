@@ -149,8 +149,9 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label><strong>Ubicación</strong></label>
-                                <input type="text" name="ubicacion" value="{{ old('ubicacion') }}"
-                                    class="form-control">
+                                <input type="text" name="ubicacion" id="address-input"
+                                    value="{{ old('ubicacion') }}" class="form-control"
+                                    placeholder="Introduce la dirección">
                                 @error('ubicacion')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -159,11 +160,44 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label><strong>Código Postal</strong></label>
-                                <input type="text" name="cod_postal" value="{{ old('cod_postal') }}"
-                                    class="form-control">
+                                <input type="text" name="cod_postal" id="postal-code-input"
+                                    value="{{ old('cod_postal') }}" class="form-control" placeholder="Código postal">
                                 @error('cod_postal')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mapa de Google Maps -->
+                    <div class="mb-3">
+                        <label><strong>Selecciona la ubicación exacta en el mapa</strong></label>
+                        <div id="map"
+                            style="height: 400px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
+                        <small class="form-text text-muted">Haz clic en el mapa para marcar la ubicación exacta del
+                            inmueble</small>
+                        @error('coordinates')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Campos ocultos para las coordenadas -->
+                    <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                    <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label><strong>Latitud</strong></label>
+                                <input type="text" id="latitude-display" class="form-control" readonly
+                                    placeholder="Selecciona en el mapa">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label><strong>Longitud</strong></label>
+                                <input type="text" id="longitude-display" class="form-control" readonly
+                                    placeholder="Selecciona en el mapa">
                             </div>
                         </div>
                     </div>
@@ -739,6 +773,199 @@
                 if (oldSubtypeValue) {
                     subtypeSelect.value = oldSubtypeValue;
                 }
+            }
+        });
+    </script>
+
+    <!-- Google Maps JavaScript -->
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places">
+    </script>
+    <script>
+        let map;
+        let marker;
+        let geocoder;
+        let autocomplete;
+
+        function initMap() {
+            // Coordenadas por defecto (Madrid)
+            const defaultLocation = {
+                lat: 40.4168,
+                lng: -3.7038
+            };
+
+            // Crear el mapa
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 13,
+                center: defaultLocation,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
+
+            // Crear el geocoder
+            geocoder = new google.maps.Geocoder();
+
+            // Crear el marcador
+            marker = new google.maps.Marker({
+                map: map,
+                draggable: true,
+                position: defaultLocation
+            });
+
+            // Autocompletado para el campo de dirección
+            const addressInput = document.getElementById('address-input');
+            autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                types: ['address'],
+                componentRestrictions: {
+                    country: 'ES'
+                }
+            });
+
+            // Evento cuando se selecciona una dirección del autocompletado
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+
+                if (place.geometry) {
+                    const position = place.geometry.location;
+
+                    // Actualizar el mapa
+                    map.setCenter(position);
+                    map.setZoom(16);
+                    marker.setPosition(position);
+
+                    // Actualizar coordenadas
+                    updateCoordinates(position.lat(), position.lng());
+
+                    // Extraer código postal si está disponible
+                    if (place.address_components) {
+                        for (let component of place.address_components) {
+                            if (component.types.includes('postal_code')) {
+                                document.getElementById('postal-code-input').value = component.long_name;
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Evento cuando se hace clic en el mapa
+            map.addListener('click', function(event) {
+                const position = event.latLng;
+                marker.setPosition(position);
+                updateCoordinates(position.lat(), position.lng());
+
+                // Geocodificar las coordenadas para obtener la dirección
+                geocoder.geocode({
+                    location: position
+                }, function(results, status) {
+                    if (status === 'OK' && results[0]) {
+                        document.getElementById('address-input').value = results[0].formatted_address;
+
+                        // Extraer código postal
+                        for (let component of results[0].address_components) {
+                            if (component.types.includes('postal_code')) {
+                                document.getElementById('postal-code-input').value = component.long_name;
+                                break;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Evento cuando se arrastra el marcador
+            marker.addListener('dragend', function(event) {
+                const position = event.latLng;
+                updateCoordinates(position.lat(), position.lng());
+
+                // Geocodificar las coordenadas para obtener la dirección
+                geocoder.geocode({
+                    location: position
+                }, function(results, status) {
+                    if (status === 'OK' && results[0]) {
+                        document.getElementById('address-input').value = results[0].formatted_address;
+
+                        // Extraer código postal
+                        for (let component of results[0].address_components) {
+                            if (component.types.includes('postal_code')) {
+                                document.getElementById('postal-code-input').value = component.long_name;
+                                break;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Botón para buscar dirección
+            const searchButton = document.createElement('button');
+            searchButton.textContent = 'Buscar';
+            searchButton.className = 'btn btn-primary btn-sm';
+            searchButton.style.marginTop = '10px';
+            searchButton.onclick = searchAddress;
+
+            document.getElementById('map').parentNode.appendChild(searchButton);
+        }
+
+        function updateCoordinates(lat, lng) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            document.getElementById('latitude-display').value = lat.toFixed(6);
+            document.getElementById('longitude-display').value = lng.toFixed(6);
+        }
+
+        function searchAddress() {
+            const address = document.getElementById('address-input').value;
+            const postalCode = document.getElementById('postal-code-input').value;
+
+            let searchQuery = address;
+            if (postalCode) {
+                searchQuery += ', ' + postalCode + ', Spain';
+            }
+
+            geocoder.geocode({
+                address: searchQuery
+            }, function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    const position = results[0].geometry.location;
+
+                    // Actualizar el mapa
+                    map.setCenter(position);
+                    map.setZoom(16);
+                    marker.setPosition(position);
+
+                    // Actualizar coordenadas
+                    updateCoordinates(position.lat(), position.lng());
+
+                    // Actualizar dirección formateada
+                    document.getElementById('address-input').value = results[0].formatted_address;
+
+                    // Extraer código postal
+                    for (let component of results[0].address_components) {
+                        if (component.types.includes('postal_code')) {
+                            document.getElementById('postal-code-input').value = component.long_name;
+                            break;
+                        }
+                    }
+                } else {
+                    alert('No se pudo encontrar la dirección. Por favor, verifica que la dirección sea correcta.');
+                }
+            });
+        }
+
+        // Inicializar el mapa cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+
+            // Restaurar valores si existen (en caso de error de validación)
+            const oldLat = '{{ old('latitude') }}';
+            const oldLng = '{{ old('longitude') }}';
+
+            if (oldLat && oldLng) {
+                const position = {
+                    lat: parseFloat(oldLat),
+                    lng: parseFloat(oldLng)
+                };
+                map.setCenter(position);
+                marker.setPosition(position);
+                updateCoordinates(position.lat, position.lng);
             }
         });
     </script>
