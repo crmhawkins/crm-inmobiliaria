@@ -25,12 +25,24 @@
                                 <label><strong>Tipo de vivienda *</strong></label>
                                 <select name="tipo_vivienda_id" id="tipo_vivienda_id" class="form-control" required>
                                     <option value="">-- Elige --</option>
-                                    @foreach ($tipos_vivienda as $tipo)
-                                        <option value="{{ $tipo->id }}"
-                                            {{ old('tipo_vivienda_id') == $tipo->id ? 'selected' : '' }}>
-                                            {{ $tipo->nombre }}
-                                        </option>
-                                    @endforeach
+                                    <option value="1" {{ old('tipo_vivienda_id') == '1' ? 'selected' : '' }}>Flat
+                                    </option>
+                                    <option value="2" {{ old('tipo_vivienda_id') == '2' ? 'selected' : '' }}>House
+                                    </option>
+                                    <option value="3" {{ old('tipo_vivienda_id') == '3' ? 'selected' : '' }}>Commercial
+                                        store</option>
+                                    <option value="4" {{ old('tipo_vivienda_id') == '4' ? 'selected' : '' }}>Office
+                                    </option>
+                                    <option value="5" {{ old('tipo_vivienda_id') == '5' ? 'selected' : '' }}>Building
+                                    </option>
+                                    <option value="6" {{ old('tipo_vivienda_id') == '6' ? 'selected' : '' }}>Land
+                                    </option>
+                                    <option value="7" {{ old('tipo_vivienda_id') == '7' ? 'selected' : '' }}>Industrial
+                                        building</option>
+                                    <option value="8" {{ old('tipo_vivienda_id') == '8' ? 'selected' : '' }}>Garage
+                                    </option>
+                                    <option value="12" {{ old('tipo_vivienda_id') == '12' ? 'selected' : '' }}>Storage
+                                        room</option>
                                 </select>
                                 @error('tipo_vivienda_id')
                                     <span class="text-danger">{{ $message }}</span>
@@ -39,7 +51,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label><strong>Subtipo de inmueble *</strong></label>
+                                <label><strong>Subtipo de inmueble *</label>
                                 <select name="building_subtype_id" id="building_subtype_id" class="form-control" required>
                                     <option value="">-- Primero selecciona el tipo --</option>
                                 </select>
@@ -1021,15 +1033,15 @@
                     },
                     {
                         id: 9,
-                        name: 'Piso'
+                        name: 'Flat'
                     },
                     {
                         id: 10,
-                        name: 'Apartamento'
+                        name: 'Apartment'
                     },
                     {
                         id: 11,
-                        name: 'Bajo'
+                        name: 'Ground floor'
                     }
                 ]
             },
@@ -1037,15 +1049,15 @@
                 fotocasaType: 2,
                 subtypes: [{
                         id: 13,
-                        name: 'Casa'
+                        name: 'House'
                     },
                     {
                         id: 17,
-                        name: 'Casa adosada'
+                        name: 'Terraced house'
                     },
                     {
                         id: 19,
-                        name: 'Casa pareada'
+                        name: 'Paired house'
                     },
                     {
                         id: 20,
@@ -1053,7 +1065,7 @@
                     },
                     {
                         id: 24,
-                        name: 'Casa rústica'
+                        name: 'Rustic house'
                     },
                     {
                         id: 27,
@@ -1065,19 +1077,19 @@
                 fotocasaType: 3,
                 subtypes: [{
                         id: 48,
-                        name: 'Residencial'
+                        name: 'Residential'
                     },
                     {
                         id: 49,
-                        name: 'Otros'
+                        name: 'Others'
                     },
                     {
                         id: 50,
-                        name: 'Residencial mixto'
+                        name: 'Mixed residential'
                     },
                     {
                         id: 51,
-                        name: 'Oficinas'
+                        name: 'Offices'
                     },
                     {
                         id: 72,
@@ -1089,15 +1101,15 @@
                 fotocasaType: 4,
                 subtypes: [{
                         id: 56,
-                        name: 'Terreno residencial'
+                        name: 'Residential land'
                     },
                     {
                         id: 60,
-                        name: 'Terreno industrial'
+                        name: 'Industrial land'
                     },
                     {
                         id: 91,
-                        name: 'Terreno rústico'
+                        name: 'Rustic land'
                     }
                 ]
             },
@@ -1105,19 +1117,19 @@
                 fotocasaType: 5,
                 subtypes: [{
                         id: 48,
-                        name: 'Residencial'
+                        name: 'Residential'
                     },
                     {
                         id: 49,
-                        name: 'Otros'
+                        name: 'Others'
                     },
                     {
                         id: 50,
-                        name: 'Residencial mixto'
+                        name: 'Mixed residential'
                     },
                     {
                         id: 51,
-                        name: 'Oficinas'
+                        name: 'Offices'
                     },
                     {
                         id: 72,
@@ -1129,15 +1141,15 @@
                 fotocasaType: 6,
                 subtypes: [{
                         id: 56,
-                        name: 'Terreno residencial'
+                        name: 'Residential land'
                     },
                     {
                         id: 60,
-                        name: 'Terreno industrial'
+                        name: 'Industrial land'
                     },
                     {
                         id: 91,
-                        name: 'Terreno rústico'
+                        name: 'Rustic land'
                     }
                 ]
             },
@@ -1149,7 +1161,7 @@
                     },
                     {
                         id: 63,
-                        name: 'Doble'
+                        name: 'Double'
                     }
                 ]
             },
@@ -1161,7 +1173,7 @@
                     },
                     {
                         id: 69,
-                        name: 'Doble'
+                        name: 'Double'
                     },
                     {
                         id: 70,
@@ -1169,7 +1181,7 @@
                     }
                 ]
             },
-            9: { // Trastero -> Storage room
+            12: { // Storage room
                 fotocasaType: 12,
                 subtypes: [{
                     id: 90,

@@ -100,11 +100,10 @@ class InmueblesController extends Controller
 
     public function create()
     {
-        $tipos_vivienda = TipoVivienda::all();
         $caracteristicas = Caracteristicas::all();
         $vendedores = Clientes::where('inmobiliaria', 1)->get();
 
-        return view('inmuebles.create', compact('tipos_vivienda', 'caracteristicas', 'vendedores'));
+        return view('inmuebles.create', compact('caracteristicas', 'vendedores'));
     }
     public function store(Request $request)
     {
@@ -116,7 +115,7 @@ class InmueblesController extends Controller
             'valor_referencia' => 'nullable|numeric|min:0',
             'habitaciones' => 'nullable|integer|min:0',
             'banos' => 'nullable|integer|min:0',
-            'tipo_vivienda_id' => 'required|exists:tipos_vivienda,id',
+            'tipo_vivienda_id' => 'required|integer|in:1,2,3,4,5,6,7,8,12',
             'building_subtype_id' => 'required|integer|min:1',
             'ubicacion' => 'nullable|string',
             'cod_postal' => 'nullable|string',
@@ -325,12 +324,13 @@ class InmueblesController extends Controller
 
         // Enviar a Fotocasa
         $fotocasaResponse = $this->sendToFotocasa($inmueble);
-
+        //dd($fotocasaResponse);
         // Si hay error en Fotocasa, logearlo pero continuar
-        if (!$fotocasaResponse->getData()->success ?? false) {
+        if ($fotocasaResponse->getStatusCode() !== 200) {
             Log::warning('Error sending to Fotocasa', [
                 'inmueble_id' => $inmueble->id,
-                'response' => $fotocasaResponse->getData()
+                'status' => $fotocasaResponse->getStatusCode(),
+                'response' => $fotocasaResponse->getContent()
             ]);
         }
 
@@ -339,27 +339,8 @@ class InmueblesController extends Controller
 
     public function sendToFotocasa(Inmuebles $inmueble)
     {
-        // Función para mapear tipo_vivienda_id local a Fotocasa TypeId
-        $mapToFotocasaType = function($localTipoId) {
-            // Mapeo de tipos locales a Fotocasa
-            // Esto debería basarse en los nombres de los tipos en tu base de datos
-            $mapping = [
-                1 => 1, // Piso -> Flat
-                2 => 2, // Casa -> House
-                3 => 3, // Local -> Commercial store
-                4 => 4, // Oficina -> Office
-                5 => 5, // Edificio -> Building
-                6 => 6, // Terreno -> Land
-                7 => 7, // Nave -> Industrial building
-                8 => 8, // Garaje -> Garage
-                9 => 12, // Trastero -> Storage room
-            ];
-
-            return $mapping[$localTipoId] ?? 1; // Por defecto Flat
-        };
-
-        // Obtener el TypeId de Fotocasa
-        $fotocasaTypeId = $mapToFotocasaType($inmueble->tipo_vivienda_id);
+        // Usar directamente el tipo_vivienda_id como TypeId de Fotocasa
+        $fotocasaTypeId = $inmueble->tipo_vivienda_id;
 
         // Diccionarios completos según la documentación de la API de Fotocasa
         $buildingTypes = [1,2,3,4,5,6,7,8,12];
@@ -402,7 +383,7 @@ class InmueblesController extends Controller
             'energy_certificate_status' => ['nullable'],
             'conservation_status' => ['nullable'],
 
-            'cod_postal' => ['required','string'],
+            'cod_postal' => ['nullable','string'],
             'ubicacion' => ['nullable','string'],
 
             'valor_referencia' => ['nullable','integer'],
@@ -447,7 +428,7 @@ class InmueblesController extends Controller
 
             "PropertyAddress" => [
                 [
-                    "ZipCode" => $safeString($inmueble->cod_postal),
+                    "ZipCode" => $safeString($inmueble->cod_postal ?? ''),
                     "Street" => $safeString($inmueble->ubicacion),
                     "FloorId" => $safeInt($inmueble->floor_id),
                     "x" => $safeFloat($coordinates['x']),
@@ -703,9 +684,17 @@ class InmueblesController extends Controller
                 ]
             ],
 
-            // Añadir imágenes si existen
-            "PropertyDocument" => $this->getPropertyDocuments($inmueble)
+            // Añadir imágenes desde el archivo imagenes.json
+            "PropertyDocument" => $this->getPropertyDocumentsFromJson($inmueble)
         ];
+
+        // Log del payload antes de enviar (para debugging)
+        Log::info('Payload enviado a Fotocasa', [
+            'inmueble_id' => $inmueble->id,
+            'titulo' => $inmueble->titulo,
+            'property_documents_count' => count($payload['PropertyDocument']),
+            'property_documents' => $payload['PropertyDocument']
+        ]);
 
         // Petición HTTP a Fotocasa
         $url = 'https://imports.gw.fotocasa.pro/api/property';
@@ -718,6 +707,14 @@ class InmueblesController extends Controller
                 'verify' => false, // Deshabilitar verificación SSL para desarrollo
                 'timeout' => 30,   // Timeout de 30 segundos
             ])->post($url, $payload);
+
+            // Log de la respuesta de Fotocasa
+            Log::info('Respuesta de Fotocasa', [
+                'inmueble_id' => $inmueble->id,
+                'status_code' => $response->status(),
+                'response_body' => $response->body(),
+                'response_json' => $response->json()
+            ]);
 
             // Retorna JSON con la respuesta de la API o error
             if ($response->successful()) {
@@ -862,57 +859,1201 @@ class InmueblesController extends Controller
         return $statusMap[strtolower($status)] ?? 1; // Por defecto bueno
     }
 
-    public function getPropertyDocuments(Inmuebles $inmueble)
+    public function getPropertyDocumentsFromJson(Inmuebles $inmueble)
     {
         $documents = [];
 
-        // Procesar la galería de imágenes
-        if ($inmueble->galeria) {
-            $galeria = json_decode($inmueble->galeria, true);
+        // Leer el archivo imagenes_original.json
+        $jsonPath = base_path('imagenes_original.json');
+        if (!file_exists($jsonPath)) {
+            Log::warning('Archivo imagenes_original.json no encontrado', [
+                'path' => $jsonPath,
+                'inmueble_id' => $inmueble->id
+            ]);
+            return $documents;
+        }
 
-            if (is_array($galeria)) {
-                $sortingId = 1;
+        $jsonContent = file_get_contents($jsonPath);
+        $imagenes = json_decode($jsonContent, true);
 
-                foreach ($galeria as $key => $imageUrl) {
-                    // Si la URL es relativa, convertirla a absoluta
-                    if (!filter_var($imageUrl, FILTER_VALIDATE_URL) && strpos($imageUrl, 'http') !== 0) {
-                        // Si es una ruta de storage, convertirla a URL pública
-                        if (strpos($imageUrl, 'storage/') === 0) {
-                            $imageUrl = url($imageUrl);
-                        } else {
-                            $imageUrl = url($imageUrl);
-                        }
-                    }
+        if (!$imagenes) {
+            Log::warning('Error al parsear imagenes_original.json', [
+                'inmueble_id' => $inmueble->id,
+                'json_content_length' => strlen($jsonContent)
+            ]);
+            return $documents;
+        }
 
-                    // Verificar que la URL sea válida y accesible
-                    if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
-                        // Verificar que la imagen sea accesible públicamente
-                        try {
-                            $response = Http::timeout(5)->head($imageUrl);
-                            if ($response->successful()) {
-                                $documents[] = [
-                                    "TypeId" => 1, // Image
-                                    "Url" => $imageUrl,
-                                    "SortingId" => $sortingId
-                                ];
-                                $sortingId++;
-                            } else {
-                                Log::warning('Image not accessible', [
-                                    'url' => $imageUrl,
-                                    'status' => $response->status()
-                                ]);
-                            }
-                        } catch (\Exception $e) {
-                            Log::warning('Error checking image accessibility', [
-                                'url' => $imageUrl,
-                                'error' => $e->getMessage()
-                            ]);
-                        }
+        // Buscar las imágenes de esta propiedad por su ID original del JSON
+        // Como no tenemos el ID original almacenado, vamos a buscar por título
+        $propertyId = null;
+        $titulo = $inmueble->titulo;
+
+        Log::info("Buscando imágenes para inmueble", [
+            'inmueble_id' => $inmueble->id,
+            'titulo' => $titulo,
+            'external_id' => $inmueble->external_id
+        ]);
+
+        // Buscar en el JSON de propiedades para encontrar el ID original
+        $jsonPathProps = base_path('viviendas2_formateado.json');
+        if (file_exists($jsonPathProps)) {
+            $propsContent = file_get_contents($jsonPathProps);
+            $props = json_decode($propsContent, true);
+
+            if ($props) {
+                Log::info("JSON de propiedades cargado", [
+                    'total_properties' => count($props),
+                    'first_few_keys' => array_slice(array_keys($props), 0, 5)
+                ]);
+
+                foreach ($props as $id => $prop) {
+                    if (isset($prop['titulo']) && $prop['titulo'] === $titulo) {
+                        $propertyId = (string)$id;
+                        Log::info("¡Coincidencia encontrada!", [
+                            'inmueble_id' => $inmueble->id,
+                            'titulo_buscado' => $titulo,
+                            'property_id_encontrado' => $propertyId,
+                            'titulo_en_json' => $prop['titulo']
+                        ]);
+                        break;
                     }
                 }
+
+                if (!$propertyId) {
+                    Log::warning("No se encontró coincidencia por título", [
+                        'inmueble_id' => $inmueble->id,
+                        'titulo_buscado' => $titulo,
+                        'primeros_titulos_en_json' => array_slice(array_column($props, 'titulo'), 0, 5)
+                    ]);
+                }
+            } else {
+                Log::warning("Error al parsear viviendas2_formateado.json");
+            }
+        } else {
+            Log::warning("Archivo viviendas2_formateado.json no encontrado", [
+                'path' => $jsonPathProps
+            ]);
+        }
+
+        if (!$propertyId || !isset($imagenes[$propertyId])) {
+            Log::info("No se encontraron imágenes para la propiedad", [
+                'inmueble_id' => $inmueble->id,
+                'titulo' => $titulo,
+                'property_id_found' => $propertyId,
+                'available_keys' => array_keys($imagenes)
+            ]);
+            return $documents;
+        }
+
+        $propertyImages = $imagenes[$propertyId];
+        $sortingId = 1;
+
+        Log::info("Procesando imágenes para propiedad", [
+            'inmueble_id' => $inmueble->id,
+            'property_id_in_json' => $propertyId,
+            'total_images_found' => count($propertyImages),
+            'images' => $propertyImages
+        ]);
+        Log::info("Procesando imágenes para propiedad", [
+            'inmueble_id' => $inmueble->id,
+            'property_id_in_json' => $propertyId,
+            'total_images_found' => count($propertyImages),
+            'images' => $propertyImages
+        ]);
+        foreach ($propertyImages as $imageKey => $imageUrl) {
+            // Convertir URL a rule=original
+            $originalUrl = $this->convertToOriginalUrl($imageUrl);
+
+            Log::info("Procesando imagen", [
+                'inmueble_id' => $inmueble->id,
+                'image_key' => $imageKey,
+                'original_url' => $imageUrl,
+                'converted_url' => $originalUrl
+            ]);
+
+            // Agregar imagen directamente sin verificar accesibilidad
+            $documents[] = [
+                "TypeId" => 1, // Image
+                "Url" => $originalUrl,
+                "SortingId" => $sortingId
+            ];
+            $sortingId++;
+
+            Log::info("Imagen agregada", [
+                'inmueble_id' => $inmueble->id,
+                'url' => $originalUrl,
+                'sorting_id' => $sortingId - 1
+            ]);
+        }
+        Log::info("Procesadas " . count($documents) . " imágenes para la propiedad ID: {$propertyId}", [
+            'inmueble_id' => $inmueble->id,
+            'total_images_processed' => count($propertyImages),
+            'valid_images_count' => count($documents),
+            'documents' => $documents
+        ]);
+
+        return $documents;
+    }
+
+    /**
+     * Convertir URL de imagen a formato original
+     */
+    private function convertToOriginalUrl($url)
+    {
+        // Si ya es una URL original, devolverla tal como está
+        if (strpos($url, '?rule=original') !== false) {
+            return $url;
+        }
+
+        // Si es una URL con regla específica, convertirla a original
+        if (preg_match('/^(https:\/\/static\.fotocasa\.es\/images\/ads\/[a-f0-9-]+)/', $url, $matches)) {
+            return $matches[1] . '?rule=original';
+        }
+
+        return $url;
+    }
+
+    /**
+     * Enviar propiedad a Fotocasa con ID original para mapear imágenes correctamente
+     */
+    public function sendToFotocasaWithOriginalId(Inmuebles $inmueble, $originalId)
+    {
+        // Usar directamente el tipo_vivienda_id como TypeId de Fotocasa
+        $fotocasaTypeId = $inmueble->tipo_vivienda_id;
+
+        // Diccionarios completos según la documentación de la API de Fotocasa
+        $buildingTypes = [1,2,3,4,5,6,7,8,12];
+
+        $buildingSubtypes = [
+            1 => [2,3,5,6,7,9,10,11],       // Flat: Triplex, Duplex, Penthouse, Studio, Loft, Flat, Apartment, Ground floor
+            2 => [13,17,19,20,24,27],       // House: House, Terraced house, Paired house, Chalet, Rustic house, Bungalow
+            3 => [48,49,50,51,72],          // Commercial store: Residential, Others, Mixed residential, Offices, Hotel
+            4 => [56,60,91],                // Office: Residential land, Industrial land, Rustic land
+            5 => [48,49,50,51,72],          // Building: Residential, Others, Mixed residential, Offices, Hotel
+            6 => [56,60,91],                // Land: Residential land, Industrial land, Rustic land
+            7 => [62,63],                   // Industrial building: Moto, Double, Individual
+            8 => [68,69,70],                // Garage: Moto, Double, Individual
+            12 => [90],                     // Storage room: Suelos
+        ];
+
+        $transactionTypes = [1,3,4,7,9];
+        $visibilityModes = [1,2,3];
+        $floorTypes = [1,3,4,6,7,8,9,10,11,12,13,14,15,16,22,31];
+        $energyLabels = ['A','B','C','D','E','F','G','NC'];
+
+        // Validación completa
+        $rules = [
+            'id' => ['required'],
+            'inmobiliaria' => ['nullable'],
+            'tipo_vivienda_id' => ['required','integer'],
+            'building_subtype_id' => ['required','integer', function($attr, $val, $fail) use ($buildingSubtypes, $fotocasaTypeId) {
+                if (!isset($buildingSubtypes[$fotocasaTypeId]) || !in_array($val, $buildingSubtypes[$fotocasaTypeId])) {
+                    $fail("El campo $attr no es válido para el TypeId dado.");
+                }
+            }],
+            'transaction_type_id' => ['required','integer', function($attr, $val, $fail) use ($transactionTypes) {
+                if (!in_array($val, $transactionTypes)) {
+                    $fail("El campo $attr debe ser un tipo válido.");
+                }
+            }],
+            'visibility_mode_id' => ['required','integer', 'in:1,2,3'],
+            'floor_id' => ['nullable','integer', 'in:1,3,4,6,7,8,9,10,11,12,13,14,15,16,22,31'],
+            'orientation_id' => ['nullable','integer', 'min:0'],
+            'energy_certificate_status' => ['nullable'],
+            'conservation_status' => ['nullable'],
+
+            'cod_postal' => ['nullable','string'],
+            'ubicacion' => ['nullable','string'],
+
+            'valor_referencia' => ['nullable','integer'],
+            'mostrar_precio' => ['nullable','boolean'],
+
+            'email' => ['nullable','email'],
+            'telefono' => ['nullable','string'],
+
+            'latitude' => ['required','numeric','between:-90,90'],
+            'longitude' => ['required','numeric','between:-180,180'],
+        ];
+
+        $validator = Validator::make($inmueble->toArray(), $rules);
+
+        if ($validator->fails()) {
+            // Agregar mensaje personalizado para coordenadas
+            if ($validator->errors()->has('latitude') || $validator->errors()->has('longitude')) {
+                $validator->errors()->add('coordinates', 'Debes seleccionar una ubicación en el mapa.');
+            }
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Funciones para valores seguros
+        $safeInt = fn($v) => is_null($v) ? 0 : (int)$v;
+        $safeBool = fn($v) => is_null($v) ? false : (bool)$v;
+        $safeString = fn($v) => is_null($v) ? '' : (string)$v;
+        $safeFloat = fn($v) => is_null($v) ? null : (float)$v;
+
+        // Obtener coordenadas desde la base de datos
+        $coordinates = [
+            'x' => $inmueble->longitude ?? -3.7038, // Longitud de Madrid por defecto
+            'y' => $inmueble->latitude ?? 40.4168   // Latitud de Madrid por defecto
+        ];
+
+        // Construcción payload según el esquema de la API de Fotocasa
+        $payload = [
+            "ExternalId" => $safeString($inmueble->id),
+            "AgencyReference" => $safeString($inmueble->inmobiliaria),
+            "TypeId" => $safeInt($fotocasaTypeId),
+            "SubTypeId" => $safeInt($inmueble->building_subtype_id),
+            "ContactTypeId" => 1, // Agency contact type
+
+            "PropertyAddress" => [
+                [
+                    "ZipCode" => $safeString($inmueble->cod_postal ?? ''),
+                    "Street" => $safeString($inmueble->ubicacion),
+                    "FloorId" => $safeInt($inmueble->floor_id),
+                    "x" => $safeFloat($coordinates['x']),
+                    "y" => $safeFloat($coordinates['y']),
+                    "VisibilityModeId" => $safeInt($inmueble->visibility_mode_id)
+                ]
+            ],
+
+            "PropertyFeature" => array_merge([
+                [
+                    "FeatureId" => 1, // Surface
+                    "DecimalValue" => $safeFloat($inmueble->m2 ?? 0)
+                ],
+                [
+                    "FeatureId" => 2, // Title
+                    "TextValue" => $safeString($inmueble->titulo)
+                ],
+                [
+                    "FeatureId" => 3, // Description
+                    "TextValue" => $safeString($inmueble->descripcion ?? '')
+                ],
+                [
+                    "FeatureId" => 11, // Rooms
+                    "DecimalValue" => $safeFloat($inmueble->habitaciones ?? 0)
+                ],
+                [
+                    "FeatureId" => 12, // Bathrooms
+                    "DecimalValue" => $safeFloat($inmueble->banos ?? 0)
+                ],
+                [
+                    "FeatureId" => 30, // Furnished
+                    "BoolValue" => $safeBool($inmueble->furnished)
+                ],
+                [
+                    "FeatureId" => 231, // Year built
+                    "DecimalValue" => $safeFloat($inmueble->year_built ?? 0)
+                ],
+                [
+                    "FeatureId" => 22, // Elevator
+                    "BoolValue" => $safeBool($inmueble->has_elevator)
+                ],
+                [
+                    "FeatureId" => 258, // Wardrobe
+                    "BoolValue" => $safeBool($inmueble->has_wardrobe)
+                ],
+                [
+                    "FeatureId" => 314, // Equipped kitchen
+                    "BoolValue" => $safeBool($inmueble->has_equipped_kitchen)
+                ],
+                [
+                    "FeatureId" => 254, // Air conditioner
+                    "BoolValue" => $safeBool($inmueble->has_air_conditioning)
+                ],
+                [
+                    "FeatureId" => 23, // Parking
+                    "BoolValue" => $safeBool($inmueble->has_parking)
+                ],
+                [
+                    "FeatureId" => 294, // Security door
+                    "BoolValue" => $safeBool($inmueble->has_security_door)
+                ],
+                [
+                    "FeatureId" => 297, // Balcony
+                    "BoolValue" => $safeBool($inmueble->has_balcony)
+                ],
+                [
+                    "FeatureId" => 313, // Pets allowed
+                    "BoolValue" => $safeBool($inmueble->pets_allowed)
+                ],
+                // Nuevos campos adicionales
+                [
+                    "FeatureId" => 27, // Terrace
+                    "BoolValue" => $safeBool($inmueble->has_terrace)
+                ],
+                [
+                    "FeatureId" => 62, // Terrace surface
+                    "DecimalValue" => $safeFloat($inmueble->terrace_surface ?? 0)
+                ],
+                [
+                    "FeatureId" => 298, // Private garden
+                    "BoolValue" => $safeBool($inmueble->has_private_garden)
+                ],
+                [
+                    "FeatureId" => 263, // Yard
+                    "BoolValue" => $safeBool($inmueble->has_yard)
+                ],
+                [
+                    "FeatureId" => 311, // Smoke outlet
+                    "BoolValue" => $safeBool($inmueble->has_smoke_outlet)
+                ],
+                [
+                    "FeatureId" => 300, // Community pool
+                    "BoolValue" => $safeBool($inmueble->has_community_pool)
+                ],
+                [
+                    "FeatureId" => 25, // Private pool
+                    "BoolValue" => $safeBool($inmueble->has_private_pool)
+                ],
+                [
+                    "FeatureId" => 204, // Loading area
+                    "BoolValue" => $safeBool($inmueble->has_loading_area)
+                ],
+                [
+                    "FeatureId" => 207, // 24h access
+                    "BoolValue" => $safeBool($inmueble->has_24h_access)
+                ],
+                [
+                    "FeatureId" => 208, // Internal transport
+                    "BoolValue" => $safeBool($inmueble->has_internal_transport)
+                ],
+                [
+                    "FeatureId" => 235, // Alarm
+                    "BoolValue" => $safeBool($inmueble->has_alarm)
+                ],
+                [
+                    "FeatureId" => 131, // Access code
+                    "BoolValue" => $safeBool($inmueble->has_access_code)
+                ],
+                [
+                    "FeatureId" => 206, // Free parking
+                    "BoolValue" => $safeBool($inmueble->has_free_parking)
+                ],
+                [
+                    "FeatureId" => 257, // Laundry
+                    "BoolValue" => $safeBool($inmueble->has_laundry)
+                ],
+                [
+                    "FeatureId" => 301, // Community area
+                    "BoolValue" => $safeBool($inmueble->has_community_area)
+                ],
+                [
+                    "FeatureId" => 289, // Office kitchen
+                    "BoolValue" => $safeBool($inmueble->has_office_kitchen)
+                ],
+                [
+                    "FeatureId" => 274, // Jacuzzi
+                    "BoolValue" => $safeBool($inmueble->has_jacuzzi)
+                ],
+                [
+                    "FeatureId" => 277, // Sauna
+                    "BoolValue" => $safeBool($inmueble->has_sauna)
+                ],
+                [
+                    "FeatureId" => 310, // Tennis court
+                    "BoolValue" => $safeBool($inmueble->has_tennis_court)
+                ],
+                [
+                    "FeatureId" => 309, // Gym
+                    "BoolValue" => $safeBool($inmueble->has_gym)
+                ],
+                [
+                    "FeatureId" => 302, // Sports area
+                    "BoolValue" => $safeBool($inmueble->has_sports_area)
+                ],
+                [
+                    "FeatureId" => 303, // Children area
+                    "BoolValue" => $safeBool($inmueble->has_children_area)
+                ],
+                [
+                    "FeatureId" => 142, // Home automation
+                    "BoolValue" => $safeBool($inmueble->has_home_automation)
+                ],
+                [
+                    "FeatureId" => 286, // Internet
+                    "BoolValue" => $safeBool($inmueble->has_internet)
+                ],
+                [
+                    "FeatureId" => 260, // Suite bathroom
+                    "BoolValue" => $safeBool($inmueble->has_suite_bathroom)
+                ],
+                [
+                    "FeatureId" => 259, // Home appliances
+                    "BoolValue" => $safeBool($inmueble->has_home_appliances)
+                ],
+                [
+                    "FeatureId" => 288, // Oven
+                    "BoolValue" => $safeBool($inmueble->has_oven)
+                ],
+                [
+                    "FeatureId" => 293, // Washing machine
+                    "BoolValue" => $safeBool($inmueble->has_washing_machine)
+                ],
+                [
+                    "FeatureId" => 287, // Microwave
+                    "BoolValue" => $safeBool($inmueble->has_microwave)
+                ],
+                [
+                    "FeatureId" => 292, // Fridge
+                    "BoolValue" => $safeBool($inmueble->has_fridge)
+                ],
+                [
+                    "FeatureId" => 291, // TV
+                    "BoolValue" => $safeBool($inmueble->has_tv)
+                ],
+                [
+                    "FeatureId" => 290, // Parquet
+                    "BoolValue" => $safeBool($inmueble->has_parquet)
+                ],
+                [
+                    "FeatureId" => 295, // Stoneware
+                    "BoolValue" => $safeBool($inmueble->has_stoneware)
+                ],
+                [
+                    "FeatureId" => 176, // Nearby public transport
+                    "BoolValue" => $safeBool($inmueble->nearby_public_transport)
+                ],
+                [
+                    "FeatureId" => 69, // Land area
+                    "DecimalValue" => $safeFloat($inmueble->land_area ?? 0)
+                ],
+                // Orientación
+                [
+                    "FeatureId" => 28, // Orientation
+                    "DecimalValue" => $safeFloat($inmueble->orientation_id ?? 0)
+                ],
+                // Calefacción
+                [
+                    "FeatureId" => 29, // Has heating
+                    "BoolValue" => $safeBool($inmueble->has_heating)
+                ],
+                [
+                    "FeatureId" => 320, // Heating type
+                    "DecimalValue" => $safeFloat($inmueble->heating_type_id ?? 0)
+                ],
+                // Agua caliente
+                [
+                    "FeatureId" => 321, // Hot water type
+                    "DecimalValue" => $safeFloat($inmueble->hot_water_type_id ?? 0)
+                ],
+                // Estado de conservación
+                [
+                    "FeatureId" => 249, // Conservation status
+                    "DecimalValue" => $this->getConservationStatusValue($inmueble->conservation_status)
+                ]
+            ], $this->getEnergyFeatures($inmueble)),
+
+            "PropertyContactInfo" => [
+                [
+                    "TypeId" => 1, // Email
+                    "Value" => $safeString($inmueble->email ?? 'contact@example.com')
+                ],
+                [
+                    "TypeId" => 2, // Phone
+                    "Value" => $safeString($inmueble->telefono ?? '+34 123 456 789')
+                ]
+            ],
+
+            "PropertyTransaction" => [
+                [
+                    "TransactionTypeId" => $safeInt($inmueble->transaction_type_id),
+                    "Price" => $safeFloat($inmueble->valor_referencia ?? 0),
+                    "ShowPrice" => $safeBool($inmueble->mostrar_precio ?? true)
+                ]
+            ],
+
+            // Añadir imágenes usando el ID original del JSON
+            "PropertyDocument" => $this->getPropertyDocumentsFromOriginalId($originalId)
+        ];
+
+        // Log del payload antes de enviar (para debugging)
+        Log::info('Payload enviado a Fotocasa', [
+            'inmueble_id' => $inmueble->id,
+            'original_id' => $originalId,
+            'titulo' => $inmueble->titulo,
+            'property_documents_count' => count($payload['PropertyDocument']),
+            'property_documents' => $payload['PropertyDocument']
+        ]);
+
+        // DEBUG: Log detallado del payload completo
+        Log::info('DEBUG - Payload completo enviado a Fotocasa', [
+            'inmueble_id' => $inmueble->id,
+            'original_id' => $originalId,
+            'full_payload' => json_encode($payload, JSON_PRETTY_PRINT),
+            'property_documents_section' => $payload['PropertyDocument'],
+            'property_documents_count' => count($payload['PropertyDocument']),
+            'property_documents_type' => gettype($payload['PropertyDocument']),
+            'property_documents_is_array' => is_array($payload['PropertyDocument']),
+            'property_documents_empty' => empty($payload['PropertyDocument'])
+        ]);
+
+        // Petición HTTP a Fotocasa
+        $url = 'https://imports.gw.fotocasa.pro/api/property';
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Api-Key' => env('API_KEY'),
+            ])->withOptions([
+                'verify' => false, // Deshabilitar verificación SSL para desarrollo
+                'timeout' => 30,   // Timeout de 30 segundos
+            ])->post($url, $payload);
+
+            // Log de la respuesta de Fotocasa
+            Log::info('Respuesta de Fotocasa', [
+                'inmueble_id' => $inmueble->id,
+                'original_id' => $originalId,
+                'status_code' => $response->status(),
+                'response_body' => $response->body(),
+                'response_json' => $response->json()
+            ]);
+
+            // Retorna JSON con la respuesta de la API o error
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $response->json()
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'status' => $response->status(),
+                    'message' => $response->body()
+                ], $response->status());
+            }
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            Log::error('Error en petición a Fotocasa API', [
+                'error' => $e->getMessage(),
+                'inmueble_id' => $inmueble->id,
+                'original_id' => $originalId,
+                'url' => $url
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'message' => 'Error de conexión con Fotocasa API: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener documentos/imágenes usando el ID original del JSON
+     */
+    public function getPropertyDocumentsFromOriginalId($originalId)
+    {
+        $documents = [];
+
+        // Leer el archivo imagenes_original.json
+        $jsonPath = base_path('imagenes_original.json');
+        if (!file_exists($jsonPath)) {
+            Log::warning('Archivo imagenes_original.json no encontrado', [
+                'path' => $jsonPath,
+                'original_id' => $originalId
+            ]);
+            return $documents;
+        }
+
+        $jsonContent = file_get_contents($jsonPath);
+        $imagenes = json_decode($jsonContent, true);
+
+        if (!$imagenes) {
+            Log::warning('Error al parsear imagenes_original.json', [
+                'original_id' => $originalId,
+                'json_content_length' => strlen($jsonContent)
+            ]);
+            return $documents;
+        }
+
+        // Buscar las imágenes usando el ID original
+        $propertyId = (string)$originalId;
+
+        Log::info("Buscando imágenes para propertyId: {$propertyId}", [
+            'original_id' => $originalId,
+            'property_id_string' => $propertyId,
+            'available_keys' => array_keys($imagenes),
+            'key_exists' => isset($imagenes[$propertyId])
+        ]);
+
+        if (!isset($imagenes[$propertyId])) {
+            Log::info("No se encontraron imágenes para la propiedad ID original: {$propertyId}", [
+                'original_id' => $originalId,
+                'available_keys' => array_keys($imagenes)
+            ]);
+            return $documents;
+        }
+
+        $propertyImages = $imagenes[$propertyId];
+        $sortingId = 1;
+
+        Log::info("Procesando imágenes para propiedad", [
+            'original_id' => $originalId,
+            'property_id_in_json' => $propertyId,
+            'total_images_found' => count($propertyImages),
+            'images' => $propertyImages
+        ]);
+
+        foreach ($propertyImages as $imageKey => $imageUrl) {
+            // Las URLs ya están en formato original, no necesitan conversión
+            $originalUrl = $imageUrl;
+
+            Log::info("Procesando imagen", [
+                'original_id' => $originalId,
+                'image_key' => $imageKey,
+                'url' => $imageUrl
+            ]);
+
+            // Verificar que la URL sea válida
+            if (filter_var($originalUrl, FILTER_VALIDATE_URL)) {
+                // Verificar que la imagen sea accesible públicamente
+                try {
+                    $response = Http::withOptions([
+                        'verify' => false, // Deshabilitar verificación SSL
+                        'timeout' => 5
+                    ])->head($originalUrl);
+                    if ($response->successful()) {
+                        $documents[] = [
+                            "TypeId" => 1, // Image
+                            "Url" => $originalUrl,
+                            "SortingId" => $sortingId
+                        ];
+                        $sortingId++;
+                        Log::info("Imagen validada y agregada", [
+                            'inmueble_id' => $inmueble->id,
+                            'url' => $originalUrl,
+                            'sorting_id' => $sortingId - 1,
+                            'response_status' => $response->status()
+                        ]);
+                    } else {
+                        Log::warning('Image not accessible', [
+                            'inmueble_id' => $inmueble->id,
+                            'url' => $originalUrl,
+                            'status' => $response->status(),
+                            'response_headers' => $response->headers()
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error checking image accessibility', [
+                        'inmueble_id' => $inmueble->id,
+                        'url' => $originalUrl,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } else {
+                Log::warning('URL de imagen inválida', [
+                    'original_id' => $originalId,
+                    'url' => $originalUrl
+                ]);
             }
         }
 
+        Log::info("Procesadas " . count($documents) . " imágenes para la propiedad ID original: {$propertyId}", [
+            'original_id' => $originalId,
+            'total_images_processed' => count($propertyImages),
+            'valid_images_count' => count($documents),
+            'documents' => $documents
+        ]);
+
         return $documents;
+    }
+
+    /**
+     * Importar viviendas desde el JSON y enviarlas a Fotocasa
+     */
+    public function importFromJson()
+    {
+        try {
+            // Leer el archivo JSON
+            $jsonPath = base_path('viviendas2_formateado.json');
+            if (!file_exists($jsonPath)) {
+                return response()->json(['error' => 'Archivo JSON no encontrado'], 404);
+            }
+
+            $jsonContent = file_get_contents($jsonPath);
+            $viviendas = json_decode($jsonContent, true);
+
+            if (!$viviendas) {
+                return response()->json(['error' => 'Error al parsear el JSON'], 400);
+            }
+
+            $imported = 0;
+            $errors = [];
+            $results = [];
+
+            foreach ($viviendas as $id => $vivienda) {
+                try {
+                    // Convertir datos del JSON al formato del CRM
+                    $inmuebleData = $this->convertJsonToInmuebleData($vivienda, $id);
+
+                    // Crear el inmueble en la base de datos
+                    $inmueble = Inmuebles::create($inmuebleData);
+
+                    // Enviar a Fotocasa
+                    $fotocasaResponse = $this->sendToFotocasa($inmueble);
+
+                    $results[] = [
+                        'id' => $id,
+                        'titulo' => $vivienda['titulo'],
+                        'inmueble_id' => $inmueble->id,
+                        'fotocasa_status' => $fotocasaResponse->getStatusCode(),
+                        'fotocasa_response' => $fotocasaResponse->getContent()
+                    ];
+
+                    $imported++;
+
+                    // Pausa pequeña para no sobrecargar la API
+                    usleep(500000); // 0.5 segundos
+
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'id' => $id,
+                        'titulo' => $vivienda['titulo'] ?? 'Sin título',
+                        'error' => $e->getMessage()
+                    ];
+
+                    Log::error('Error importing property', [
+                        'id' => $id,
+                        'error' => $e->getMessage(),
+                        'data' => $vivienda
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'imported' => $imported,
+                'errors' => $errors,
+                'results' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in importFromJson', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Error general en la importación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Convertir datos del JSON al formato del CRM
+     */
+    public function convertJsonToInmuebleData($vivienda, $externalId)
+    {
+        // Extraer características
+        $caracteristicas = $vivienda['caracteristicas'] ?? [];
+
+        // Convertir precio
+        $precio = $this->extractPrice($vivienda['precio'] ?? '0 €');
+
+        // Convertir metros
+        $metros = $this->extractNumber($caracteristicas['metros'] ?? '0 m²');
+
+        // Convertir habitaciones
+        $habitaciones = $this->extractNumber($caracteristicas['habitaciones'] ?? '0 habs.');
+
+        // Convertir baños
+        $banos = $this->extractNumber($caracteristicas['baños'] ?? '0 baños');
+
+        // Determinar tipo de vivienda
+        $tipoVivienda = $this->mapTipoVivienda($caracteristicas['tipo_inmueble'] ?? '');
+
+        // Determinar building subtype
+        $buildingSubtype = $this->mapBuildingSubtype($caracteristicas['tipo_inmueble'] ?? '');
+
+        // Extraer dirección
+        $direccion = implode(' ', $vivienda['direccion'] ?? []);
+
+        // Determinar coordenadas (usar coordenadas de Algeciras por defecto)
+        $coordinates = $this->getCoordinatesFromAddress($direccion);
+
+        // Mapear características booleanas
+        $booleanFeatures = $this->mapBooleanFeatures($caracteristicas);
+
+        // Mapear estado de conservación
+        $conservationStatus = $this->mapConservationStatus($caracteristicas['estado'] ?? '');
+
+        // Mapear certificación energética
+        $energyCert = $this->mapEnergyCertification($caracteristicas);
+
+        // Obtener imágenes del archivo imagenes.json
+        $galeria = $this->getImagesFromJsonForProperty($externalId);
+
+        return [
+            'titulo' => $vivienda['titulo'] ?? 'Sin título',
+            'descripcion' => $vivienda['descripcion'] ?? '',
+            'm2' => $metros,
+            'm2_construidos' => $metros,
+            'valor_referencia' => $precio,
+            'habitaciones' => $habitaciones,
+            'banos' => $banos,
+            'ubicacion' => $direccion,
+            'cod_postal' => '11200', // Código postal de Algeciras
+            'latitude' => $coordinates['lat'],
+            'longitude' => $coordinates['lng'],
+            'estado' => $conservationStatus,
+            'disponibilidad' => 'disponible',
+            'conservation_status' => $conservationStatus,
+            'cert_energetico' => true,
+            'cert_energetico_elegido' => $energyCert['scale'],
+            'energy_certificate_status' => 'available',
+            'year_built' => 2000, // Año por defecto
+            'galeria' => json_encode($galeria), // Imágenes del archivo imagenes.json
+            'otras_caracteristicas' => json_encode([]),
+            'inmobiliaria' => session('inmobiliaria') === 'sayco' ? 1 : 0,
+            // Campos Fotocasa
+            'tipo_vivienda_id' => $tipoVivienda,
+            'building_subtype_id' => $buildingSubtype,
+            'transaction_type_id' => 1, // Venta
+            'visibility_mode_id' => 1, // Público
+            'floor_id' => $this->mapFloor($caracteristicas['planta'] ?? ''),
+            'orientation_id' => 1, // Norte por defecto
+            'heating_type_id' => 1, // Gas natural por defecto
+            'hot_water_type_id' => 1, // Gas natural por defecto
+            // Campos de eficiencia energética
+            'consumption_efficiency_scale' => $energyCert['consumption_scale'],
+            'emissions_efficiency_scale' => $energyCert['emissions_scale'],
+            'consumption_efficiency_value' => $energyCert['consumption_value'],
+            'emissions_efficiency_value' => $energyCert['emissions_value'],
+            // Campos booleanos
+            'furnished' => $booleanFeatures['furnished'],
+            'has_elevator' => $booleanFeatures['has_elevator'],
+            'has_terrace' => $booleanFeatures['has_terrace'],
+            'has_balcony' => false,
+            'has_parking' => $booleanFeatures['has_parking'],
+            'has_air_conditioning' => true, // Asumir que tiene aire acondicionado
+            'has_heating' => true, // Asumir que tiene calefacción
+            'has_security_door' => false,
+            'has_equipped_kitchen' => true,
+            'has_wardrobe' => true,
+            'has_storage_room' => $booleanFeatures['has_storage_room'],
+            'pets_allowed' => false,
+            // Campos adicionales
+            'terrace_surface' => 0,
+            'has_private_garden' => $booleanFeatures['has_private_garden'],
+            'has_yard' => false,
+            'has_smoke_outlet' => false,
+            'has_community_pool' => false,
+            'has_private_pool' => $booleanFeatures['has_private_pool'],
+            'has_loading_area' => false,
+            'has_24h_access' => false,
+            'has_internal_transport' => false,
+            'has_alarm' => false,
+            'has_access_code' => false,
+            'has_free_parking' => false,
+            'has_laundry' => false,
+            'has_community_area' => false,
+            'has_office_kitchen' => false,
+            'has_jacuzzi' => false,
+            'has_sauna' => false,
+            'has_tennis_court' => false,
+            'has_gym' => false,
+            'has_sports_area' => false,
+            'has_children_area' => false,
+            'has_home_automation' => false,
+            'has_internet' => true,
+            'has_suite_bathroom' => false,
+            'has_home_appliances' => true,
+            'has_oven' => true,
+            'has_washing_machine' => true,
+            'has_microwave' => true,
+            'has_fridge' => true,
+            'has_tv' => false,
+            'has_parquet' => false,
+            'has_stoneware' => false,
+            'nearby_public_transport' => true,
+            'land_area' => 0,
+            'mostrar_precio' => true,
+        ];
+    }
+
+    /**
+     * Obtener imágenes del archivo imagenes_original.json para una propiedad específica
+     */
+    private function getImagesFromJsonForProperty($propertyId)
+    {
+        $galeria = [];
+
+        // Leer el archivo imagenes_original.json
+        $jsonPath = base_path('imagenes_original.json');
+        if (!file_exists($jsonPath)) {
+            return $galeria;
+        }
+
+        $jsonContent = file_get_contents($jsonPath);
+        $imagenes = json_decode($jsonContent, true);
+
+        if (!$imagenes || !isset($imagenes[$propertyId])) {
+            return $galeria;
+        }
+
+        $propertyImages = $imagenes[$propertyId];
+        $sortingId = 1;
+
+        foreach ($propertyImages as $imageKey => $imageUrl) {
+            // Las URLs ya están en formato original, no necesitan conversión
+            $originalUrl = $imageUrl;
+
+            // Agregar a la galería
+            $galeria[$sortingId] = $originalUrl;
+            $sortingId++;
+        }
+
+        return $galeria;
+    }
+
+    /**
+     * Extraer precio del string
+     */
+    private function extractPrice($priceString)
+    {
+        preg_match('/[\d.]+/', $priceString, $matches);
+        if (!empty($matches)) {
+            // Elimina puntos y comas, y convierte a entero
+            return (int)str_replace(['.', ','], '', $matches[0]);
+        }
+        return 0;
+    }
+
+    /**
+     * Extraer número del string
+     */
+    private function extractNumber($string)
+    {
+        preg_match('/\d+/', $string, $matches);
+        return !empty($matches) ? (int) $matches[0] : 0;
+    }
+
+    /**
+     * Mapear tipo de vivienda a ID de Fotocasa
+     */
+    private function mapTipoVivienda($tipo)
+    {
+        $mapping = [
+            'Piso' => 1,
+            'Casa o chalet' => 2,
+            'Casa adosada' => 2,
+            'Dúplex' => 1,
+            'Ático' => 1,
+            'Estudio' => 1,
+            'Loft' => 1,
+        ];
+
+        return $mapping[$tipo] ?? 1; // Flat por defecto
+    }
+
+    /**
+     * Mapear building subtype
+     */
+    private function mapBuildingSubtype($tipo)
+    {
+        $mapping = [
+            'Piso' => 9, // Flat
+            'Casa o chalet' => 13, // House
+            'Casa adosada' => 17, // Terraced house
+            'Dúplex' => 3, // Duplex
+            'Ático' => 5, // Penthouse
+            'Estudio' => 6, // Studio
+            'Loft' => 7, // Loft
+        ];
+
+        return $mapping[$tipo] ?? 9; // Flat por defecto
+    }
+
+    /**
+     * Mapear planta
+     */
+    private function mapFloor($planta)
+    {
+        if (empty($planta)) return null;
+
+        $mapping = [
+            'Bajo' => 3, // Ground floor
+            'Entresuelo' => 4, // Mezzanine
+            '1' => 6, // First
+            '2' => 7, // Second
+            '3' => 8, // Third
+            '4' => 9, // Fourth
+            '5' => 10, // Fifth
+            '6' => 11, // Sixth
+            '7' => 12, // Seventh
+            '8' => 13, // Eighth
+            '9' => 14, // Ninth
+            '10' => 15, // Tenth
+            'Ático' => 22, // Penthouse
+        ];
+
+        return $mapping[$planta] ?? null;
+    }
+
+    /**
+     * Mapear características booleanas
+     */
+    private function mapBooleanFeatures($caracteristicas)
+    {
+        return [
+            'furnished' => strtolower($caracteristicas['amueblado'] ?? '') === 'sí',
+            'has_elevator' => strtolower($caracteristicas['ascensor'] ?? '') === 'sí',
+            'has_terrace' => strpos(strtolower($caracteristicas['metros'] ?? ''), 'terraza') !== false,
+            'has_parking' => !empty($caracteristicas['parking']),
+            'has_storage_room' => strpos(strtolower($caracteristicas['metros'] ?? ''), 'trastero') !== false,
+            'has_private_garden' => strpos(strtolower($caracteristicas['metros'] ?? ''), 'jardín') !== false,
+            'has_private_pool' => strpos(strtolower($caracteristicas['metros'] ?? ''), 'piscina') !== false,
+        ];
+    }
+
+    /**
+     * Mapear estado de conservación
+     */
+    private function mapConservationStatus($estado)
+    {
+        $mapping = [
+            'Muy bien' => 'excelente',
+            'Bien' => 'bueno',
+            'Regular' => 'regular',
+            'Necesita reforma' => 'necesita reforma',
+        ];
+
+        return $mapping[$estado] ?? 'bueno';
+    }
+
+    /**
+     * Mapear certificación energética
+     */
+    private function mapEnergyCertification($caracteristicas)
+    {
+        $scaleMap = [
+            'A' => 1,
+            'B' => 2,
+            'C' => 3,
+            'D' => 4,
+            'E' => 5,
+            'F' => 6,
+            'G' => 7,
+            'NC' => 0
+        ];
+        $consumo = $caracteristicas['consumo_energia'] ?? '';
+        $emisiones = $caracteristicas['emisiones'] ?? '';
+        $scale = 'G'; // Por defecto
+        $consumption_scale = 7;
+        $emissions_scale = 7;
+
+        if (preg_match('/([A-G])/', $consumo, $m)) {
+            $scale = $m[1];
+            $consumption_scale = $scaleMap[$scale];
+        }
+        if (preg_match('/([A-G])/', $emisiones, $m)) {
+            $emissions_scale = $scaleMap[$m[1]];
+        }
+
+        return [
+            'scale' => $scale,
+            'consumption_scale' => $consumption_scale,
+            'emissions_scale' => $emissions_scale,
+            'consumption_value' => 999,
+            'emissions_value' => 999,
+        ];
+    }
+
+    /**
+     * Obtener coordenadas desde dirección
+     */
+    private function getCoordinatesFromAddress($address)
+    {
+        // Coordenadas por defecto de Algeciras (más precisas)
+        $defaultCoords = [
+            'lat' => 36.1408,
+            'lng' => -5.4565
+        ];
+
+        if (empty($address)) {
+            return $defaultCoords;
+        }
+
+        // Coordenadas específicas de barrios de Algeciras
+        $barrioCoords = [
+            'rinconcillo' => ['lat' => 36.1456, 'lng' => -5.4567],
+            'casco antiguo' => ['lat' => 36.1408, 'lng' => -5.4565],
+            'san garcía' => ['lat' => 36.1389, 'lng' => -5.4589],
+            'los pinos' => ['lat' => 36.1423, 'lng' => -5.4543],
+            'reconquista' => ['lat' => 36.1412, 'lng' => -5.4578],
+            'el rosario' => ['lat' => 36.1434, 'lng' => -5.4556],
+        ];
+
+        // Primero intentar con coordenadas específicas de barrios
+        $addressLower = strtolower($address);
+        foreach ($barrioCoords as $barrio => $coords) {
+            if (strpos($addressLower, $barrio) !== false) {
+                return $coords;
+            }
+        }
+
+        try {
+            // Si no se encuentra el barrio, intentar geocodificación con Google Maps
+            $response = Http::withOptions([
+                'verify' => false,
+                'timeout' => 10,
+            ])->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $address . ', Algeciras, Cádiz, Spain',
+                'key' => env('GOOGLE_MAPS_API_KEY')
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if ($data['status'] === 'OK' && !empty($data['results'])) {
+                    $location = $data['results'][0]['geometry']['location'];
+
+                    // Validar que las coordenadas estén en España
+                    $lat = $location['lat'];
+                    $lng = $location['lng'];
+
+                    if ($lat >= 35.0 && $lat <= 44.0 && $lng >= -10.0 && $lng <= 5.0) {
+                        return [
+                            'lat' => $lat,
+                            'lng' => $lng
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Error getting coordinates from Google Maps', [
+                'address' => $address,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Si todo falla, usar coordenadas por defecto de Algeciras
+        return $defaultCoords;
+    }
+
+    /**
+     * Parsea un array de JSON de propiedad al formato del modelo Inmuebles
+     */
+    public function parseJsonToInmuebleArray($prop)
+    {
+        // Aquí debes mapear todos los campos relevantes del JSON al modelo
+        // Ajusta los nombres de los campos según tu estructura
+        return [
+            'referencia' => $prop['referencia'] ?? null,
+            'titulo' => $prop['titulo'] ?? null,
+            'descripcion' => $prop['descripcion'] ?? null,
+            'direccion' => $prop['direccion'] ?? null,
+            'localidad' => $prop['localidad'] ?? null,
+            'provincia' => $prop['provincia'] ?? null,
+            'cp' => $prop['cp'] ?? null,
+            'precio' => isset($prop['precio']) ? $this->extractPrice($prop['precio']) : 0,
+            'superficie' => $prop['superficie'] ?? null,
+            'habitaciones' => $prop['habitaciones'] ?? null,
+            'banos' => $prop['banos'] ?? null,
+            'tipo_vivienda_id' => $prop['tipo_vivienda_id'] ?? null,
+            'estado' => $prop['estado'] ?? null,
+            'galeria' => isset($prop['galeria']) ? json_encode($prop['galeria']) : null,
+            // Agrega aquí el resto de campos necesarios
+        ];
     }
 }

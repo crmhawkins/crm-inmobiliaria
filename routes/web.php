@@ -58,6 +58,7 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::get('inmuebles/edit/{inmueble}', [InmueblesController::class, 'edit'])->name('inmuebles.edit');
     Route::put('inmuebles/update/{inmueble}', [InmueblesController::class, 'update'])->name('inmuebles.update');
     Route::delete('inmuebles/destroy/{inmueble}', [InmueblesController::class, 'destroy'])->name('inmuebles.destroy');
+    Route::post('inmuebles/import-json', [InmueblesController::class, 'importFromJson'])->name('inmuebles.import-json');
 
     // Clientes
     Route::get('clientes', [ClientesController::class, 'index'])->name('clientes.index');
