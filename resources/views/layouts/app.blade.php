@@ -33,7 +33,7 @@
 
     <x-livewire-alert::scripts />
     <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/sass/app.scss', 'resources/js/app.js'])
 
     @yield('head')
 
@@ -48,29 +48,29 @@
         @if (Request::session()->get('inmobiliaria') == 'sayco')
             @include('layouts.header-dark')
             <div class="page-wrapper chiller-theme toggled" style="background-color: #d9d9d9;">
-                    <div class="container " style="background-color: #d9d9d9  ; margin-top:30px; min-height:100%;">
-                        <div class="container-fluid shadow-lg rounded-4" style="background-color: #fcfcfc; min-height:100%">
-        @else
-            @include('layouts.header')
-            <div class="page-wrapper chiller-theme toggled" style="background-color: #333;">
-                <div class="container-fluid"
-                    style="background-color: #333  ; margin-top:30px; min-height:100%;">
-                    <div class="container-fluid shadow-lg rounded-4"
-                        style="background-color: #fcfcfc; min-height:100%">
+                <div class="container " style="background-color: #d9d9d9  ; margin-top:30px; min-height:100%;">
+                    <div class="container-fluid shadow-lg rounded-4" style="background-color: #fcfcfc; min-height:100%">
+                    @else
+                        @include('layouts.header')
+                        <div class="page-wrapper chiller-theme toggled" style="background-color: #333;">
+                            <div class="container-fluid"
+                                style="background-color: #333  ; margin-top:30px; min-height:100%;">
+                                <div class="container-fluid shadow-lg rounded-4"
+                                    style="background-color: #fcfcfc; min-height:100%">
         @endif
-                        <div class="container" style="border-bottom: 1px solid black; margin-bottom:10px;">
-                            <br>
-                            <div class="row">
-                                <h1 style="border-bottom:0px !important">@yield('encabezado')</h1>
-                                <h2 style="text-align:left;">@yield('subtitulo')</h2>
-                            </div>
-                        </div>
-                        <div class="container" >
-                            @yield('content')
-                        </div>
-                    </div>
-                </div>
+        <div class="container" style="border-bottom: 1px solid black; margin-bottom:10px;">
+            <br>
+            <div class="row">
+                <h1 style="border-bottom:0px !important">@yield('encabezado')</h1>
+                <h2 style="text-align:left;">@yield('subtitulo')</h2>
             </div>
+        </div>
+        <div class="container">
+            @yield('content')
+        </div>
+    </div>
+    </div>
+    </div>
     </div>
     {{-- </div> --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.3/viewer.min.js"

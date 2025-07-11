@@ -32,16 +32,23 @@
                 @if ($tipo_tarea == 'opcion_1')
                     <div class="mb-3 row d-flex align-items-center">
                         <label for="cliente" class="col-sm-3 col-form-label"><strong>Cliente:</strong></label>
-                        <div x-data="" x-init="$('#select2-cliente-create').select2();
-                        $('#select2-cliente-create').on('change', function(e) {
-                            var data = $('#select2-cliente-create').select2('val');
-                            @this.set('cliente_id', data);
+                        <div x-data="" x-init="$nextTick(() => {
+                            if ($('#select2-cliente-create').length) {
+                                $('#select2-cliente-create').select2({
+                                    placeholder: '-- Elige un cliente --',
+                                    allowClear: true
+                                });
+                                $('#select2-cliente-create').on('change', function(e) {
+                                    var data = $('#select2-cliente-create').select2('val');
+                                    @this.set('cliente_id', data);
+                                });
+                            }
                         });">
                             <div class="col" wire:ignore>
                                 <select class="form-control" id="select2-cliente-create">
                                     <option value="">-- Elige un cliente --</option>
                                     @foreach ($clientes as $cliente)
-                                        <option value={{ $cliente->id }}>{{ $cliente->nombre_completo }}</option>
+                                        <option value="{{ $cliente->id }}">{{ $cliente->nombre_completo }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -49,16 +56,25 @@
                     </div>
                     <div class="mb-3 row d-flex align-items-center">
                         <label for="inmueble" class="col-sm-3 col-form-label"><strong>Inmueble :</strong></label>
-                        <div x-data="" x-init="$('#select2-inmueble-create').select2();
-                        $('#select2-inmueble-create').on('change', function(e) {
-                            var data = $('#select2-inmueble-create').select2('val');
-                            @this.set('inmueble_id', data);
+                        <div x-data="" x-init="$nextTick(() => {
+                            if ($('#select2-inmueble-create').length) {
+                                $('#select2-inmueble-create').select2({
+                                    placeholder: '-- Elige un inmueble --',
+                                    allowClear: true
+                                });
+                                $('#select2-inmueble-create').on('change', function(e) {
+                                    var data = $('#select2-inmueble-create').select2('val');
+                                    @this.set('inmueble_id', data);
+                                });
+                            }
                         });">
                             <div class="col" wire:ignore>
+                                {{-- Debug: mostrar cantidad de inmuebles --}}
+                                <small class="text-muted">Inmuebles disponibles: {{ $inmuebles->count() }}</small>
                                 <select class="form-control" id="select2-inmueble-create">
                                     <option value="">-- Elige un inmueble --</option>
                                     @foreach ($inmuebles as $inmueble)
-                                        <option value={{ $inmueble->id }}>{{ $inmueble->titulo }}</option>
+                                        <option value="{{ $inmueble->id }}">{{ $inmueble->titulo }}</option>
                                     @endforeach
                                 </select>
                             </div>

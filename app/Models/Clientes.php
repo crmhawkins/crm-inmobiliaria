@@ -16,6 +16,7 @@ class Clientes extends Model
         'dni',
         'telefono',
         'email',
+        'direccion',
         'intereses',
         'inmuebles_intereses',
         'inmobiliaria',

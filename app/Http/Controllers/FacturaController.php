@@ -224,6 +224,8 @@ public function create()
         'condiciones' => $factura->condiciones,
         'cliente_nombre' => $factura->cliente->nombre_completo,
         'cliente_dni' => $factura->cliente->dni,
+        'cliente_direccion' => $factura->cliente->direccion ?? '',
+        'cliente_telefono' => $factura->cliente->telefono ?? '',
         'subtotal' => number_format($factura->subtotal, 2),
         'total' => number_format($factura->total, 2),
         'articulos' => [],

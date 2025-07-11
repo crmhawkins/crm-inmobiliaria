@@ -87,6 +87,18 @@ class InmueblesController extends Controller
         return view('inmuebles.show', compact('inmueble', 'caracteristicas'));
     }
 
+    public function adminShow($id)
+    {
+        $inmueble = Inmuebles::with(['tipoVivienda', 'vendedor'])->findOrFail($id);
+
+        // Decodificar otras_caracteristicas de forma segura
+        $caracteristicas_ids = json_decode($inmueble->otras_caracteristicas ?? '[]', true) ?? [];
+
+        $caracteristicas = Caracteristicas::whereIn('id', $caracteristicas_ids)->get();
+
+        return view('inmuebles.admin-show', compact('inmueble', 'caracteristicas'));
+    }
+
     public function publicShow($id)
     {
         $inmueble = Inmuebles::with(['tipoVivienda', 'vendedor'])->findOrFail($id);
@@ -1440,129 +1452,6 @@ class InmueblesController extends Controller
         }
     }
 
-    /**
-     * Obtener documentos/imágenes usando el ID original del JSON
-     */
-    public function getPropertyDocumentsFromOriginalId($originalId)
-    {
-        $documents = [];
-
-        // Leer el archivo imagenes_original.json
-        $jsonPath = base_path('imagenes_original.json');
-        if (!file_exists($jsonPath)) {
-            Log::warning('Archivo imagenes_original.json no encontrado', [
-                'path' => $jsonPath,
-                'original_id' => $originalId
-            ]);
-            return $documents;
-        }
-
-        $jsonContent = file_get_contents($jsonPath);
-        $imagenes = json_decode($jsonContent, true);
-
-        if (!$imagenes) {
-            Log::warning('Error al parsear imagenes_original.json', [
-                'original_id' => $originalId,
-                'json_content_length' => strlen($jsonContent)
-            ]);
-            return $documents;
-        }
-
-        // Buscar las imágenes usando el ID original
-        $propertyId = (string)$originalId;
-
-        Log::info("Buscando imágenes para propertyId: {$propertyId}", [
-            'original_id' => $originalId,
-            'property_id_string' => $propertyId,
-            'available_keys' => array_keys($imagenes),
-            'key_exists' => isset($imagenes[$propertyId])
-        ]);
-
-        if (!isset($imagenes[$propertyId])) {
-            Log::info("No se encontraron imágenes para la propiedad ID original: {$propertyId}", [
-                'original_id' => $originalId,
-                'available_keys' => array_keys($imagenes)
-            ]);
-            return $documents;
-        }
-
-        $propertyImages = $imagenes[$propertyId];
-        $sortingId = 1;
-
-        Log::info("Procesando imágenes para propiedad", [
-            'original_id' => $originalId,
-            'property_id_in_json' => $propertyId,
-            'total_images_found' => count($propertyImages),
-            'images' => $propertyImages
-        ]);
-
-        foreach ($propertyImages as $imageKey => $imageUrl) {
-            // Las URLs ya están en formato original, no necesitan conversión
-            $originalUrl = $imageUrl;
-
-            Log::info("Procesando imagen", [
-                'original_id' => $originalId,
-                'image_key' => $imageKey,
-                'url' => $imageUrl
-            ]);
-
-            // Verificar que la URL sea válida
-            if (filter_var($originalUrl, FILTER_VALIDATE_URL)) {
-                // Verificar que la imagen sea accesible públicamente
-                try {
-                    $response = Http::withOptions([
-                        'verify' => false, // Deshabilitar verificación SSL
-                        'timeout' => 5
-                    ])->head($originalUrl);
-                    if ($response->successful()) {
-                        $documents[] = [
-                            "TypeId" => 1, // Image
-                            "Url" => $originalUrl,
-                            "SortingId" => $sortingId
-                        ];
-                        $sortingId++;
-                        Log::info("Imagen validada y agregada", [
-                            'inmueble_id' => $inmueble->id,
-                            'url' => $originalUrl,
-                            'sorting_id' => $sortingId - 1,
-                            'response_status' => $response->status()
-                        ]);
-                    } else {
-                        Log::warning('Image not accessible', [
-                            'inmueble_id' => $inmueble->id,
-                            'url' => $originalUrl,
-                            'status' => $response->status(),
-                            'response_headers' => $response->headers()
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Error checking image accessibility', [
-                        'inmueble_id' => $inmueble->id,
-                        'url' => $originalUrl,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            } else {
-                Log::warning('URL de imagen inválida', [
-                    'original_id' => $originalId,
-                    'url' => $originalUrl
-                ]);
-            }
-        }
-
-        Log::info("Procesadas " . count($documents) . " imágenes para la propiedad ID original: {$propertyId}", [
-            'original_id' => $originalId,
-            'total_images_processed' => count($propertyImages),
-            'valid_images_count' => count($documents),
-            'documents' => $documents
-        ]);
-
-        return $documents;
-    }
-
-    /**
-     * Importar viviendas desde el JSON y enviarlas a Fotocasa
-     */
     public function importFromJson()
     {
         try {
@@ -2055,5 +1944,185 @@ class InmueblesController extends Controller
             'galeria' => isset($prop['galeria']) ? json_encode($prop['galeria']) : null,
             // Agrega aquí el resto de campos necesarios
         ];
+    }
+
+    public function documentos(Inmuebles $inmueble)
+    {
+        return view('inmuebles.documentos', compact('inmueble'));
+    }
+
+    public function contratos(Inmuebles $inmueble)
+    {
+        return view('inmuebles.contratos', compact('inmueble'));
+    }
+
+    public function visitas(Inmuebles $inmueble)
+    {
+        $visitas = $inmueble->hojasVisita;
+        return view('inmuebles.visitas', compact('inmueble', 'visitas'));
+    }
+
+    public function caracteristicas(Inmuebles $inmueble)
+    {
+        return view('inmuebles.caracteristicas', compact('inmueble'));
+    }
+
+    public function destroy(Inmuebles $inmueble)
+    {
+        try {
+            $inmueble->delete();
+            return redirect()->route('inmuebles.index')->with('success', 'Inmueble eliminado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al eliminar el inmueble: ' . $e->getMessage());
+        }
+    }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = Inmuebles::query()->with(['tipoVivienda', 'vendedor']);
+
+            // Ubicación
+            if ($request->filled('ubicacion')) {
+                $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+            }
+
+            // Valor de referencia
+            if ($request->filled('valorMin')) {
+                $query->where('valor_referencia', '>=', $request->valorMin);
+            }
+            if ($request->filled('valorMax')) {
+                $query->where('valor_referencia', '<=', $request->valorMax);
+            }
+
+            // M²
+            if ($request->filled('m2Min')) {
+                $query->where('m2', '>=', $request->m2Min);
+            }
+            if ($request->filled('m2Max')) {
+                $query->where('m2', '<=', $request->m2Max);
+            }
+
+            // Habitaciones
+            if ($request->filled('habitaciones')) {
+                $query->whereIn('habitaciones', $request->habitaciones);
+            }
+
+            // Baños
+            if ($request->filled('banos')) {
+                $query->whereIn('banos', $request->banos);
+            }
+
+            // Estado
+            if ($request->filled('estado')) {
+                $query->whereIn('estado', $request->estado);
+            }
+
+            // Disponibilidad
+            if ($request->filled('disponibilidad')) {
+                $query->whereIn('disponibilidad', $request->disponibilidad);
+            }
+
+            // Tipo de vivienda
+            if ($request->filled('tipo-vivienda')) {
+                $query->whereIn('tipo_vivienda_id', $request->get('tipo-vivienda'));
+            }
+
+            // Características (buscar en campos booleanos)
+            if ($request->filled('caracteristicas')) {
+                foreach ($request->caracteristicas as $caracteristica) {
+                    switch ($caracteristica) {
+                        case 'furnished':
+                            $query->where('furnished', true);
+                            break;
+                        case 'has_elevator':
+                            $query->where('has_elevator', true);
+                            break;
+                        case 'has_terrace':
+                            $query->where('has_terrace', true);
+                            break;
+                        case 'has_balcony':
+                            $query->where('has_balcony', true);
+                            break;
+                        case 'has_parking':
+                            $query->where('has_parking', true);
+                            break;
+                        case 'has_air_conditioning':
+                            $query->where('has_air_conditioning', true);
+                            break;
+                        case 'has_heating':
+                            $query->where('has_heating', true);
+                            break;
+                        case 'has_security_door':
+                            $query->where('has_security_door', true);
+                            break;
+                        case 'has_equipped_kitchen':
+                            $query->where('has_equipped_kitchen', true);
+                            break;
+                        case 'has_wardrobe':
+                            $query->where('has_wardrobe', true);
+                            break;
+                        case 'has_storage_room':
+                            $query->where('has_storage_room', true);
+                            break;
+                        case 'pets_allowed':
+                            $query->where('pets_allowed', true);
+                            break;
+                        case 'has_private_garden':
+                            $query->where('has_private_garden', true);
+                            break;
+                        case 'has_yard':
+                            $query->where('has_yard', true);
+                            break;
+                        case 'has_community_pool':
+                            $query->where('has_community_pool', true);
+                            break;
+                        case 'has_private_pool':
+                            $query->where('has_private_pool', true);
+                            break;
+                        case 'has_jacuzzi':
+                            $query->where('has_jacuzzi', true);
+                            break;
+                        case 'has_sauna':
+                            $query->where('has_sauna', true);
+                            break;
+                        case 'has_gym':
+                            $query->where('has_gym', true);
+                            break;
+                        case 'has_home_automation':
+                            $query->where('has_home_automation', true);
+                            break;
+                        case 'has_home_appliances':
+                            $query->where('has_home_appliances', true);
+                            break;
+                        case 'has_oven':
+                            $query->where('has_oven', true);
+                            break;
+                        case 'has_washing_machine':
+                            $query->where('has_washing_machine', true);
+                            break;
+                        case 'has_fridge':
+                            $query->where('has_fridge', true);
+                            break;
+                        case 'has_tv':
+                            $query->where('has_tv', true);
+                            break;
+                    }
+                }
+            }
+
+            $inmuebles = $query->get();
+
+            return response()->json([
+                'success' => true,
+                'inmuebles' => $inmuebles
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error en la búsqueda: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

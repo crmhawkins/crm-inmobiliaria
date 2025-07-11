@@ -1,12 +1,12 @@
 {
-  "resources/image/background-login-3.svg": {
-    "file": "assets/background-login-3.66c98ad5.js",
-    "src": "resources/image/background-login-3.svg",
-    "isEntry": true
-  },
   "resources/image/IVAN.jpg": {
     "file": "assets/IVAN.700ba807.js",
     "src": "resources/image/IVAN.jpg",
+    "isEntry": true
+  },
+  "resources/image/background-login-3.svg": {
+    "file": "assets/background-login-3.66c98ad5.js",
+    "src": "resources/image/background-login-3.svg",
     "isEntry": true
   },
   "resources/image/pic-login-3.svg": {
@@ -24,9 +24,9 @@
     "src": "resources/js/bootstrap.js",
     "isEntry": true
   },
-  "resources/sass/login.scss": {
-    "file": "assets/login.f374b21b.css",
-    "src": "resources/sass/login.scss",
+  "resources/css/app.css": {
+    "file": "assets/app.2a28e6b3.css",
+    "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/sass/settings.scss": {
@@ -34,8 +34,13 @@
     "src": "resources/sass/settings.scss",
     "isEntry": true
   },
+  "resources/sass/login.scss": {
+    "file": "assets/login.f374b21b.css",
+    "src": "resources/sass/login.scss",
+    "isEntry": true
+  },
   "resources/sass/app.scss": {
-    "file": "assets/app.7f77af5f.css",
+    "file": "assets/app.3037c263.css",
     "src": "resources/sass/app.scss",
     "isEntry": true
   }

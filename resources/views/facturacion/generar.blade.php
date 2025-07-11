@@ -125,18 +125,18 @@
             <tr>
                 <td>
                     <div class="box-text">
-                        <p>Inmobiliaria x</p>
-                        <p>NIF</p>
-                        <p>Dirección</p>
-                        <p>Teléfono</p>
+                        <p>Inmobiliaria SAYCO</p>
+                        <p>NIF: 123456789</p>
+                        <p>Dirección: Calle de la Princesa 123, Madrid</p>
+                        <p>Teléfono: 123456789</p>
                     </div>
                 </td>
                 <td>
                     <div class="box-text">
                         <p><strong>{{ $factura['cliente_nombre'] }}</strong></p>
-                        <p>{{ $factura['cliente_dni'] }}</p>
-                        <p>United States</p>
-                        <p>Contact: 1-206-266-1000</p>
+                        <p>DNI: {{ $factura['cliente_dni'] }}</p>
+                        <p>Dirección: {{ $factura['cliente_direccion'] }}</p>
+                        <p>Teléfono: {{ $factura['cliente_telefono'] }}</p>
                     </div>
                 </td>
             </tr>
@@ -155,21 +155,21 @@
     <div class="table-section bill-tbl w-100 mt-10">
         <table class="table w-100 mt-10">
             <tr>
-    <th>#</th>
-    <th>Artículo</th>
-    <th>Precio</th>
-    <th>IVA</th>
-    <th>Total</th>
-</tr>
-@foreach ($factura['articulos'] as $id => $item)
-    <tr>
-        <td>{{ $id + 1 }}</td>
-        <td>{{ $item['descripcion'] }}</td>
-        <td>{{ $item['importe'] }} €</td>
-        <td>{{ $item['impuesto'] }}%</td>
-        <td>{{ number_format($item['importe'] * (1 + $item['impuesto'] / 100), 2) }} €</td>
-    </tr>
-@endforeach
+                <th>#</th>
+                <th>Artículo</th>
+                <th>Precio</th>
+                <th>IVA</th>
+                <th>Total</th>
+            </tr>
+            @foreach ($factura['articulos'] as $id => $item)
+                <tr>
+                    <td>{{ $id + 1 }}</td>
+                    <td>{{ $item['descripcion'] }}</td>
+                    <td>{{ $item['importe'] }} €</td>
+                    <td>{{ $item['impuesto'] }}%</td>
+                    <td>{{ number_format($item['importe'] * (1 + $item['impuesto'] / 100), 2) }} €</td>
+                </tr>
+            @endforeach
 
             <tr>
                 <td colspan="7">

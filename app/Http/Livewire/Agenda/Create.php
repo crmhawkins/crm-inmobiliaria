@@ -27,13 +27,12 @@ class Create extends Component
 
     public function mount()
     {
-        if (request()->session()->get('inmobiliaria') == 'sayco') {
-            $this->clientes = Clientes::where('inmobiliaria', true)->orWhere('inmobiliaria', null)->get();
-            $this->inmuebles = Inmuebles::where('inmobiliaria', true)->orWhere('inmobiliaria', null)->get();
-        } else {
-            $this->clientes = Clientes::where('inmobiliaria', false)->orWhere('inmobiliaria', null)->get();
-            $this->inmuebles = Inmuebles::where('inmobiliaria', false)->orWhere('inmobiliaria', null)->get();
-        }
+        // Cargar todos los clientes e inmuebles sin filtrar por inmobiliaria
+        $this->clientes = Clientes::all();
+        $this->inmuebles = Inmuebles::all();
+
+        // Debug: verificar cuántos inmuebles se cargan
+        \Log::info('Inmuebles cargados: ' . $this->inmuebles->count());
     }
 
     // Renderizado del Componente

@@ -71,6 +71,7 @@
                             <input type="text" wire:model="titulo" class="form-control" name="titulo" id="titulo"
                                 placeholder="Título para mostrar en la agenda">
                             @error('titulo')
+                                {{-- @php $message is automatically available in @error directives --}}
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -82,6 +83,7 @@
                             <input type="text" wire:model="descripcion" class="form-control" name="descripcion"
                                 id="descripcion" placeholder="Descripción completa sobre la cita">
                             @error('descripcion')
+                                {{-- @php $message is automatically available in @error directives --}}
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -125,7 +127,14 @@
             </div>
         </div>
         <div class="mb-3 row d-flex align-items-center">
-            <button type="submit" class="btn btn-primary">Guardar</button>
+            <div class="col-sm-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+            <div class="col-sm-6 text-end">
+                <button type="button" class="btn btn-danger" wire:click="destroy">
+                    <i class="fas fa-trash me-2"></i>Eliminar evento
+                </button>
+            </div>
         </div>
     </form>
 </div>

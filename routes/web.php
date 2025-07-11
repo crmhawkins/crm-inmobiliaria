@@ -7,6 +7,9 @@ use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\InmueblesController;
 use App\Http\Controllers\TipoViviendaController;
 use App\Http\Controllers\VendedoresController;
+use App\Http\Controllers\DocumentosController;
+use App\Http\Controllers\ContratosController;
+use App\Http\Controllers\VisitasController;
 use App\Models\Caracteristicas;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -55,10 +58,39 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::get('inmuebles/create', [InmueblesController::class, 'create'])->name('inmuebles.create');
     Route::post('inmuebles/store', [InmueblesController::class, 'store'])->name('inmuebles.store');
     Route::get('inmuebles/show/{inmueble}', [InmueblesController::class, 'show'])->name('inmuebles.show');
+    Route::get('inmuebles/admin-show/{inmueble}', [InmueblesController::class, 'adminShow'])->name('inmuebles.admin-show');
     Route::get('inmuebles/edit/{inmueble}', [InmueblesController::class, 'edit'])->name('inmuebles.edit');
     Route::put('inmuebles/update/{inmueble}', [InmueblesController::class, 'update'])->name('inmuebles.update');
     Route::delete('inmuebles/destroy/{inmueble}', [InmueblesController::class, 'destroy'])->name('inmuebles.destroy');
     Route::post('inmuebles/import-json', [InmueblesController::class, 'importFromJson'])->name('inmuebles.import-json');
+    Route::post('inmuebles/search', [InmueblesController::class, 'search'])->name('inmuebles.search');
+
+    // Nuevas rutas para documentos y contratos
+    Route::get('inmuebles/{inmueble}/documentos', [InmueblesController::class, 'documentos'])->name('inmuebles.documentos');
+    Route::get('inmuebles/{inmueble}/contratos', [InmueblesController::class, 'contratos'])->name('inmuebles.contratos');
+    Route::get('inmuebles/{inmueble}/visitas', [InmueblesController::class, 'visitas'])->name('inmuebles.visitas');
+    Route::get('inmuebles/{inmueble}/caracteristicas', [InmueblesController::class, 'caracteristicas'])->name('inmuebles.caracteristicas');
+
+    // Documentos
+    Route::get('documentos/{documento}/download', [DocumentosController::class, 'download'])->name('documentos.download');
+    Route::post('documentos/store', [DocumentosController::class, 'store'])->name('documentos.store');
+    Route::delete('documentos/{documento}', [DocumentosController::class, 'destroy'])->name('documentos.destroy');
+
+    // Contratos
+    Route::get('contratos/create', [ContratosController::class, 'create'])->name('contratos.create');
+    Route::post('contratos/store', [ContratosController::class, 'store'])->name('contratos.store');
+    Route::get('contratos/{contrato}', [ContratosController::class, 'show'])->name('contratos.show');
+    Route::get('contratos/{contrato}/edit', [ContratosController::class, 'edit'])->name('contratos.edit');
+    Route::put('contratos/{contrato}', [ContratosController::class, 'update'])->name('contratos.update');
+    Route::delete('contratos/{contrato}', [ContratosController::class, 'destroy'])->name('contratos.destroy');
+
+    // Visitas
+    Route::get('visitas/create', [VisitasController::class, 'create'])->name('visitas.create');
+    Route::post('visitas/store', [VisitasController::class, 'store'])->name('visitas.store');
+    Route::get('visitas/{visita}', [VisitasController::class, 'show'])->name('visitas.show');
+    Route::get('visitas/{visita}/edit', [VisitasController::class, 'edit'])->name('visitas.edit');
+    Route::put('visitas/{visita}', [VisitasController::class, 'update'])->name('visitas.update');
+    Route::delete('visitas/{visita}', [VisitasController::class, 'destroy'])->name('visitas.destroy');
 
     // Clientes
     Route::get('clientes', [ClientesController::class, 'index'])->name('clientes.index');

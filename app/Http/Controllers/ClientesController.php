@@ -52,10 +52,10 @@ class ClientesController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nombre_completo' => 'required',
-            'dni' => 'required',
-            'telefono' => 'required',
-            'email' => 'required|email',
+            'nombre_completo' => 'required|string|max:255',
+            'dni' => 'required|string|max:20',
+            'telefono' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
         ], [
             'nombre_completo.required' => 'El nombre es obligatorio.',
             'dni.required' => 'El DNI del cliente es obligatorio.',
@@ -78,18 +78,19 @@ class ClientesController extends Controller
             'm2_min' => $request->m2_min,
             'm2_max' => $request->m2_max,
             'ubicacion' => $request->ubicacion,
-            'otras_caracteristicas' => json_encode($request->input('otras_caracteristicasArray', [])),
+            'caracteristicas' => $request->input('caracteristicas', []),
         ];
 
-        $inmobiliaria = $request->has('inmobiliaria') ? null : (session('inmobiliaria') === 'sayco');
+        $inmobiliaria = $request->has('inmobiliaria') ? 1 : 0;
 
         Clientes::create([
             'nombre_completo' => $request->nombre_completo,
             'dni' => $request->dni,
             'telefono' => $request->telefono,
             'email' => $request->email,
+            'direccion' => $request->direccion,
             'intereses' => json_encode($intereses),
-            'inmobiliaria' => $inmobiliaria,
+            'inmobiliaria' => 1,
         ]);
 
         return redirect()->route('clientes.index')->with('success', 'Cliente registrado correctamente.');
@@ -139,6 +140,7 @@ class ClientesController extends Controller
             'dni' => $request->dni,
             'telefono' => $request->telefono,
             'email' => $request->email,
+            'direccion' => $request->direccion,
             'intereses' => json_encode($intereses),
             'inmobiliaria' => $inmobiliaria,
         ]);
@@ -168,44 +170,51 @@ class ClientesController extends Controller
 
     public function filtrarInmuebles(Request $request)
     {
+        \Log::info('Método filtrarInmuebles llamado');
+        \Log::info('Datos recibidos:', $request->all());
+
         $query = Inmuebles::query();
 
-        if ($request->disponibilidad) {
-            $query->where('disponibilidad', $request->disponibilidad);
-        }
-
-        if ($request->estado) {
-            $query->where('estado', $request->estado);
-        }
-
-        if ($request->habitaciones_min) {
-            $query->where('habitaciones', '>=', $request->habitaciones_min);
-        }
-
-        if ($request->habitaciones_max) {
-            $query->where('habitaciones', '<=', $request->habitaciones_max);
-        }
-
-        if ($request->banos_min) {
-            $query->where('banos', '>=', $request->banos_min);
-        }
-
-        if ($request->banos_max) {
-            $query->where('banos', '<=', $request->banos_max);
-        }
-
-        if ($request->m2_min) {
-            $query->where('m2', '>=', $request->m2_min);
-        }
-
-        if ($request->m2_max) {
-            $query->where('m2', '<=', $request->m2_max);
-        }
-
-        if ($request->ubicacion) {
+        // Filtro básico por ubicación
+        if ($request->filled('ubicacion')) {
             $query->where('ubicacion', 'LIKE', "%{$request->ubicacion}%");
         }
 
+        // Filtro por disponibilidad
+        if ($request->filled('disponibilidad')) {
+            $query->where('disponibilidad', $request->disponibilidad);
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtros de habitaciones
+        if ($request->filled('habitaciones_min')) {
+            $query->where('habitaciones', '>=', $request->habitaciones_min);
+        }
+        if ($request->filled('habitaciones_max')) {
+            $query->where('habitaciones', '<=', $request->habitaciones_max);
+        }
+
+        // Filtros de baños
+        if ($request->filled('banos_min')) {
+            $query->where('banos', '>=', $request->banos_min);
+        }
+        if ($request->filled('banos_max')) {
+            $query->where('banos', '<=', $request->banos_max);
+        }
+
+        // Filtros de metros cuadrados
+        if ($request->filled('m2_min')) {
+            $query->where('m2', '>=', $request->m2_min);
+        }
+        if ($request->filled('m2_max')) {
+            $query->where('m2', '<=', $request->m2_max);
+        }
+
+        // Filtrar por inmobiliaria según la sesión
         if (session('inmobiliaria') === 'sayco') {
             $query->where(function ($q) {
                 $q->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
@@ -216,13 +225,11 @@ class ClientesController extends Controller
             });
         }
 
-        if ($request->filled('otras_caracteristicasArray')) {
-            foreach ($request->otras_caracteristicasArray as $caracteristica) {
-                $query->whereJsonContains('otras_caracteristicas', (string) $caracteristica);
-            }
-        }
-
         $inmuebles = $query->limit(6)->get();
+
+        \Log::info('Query SQL:', $query->toSql());
+        \Log::info('Bindings:', $query->getBindings());
+        \Log::info('Inmuebles encontrados:', $inmuebles->toArray());
 
         return response()->json($inmuebles);
     }
