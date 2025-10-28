@@ -51,13 +51,20 @@ class Create extends Component
         }
 
         // Si no hay fecha de final, se ajusta la misma que la fecha de inicio.
-
         if ($this->fecha_fin == null) {
             $this->fecha_fin = $this->fecha_inicio;
         }
 
-        //Si no se añade la opción de que esté en ambas inmobiliarias (devuelve null), se comprueba la inmobiliaria actual y se envía.
+        // Convertir fechas de datetime-local a formato MySQL
+        if ($this->fecha_inicio) {
+            $this->fecha_inicio = \Carbon\Carbon::parse($this->fecha_inicio)->format('Y-m-d H:i:s');
+        }
+        
+        if ($this->fecha_fin) {
+            $this->fecha_fin = \Carbon\Carbon::parse($this->fecha_fin)->format('Y-m-d H:i:s');
+        }
 
+        //Si no se añade la opción de que esté en ambas inmobiliarias (devuelve null), se comprueba la inmobiliaria actual y se envía.
         if ($this->inmobiliaria == null) {
             if (request()->session()->get('inmobiliaria') == 'sayco') {
                 $this->inmobiliaria = true;

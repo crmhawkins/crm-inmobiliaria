@@ -65,4 +65,25 @@ class VisitasController extends Controller
 
         return back()->with('success', 'Visita eliminada correctamente.');
     }
+
+    public function download(HojaVisita $visita)
+    {
+        $rutaArchivo = public_path($visita->ruta);
+        
+        if (!file_exists($rutaArchivo)) {
+            \Log::error("PDF no encontrado para hoja de visita {$visita->id}: {$rutaArchivo}");
+            return back()->with('error', 'El archivo PDF no existe en: ' . $visita->ruta);
+        }
+
+        return response()->download($rutaArchivo);
+    }
+
+    public function index()
+    {
+        $hojasVisita = HojaVisita::with(['cliente', 'inmueble', 'evento'])
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        return view('hojas-visita.index', compact('hojasVisita'));
+    }
 }

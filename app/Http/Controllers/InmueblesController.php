@@ -107,7 +107,128 @@ class InmueblesController extends Controller
         $caracteristicas_ids = json_decode($inmueble->otras_caracteristicas ?? '[]', true) ?? [];
         $caracteristicas = Caracteristicas::whereIn('id', $caracteristicas_ids)->get();
 
+        // Extraer solo la zona/barriada de la dirección
+        $inmueble->ubicacion_publica = $this->extractZone($inmueble->ubicacion);
+
         return view('inmuebles.public-show', compact('inmueble', 'caracteristicas'));
+    }
+
+    /**
+     * Extraer solo la zona/barriada de la dirección completa
+     */
+    private function extractZone($ubicacion)
+    {
+        if (!$ubicacion) {
+            return 'Ubicación no especificada';
+        }
+
+        // Lista de palabras comunes de direcciones que queremos eliminar
+        $removePatterns = [
+            '/^(Calle|C\\.|\/Cal)/i',  // Calle
+            '/^(Avda\\.|Avda|Avenida)/i',  // Avenida
+            '/^(Pl\\.|Plaza)/i',  // Plaza
+            '/^(Travesía|Trv\\.)/i',  // Travesía
+            '/^[A-Za-z]+\\s+[A-Za-z]+/',  // Nombres de calle seguidos
+            '/^\\d+/',  // Números al inicio
+            '/^\\d+\\w*/',  // Números con letras
+        ];
+
+        $parts = explode(',', $ubicacion);
+        
+        // Si hay comas, tomar la última parte (generalmente es la zona)
+        if (count($parts) > 1) {
+            $zone = trim(end($parts));
+            
+            // Limpiar palabras comunes
+            foreach ($removePatterns as $pattern) {
+                $zone = preg_replace($pattern, '', $zone);
+                $zone = trim($zone);
+            }
+            
+            return $zone ?: trim(end($parts));
+        }
+
+        // Si no hay comas, intentar extraer la parte después de números o nombres de calle
+        $cleaned = $ubicacion;
+        foreach ($removePatterns as $pattern) {
+            $cleaned = preg_replace($pattern, '', $cleaned);
+            $cleaned = trim($cleaned);
+        }
+
+        // Si después de limpiar queda algo, usarlo; si no, usar la original
+        return $cleaned ?: $ubicacion;
+    }
+
+    /**
+     * Aplicar marca de agua a una imagen guardada en el servidor
+     */
+    private function applyWatermark($imagePath)
+    {
+        if (!file_exists($imagePath)) {
+            return false;
+        }
+
+        // Detectar tipo de imagen
+        $imageInfo = getimagesize($imagePath);
+        if (!$imageInfo) {
+            return false;
+        }
+
+        $type = $imageInfo[2];
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+
+        // Crear imagen según el tipo
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                $image = imagecreatefromjpeg($imagePath);
+                $saveFunction = 'imagejpeg';
+                $saveParams = [$image, $imagePath, 90];
+                break;
+            case IMAGETYPE_PNG:
+                $image = imagecreatefrompng($imagePath);
+                imagealphablending($image, true);
+                imagesavealpha($image, true);
+                $saveFunction = 'imagepng';
+                $saveParams = [$image, $imagePath];
+                break;
+            case IMAGETYPE_GIF:
+                $image = imagecreatefromgif($imagePath);
+                $saveFunction = 'imagegif';
+                $saveParams = [$image, $imagePath];
+                break;
+            default:
+                return false;
+        }
+
+        if (!$image) {
+            return false;
+        }
+
+        // Configuración de la marca de agua
+        $text = 'SAYCO';
+        $fontSize = max(120, min($width, $height) / 7); // Tamaño grande y proporcional
+        $opacity = 40; // Opacidad baja
+        $textColor = imagecolorallocatealpha($image, 255, 255, 255, $opacity);
+
+        // Calcular posición centrada
+        $fontSizeInt = 5; // Fuente built-in más grande
+        $charWidth = imagefontwidth($fontSizeInt) * strlen($text);
+        $charHeight = imagefontheight($fontSizeInt);
+        $x = ($width / 2) - ($charWidth / 2);
+        $y = ($height / 2) - ($charHeight / 2);
+
+        // Dibujar texto múltiples veces para efecto bold/visible
+        for ($offset = -3; $offset <= 3; $offset++) {
+            imagestring($image, $fontSizeInt, $x + $offset, $y, $text, $textColor);
+            imagestring($image, $fontSizeInt, $x, $y + $offset, $text, $textColor);
+        }
+
+        // Guardar imagen con marca de agua
+        call_user_func_array($saveFunction, $saveParams);
+        imagedestroy($image);
+
+        return true;
     }
 
     public function create()
@@ -216,6 +337,9 @@ class InmueblesController extends Controller
 
             // Guardar la imagen en storage/app/public/photos/1/
             $ruta = $imagen->storeAs('photos/1', $nombreArchivo, 'public');
+            
+            // Aplicar marca de agua a la imagen
+            $this->applyWatermark(storage_path('app/public/' . $ruta));
 
             // Crear la URL completa
             $url = asset('storage/' . $ruta);
@@ -235,6 +359,9 @@ class InmueblesController extends Controller
 
                     // Guardar la imagen en storage/app/public/photos/1/
                     $ruta = $file->storeAs('photos/1', $nombreArchivo, 'public');
+                    
+                    // Aplicar marca de agua a la imagen
+                    $this->applyWatermark(storage_path('app/public/' . $ruta));
 
                     // Crear la URL completa
                     $url = asset('storage/' . $ruta);
@@ -441,7 +568,7 @@ class InmueblesController extends Controller
             "PropertyAddress" => [
                 [
                     "ZipCode" => $safeString($inmueble->cod_postal ?? ''),
-                    "Street" => $safeString($inmueble->ubicacion),
+                    "Street" => $safeString($this->extractZone($inmueble->ubicacion)),
                     "FloorId" => $safeInt($inmueble->floor_id),
                     "x" => $safeFloat($coordinates['x']),
                     "y" => $safeFloat($coordinates['y']),
@@ -1121,7 +1248,7 @@ class InmueblesController extends Controller
             "PropertyAddress" => [
                 [
                     "ZipCode" => $safeString($inmueble->cod_postal ?? ''),
-                    "Street" => $safeString($inmueble->ubicacion),
+                    "Street" => $safeString($this->extractZone($inmueble->ubicacion)),
                     "FloorId" => $safeInt($inmueble->floor_id),
                     "x" => $safeFloat($coordinates['x']),
                     "y" => $safeFloat($coordinates['y']),

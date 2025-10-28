@@ -101,6 +101,19 @@
                             </a>
                         @endif
                     </li>
+                    <li class="nav-item mx-2">
+                        @if (Request::is('admin/hojas-visita*') || Request::is('admin/visitas'))
+                            <a class="btn btn-md btn-dark text-light d-block w-100 p-2" href="/admin/hojas-visita">
+                                <i class="fas fa-file-signature"></i>
+                                <strong>Hojas Visita</strong>
+                            </a>
+                        @else
+                            <a class="btn btn-md btn-outline-dark d-block w-100 p-2" href="/admin/hojas-visita">
+                                <i class="fas fa-file-signature"></i>
+                                <strong>Hojas Visita</strong>
+                            </a>
+                        @endif
+                    </li>
                     @if (Request::session()->get('inmobiliaria') == 'sayco')
                         <li class="ms-auto nav-item mx-2">
                             @if (Request::is('seleccion'))

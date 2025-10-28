@@ -127,10 +127,15 @@
             </div>
         </div>
         <div class="mb-3 row d-flex align-items-center">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
                 <button type="submit" class="btn btn-primary">Guardar</button>
             </div>
-            <div class="col-sm-6 text-end">
+            <div class="col-sm-4 text-center">
+                <a href="{{ route('hojas-visita.create', ['evento_id' => $identificador]) }}" class="btn btn-success">
+                    <i class="fas fa-file-signature me-2"></i>Hoja de Visita
+                </a>
+            </div>
+            <div class="col-sm-4 text-end">
                 <button type="button" class="btn btn-danger" wire:click="destroy">
                     <i class="fas fa-trash me-2"></i>Eliminar evento
                 </button>

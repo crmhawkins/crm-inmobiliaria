@@ -22,4 +22,14 @@ class Evento extends Model
         "inmobiliaria",
 
     ];
+
+    public function cliente()
+    {
+        return $this->belongsTo(Clientes::class, 'cliente_id');
+    }
+
+    public function inmueble()
+    {
+        return $this->belongsTo(Inmuebles::class, 'inmueble_id');
+    }
 }

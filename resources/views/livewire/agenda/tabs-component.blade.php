@@ -207,36 +207,66 @@
             </ul>
 
             @livewire('agenda.create')
-        @elseif ($tab == 'tab2')
-            <ul class="nav nav-tabs nav-fill">
-                @if (
-                    (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
-                        (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
-                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
-                        (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
-                    <li class="nav-item">
-                        <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
-                            <h5>Añadir tarea</h5>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link active" wire:click.prevent="cambioTab('tab2')">
-                            <h3>Editar</h3>
-                        </button>
-                    </li>
-                @endif
+    @elseif ($tab == 'tab2')
+        <ul class="nav nav-tabs nav-fill">
+            @if (
+                (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
+                    (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
+                    (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
+                    (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
                 <li class="nav-item">
-                    <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
-                        <h5>Ver agenda</h5>
+                    <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                        <h5>Añadir tarea</h5>
                     </button>
                 </li>
-            </ul>
-            <br>
+                <li class="nav-item">
+                    <button class="nav-link active" wire:click.prevent="cambioTab('tab2')">
+                        <h3>Editar</h3>
+                    </button>
+                </li>
+            @endif
+            <li class="nav-item">
+                <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
+                    <h5>Ver agenda</h5>
+                </button>
+            </li>
+        </ul>
+        <br>
 
-            @livewire('agenda.edit', ['identificador' => $evento], key('tab3'))
+        @livewire('agenda.edit', ['identificador' => $evento], key('tab3'))
+    @elseif ($tab == 'tab4')
+        <ul class="nav nav-tabs nav-fill">
+            @if (
+                (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||
+                    (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === null) ||
+                    (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === 0) ||
+                    (Request::session()->get('inmobiliaria') == 'sancer' && Auth::user()->inmobiliaria === null))
+                <li class="nav-item">
+                    <button class="nav-link" wire:click.prevent="cambioTab('tab1')">
+                        <h5>Añadir tarea</h5>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" wire:click.prevent="cambioTab('tab2')">
+                        <h5>Editar</h5>
+                    </button>
+                </li>
+            @endif
+            <li class="nav-item">
+                <button class="nav-link" wire:click.prevent="cambioTab('tab3')">
+                    <h5>Ver agenda</h5>
+                </button>
+            </li>
+            <li class="nav-item active">
+                <button class="nav-link active" wire:click.prevent="cambioTab('tab4')">
+                    <h3>Hoja de Visita</h3>
+                </button>
+            </li>
+        </ul>
+        <br>
 
-            <br>
-        @elseif ($tab == 'tab3')
+        @livewire('agenda.visita-from-evento', ['identificador' => $evento], key('tab4'))
+    @elseif ($tab == 'tab3')
             <ul class="nav nav-tabs nav-fill">
                 @if (
                     (Request::session()->get('inmobiliaria') == 'sayco' && Auth::user()->inmobiliaria === 1) ||

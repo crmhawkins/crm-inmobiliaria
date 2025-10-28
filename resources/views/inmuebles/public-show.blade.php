@@ -22,16 +22,16 @@
                     },
                     colors: {
                         primary: {
-                            50: '#ecfeff',
-                            100: '#cffafe',
-                            200: '#a5f3fc',
-                            300: '#67e8f9',
-                            400: '#22d3ee',
-                            500: '#06b6d4',
-                            600: '#0891b2',
-                            700: '#0e7490',
-                            800: '#155e75',
-                            900: '#164e63',
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#2ecc71',  // Verde corporativo principal
+                            600: '#27ae60',
+                            700: '#229954',
+                            800: '#1e8449',
+                            900: '#145a32',
                         },
                     },
                 },
@@ -64,14 +64,60 @@
         }
 
         .gradient-text {
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        /* Marca de agua CSS - GRANDE Y VISIBLE */
+        .image-watermark::before {
+            content: 'SAYCO';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            letter-spacing: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .image-watermark::before {
+                font-size: 60px;
+                letter-spacing: 4px;
+            }
+        }
     </style>
+
+    <script>
+        // Deshabilitar clic derecho
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Deshabilitar arrastrar imágenes
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+
+        // Deshabilitar selección
+        document.addEventListener('selectstart', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+    </script>
 </head>
 
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 font-sans" oncontextmenu="return false;">
 
     <!-- Hero Section -->
     <section class="pt-24 pb-16 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white relative overflow-hidden">
@@ -85,13 +131,13 @@
                 <h1 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">{{ $inmueble->titulo }}</h1>
                 <p class="text-xl opacity-90 mb-8 flex items-center justify-center">
                     <i class="fas fa-map-marker-alt mr-2"></i>
-                    {{ $inmueble->ubicacion }}
+                    {{ $inmueble->ubicacion_publica }}
                     @if ($inmueble->cod_postal)
                         , {{ $inmueble->cod_postal }}
                     @endif
                 </p>
                 @if ($inmueble->valor_referencia)
-                    <div class="inline-block bg-white text-primary-600 px-8 py-4 rounded-2xl text-2xl font-bold shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
+                    <div class="inline-block bg-white text-green-600 px-8 py-4 rounded-2xl text-2xl font-bold shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
                         <i class="fas fa-euro-sign mr-2"></i>
                         {{ number_format($inmueble->valor_referencia, 0, ',', '.') }} €
                     </div>
@@ -173,11 +219,13 @@
                             @endphp
                             @if (is_array($galeria) && count($galeria) > 0)
                                 <!-- Main Image -->
-                                <div class="relative aspect-[16/9] overflow-hidden">
+                                <div class="relative aspect-[16/9] overflow-hidden image-watermark watermark-protection">
                                     <img src="{{ $galeria['1'] ?? array_values($galeria)[0] }}"
                                         alt="{{ $inmueble->titulo }}"
                                         class="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                                        id="main-gallery-image">
+                                        id="main-gallery-image"
+                                        draggable="false"
+                                        oncontextmenu="return false;">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                                 </div>
 
@@ -186,11 +234,13 @@
                                     <div class="p-6">
                                         <div class="grid grid-cols-6 gap-3">
                                             @foreach ($galeria as $key => $imageUrl)
-                                                <div class="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-xl"
+                                                <div class="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-xl image-watermark watermark-protection"
                                                     onclick="changeMainImage('{{ $imageUrl }}')">
                                                     <img src="{{ $imageUrl }}"
                                                         alt="{{ $inmueble->titulo }} - Imagen {{ $key }}"
-                                                        class="w-full h-full object-cover">
+                                                        class="w-full h-full object-cover"
+                                                        draggable="false"
+                                                        oncontextmenu="return false;">
                                                 </div>
                                             @endforeach
                                         </div>
@@ -760,7 +810,7 @@
                             <p class="text-lg mb-8 opacity-90">Contacta con nosotros para más información o para concertar una visita.</p>
                             <div class="space-y-4">
                                 <a href="tel:+34123456789"
-                                    class="block w-full bg-white text-primary-600 text-center py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                    class="block w-full bg-white text-green-600 text-center py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                                     <i class="fas fa-phone mr-2"></i>
                                     Llamar ahora
                                 </a>
@@ -776,7 +826,7 @@
                                         id="share-url"
                                         readonly>
                                     <button onclick="copyShareUrl()"
-                                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors duration-300">
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors duration-300">
                                         Copiar
                                     </button>
                                 </div>

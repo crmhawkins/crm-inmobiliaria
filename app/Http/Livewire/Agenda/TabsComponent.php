@@ -7,7 +7,10 @@ use Livewire\Component;
 
 class TabsComponent extends Component
 {
-    protected $listeners = ['seleccionarProducto' => 'selectProducto'];
+    protected $listeners = [
+        'seleccionarProducto' => 'selectProducto',
+        'mostrarHojaVisita' => 'showHojaVisita'
+    ];
     public $tab = "tab3";
     public $evento;
 
@@ -33,5 +36,11 @@ class TabsComponent extends Component
             $this->tab = "tab2";
         } else {
         }
+    }
+
+    public function showHojaVisita($eventoId)
+    {
+        $this->evento = $eventoId;
+        $this->tab = "tab4";
     }
 }

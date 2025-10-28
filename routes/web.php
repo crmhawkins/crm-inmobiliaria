@@ -10,6 +10,7 @@ use App\Http\Controllers\VendedoresController;
 use App\Http\Controllers\DocumentosController;
 use App\Http\Controllers\ContratosController;
 use App\Http\Controllers\VisitasController;
+use App\Http\Controllers\HojaVisitaController;
 use App\Models\Caracteristicas;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -85,12 +86,23 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::delete('contratos/{contrato}', [ContratosController::class, 'destroy'])->name('contratos.destroy');
 
     // Visitas
+    Route::get('visitas', [VisitasController::class, 'index'])->name('visitas.index');
     Route::get('visitas/create', [VisitasController::class, 'create'])->name('visitas.create');
     Route::post('visitas/store', [VisitasController::class, 'store'])->name('visitas.store');
     Route::get('visitas/{visita}', [VisitasController::class, 'show'])->name('visitas.show');
     Route::get('visitas/{visita}/edit', [VisitasController::class, 'edit'])->name('visitas.edit');
     Route::put('visitas/{visita}', [VisitasController::class, 'update'])->name('visitas.update');
     Route::delete('visitas/{visita}', [VisitasController::class, 'destroy'])->name('visitas.destroy');
+    Route::get('visitas/{visita}/download', [VisitasController::class, 'download'])->name('visitas.download');
+
+    // Hojas de Visita
+    Route::get('hojas-visita', [HojaVisitaController::class, 'index'])->name('hojas-visita.index');
+    Route::get('hojas-visita/crear', [HojaVisitaController::class, 'create'])->name('hojas-visita.create');
+    Route::post('hojas-visita/store-signature', [HojaVisitaController::class, 'storeSignature'])->name('hojas-visita.store-signature');
+    Route::post('hojas-visita/store', [HojaVisitaController::class, 'store'])->name('hojas-visita.store');
+    Route::get('hojas-visita/{hojaVisita}', [HojaVisitaController::class, 'show'])->name('hojas-visita.show');
+    Route::get('hojas-visita/{hojaVisita}/download', [HojaVisitaController::class, 'download'])->name('hojas-visita.download');
+    Route::delete('hojas-visita/{hojaVisita}', [HojaVisitaController::class, 'destroy'])->name('hojas-visita.destroy');
 
     // Clientes
     Route::get('clientes', [ClientesController::class, 'index'])->name('clientes.index');
@@ -127,21 +139,215 @@ Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']
     \UniSharp\LaravelFilemanager\Lfm::routes();
 });
 
-// Ruta para servir imágenes desde storage
-Route::get('storage/photos/{folder}/{filename}', function ($folder, $filename) {
+// Ruta para servir imágenes desde public/storage CON marca de agua
+Route::get('/storage/photos/{folder}/{filename}', function ($folder, $filename) {
     $path = storage_path("app/public/photos/{$folder}/{$filename}");
 
     if (!file_exists($path)) {
         abort(404);
     }
 
-    $file = file_get_contents($path);
-    $type = mime_content_type($path);
+    // Detectar tipo de imagen
+    $imageInfo = getimagesize($path);
+    if (!$imageInfo) {
+        abort(404);
+    }
 
-    return response($file, 200)
-        ->header('Content-Type', $type)
+    $type = $imageInfo[2];
+    $width = $imageInfo[0];
+    $height = $imageInfo[1];
+
+    // Crear imagen según el tipo
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $image = imagecreatefromjpeg($path);
+            $contentType = 'image/jpeg';
+            break;
+        case IMAGETYPE_PNG:
+            $image = imagecreatefrompng($path);
+            $contentType = 'image/png';
+            break;
+        case IMAGETYPE_GIF:
+            $image = imagecreatefromgif($path);
+            $contentType = 'image/gif';
+            break;
+        default:
+            abort(404);
+    }
+
+    if (!$image) {
+        abort(404);
+    }
+
+    // Configuración de la marca de agua
+    $text = 'SAYCO';
+    
+    // Preservar transparencia si es PNG
+    if ($type == IMAGETYPE_PNG) {
+        imagealphablending($image, true);
+        imagesavealpha($image, true);
+    }
+
+    // Calcular tamaño de fuente - hacerlo GRANDE
+    $fontSize = max(150, min($width, $height) / 6); // Tamaño mucho más grande
+    $angle = -45; // Diagonal
+    $opacity = 30; // Opacidad más baja para que sea muy visible
+    
+    // Color blanco con opacidad reducida
+    $textColor = imagecolorallocatealpha($image, 255, 255, 255, $opacity);
+    
+    // Intentar usar fuente TTF si está disponible
+    $ttfPath = public_path('fonts/arial.ttf');
+    $useTTF = function_exists('imagettftext') && file_exists($ttfPath);
+    
+    if ($useTTF) {
+        // Calcular bounding box del texto rotado
+        $bbox = imagettfbbox($fontSize, $angle, $ttfPath, $text);
+        $textWidth = abs($bbox[4] - $bbox[0]);
+        $textHeight = abs($bbox[5] - $bbox[1]);
+        
+        // Centrar exactamente
+        $x = ($width - $textWidth) / 2;
+        $y = ($height - $textHeight) / 2 + $textHeight;
+        
+        // Dibujar el texto con rotación
+        imagettftext($image, $fontSize, $angle, $x, $y, $textColor, $ttfPath, $text);
+    } else {
+        // Fallback: crear texto más grande usando fuentes built-in
+        // Crear texto superpuesto varias veces para simular tamaño grande
+        $fontSizeInt = 5; // Fuente máxima built-in
+        $charWidth = imagefontwidth($fontSizeInt);
+        $charHeight = imagefontheight($fontSizeInt);
+        $textWidth = $charWidth * strlen($text);
+        $textHeight = $charHeight;
+        
+        $centerX = $width / 2;
+        $centerY = $height / 2;
+        
+        // Ajustar posición para texto centrado (sin rotación en built-in)
+        $x = $centerX - ($textWidth / 2);
+        $y = $centerY - ($textHeight / 2);
+        
+        // Dibujar texto múltiples veces para efecto bold y tamaño
+        for ($offset = -3; $offset <= 3; $offset++) {
+            imagestring($image, $fontSizeInt, $x + $offset, $y, $text, $textColor);
+            imagestring($image, $fontSizeInt, $x, $y + $offset, $text, $textColor);
+        }
+    }
+
+    // Guardar en memoria
+    ob_start();
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            imagejpeg($image, null, 90);
+            break;
+        case IMAGETYPE_PNG:
+            imagepng($image);
+            break;
+        case IMAGETYPE_GIF:
+            imagegif($image);
+            break;
+    }
+    $watermarkedImage = ob_get_clean();
+    imagedestroy($image);
+
+    return response($watermarkedImage, 200)
+        ->header('Content-Type', $contentType)
         ->header('Cache-Control', 'public, max-age=31536000');
 })->where('filename', '.*');
+
+// Endpoint para servir imágenes con marca de agua
+Route::get('/images/watermark/{path}', function ($path) {
+    $fullPath = storage_path('app/public/photos/' . $path);
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    // Detectar tipo de imagen
+    $imageInfo = getimagesize($fullPath);
+    if (!$imageInfo) {
+        $file = file_get_contents($fullPath);
+        $type = mime_content_type($fullPath);
+        return response($file, 200)
+            ->header('Content-Type', $type)
+            ->header('Cache-Control', 'public, max-age=31536000');
+    }
+
+    $type = $imageInfo[2];
+    $width = $imageInfo[0];
+    $height = $imageInfo[1];
+
+    // Crear imagen según el tipo
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $image = imagecreatefromjpeg($fullPath);
+            $contentType = 'image/jpeg';
+            break;
+        case IMAGETYPE_PNG:
+            $image = imagecreatefrompng($fullPath);
+            $contentType = 'image/png';
+            break;
+        case IMAGETYPE_GIF:
+            $image = imagecreatefromgif($fullPath);
+            $contentType = 'image/gif';
+            break;
+        default:
+            $file = file_get_contents($fullPath);
+            return response($file, 200)
+                ->header('Content-Type', mime_content_type($fullPath));
+    }
+
+    if (!$image) {
+        $file = file_get_contents($fullPath);
+        return response($file, 200)
+            ->header('Content-Type', mime_content_type($fullPath));
+    }
+
+    // Configuración de la marca de agua
+    $text = 'SAYCO';
+    
+    if ($type == IMAGETYPE_PNG) {
+        imagealphablending($image, true);
+        imagesavealpha($image, true);
+    }
+
+    $fontSize = max(120, min($width, $height) / 7);
+    $opacity = 40;
+    $textColor = imagecolorallocatealpha($image, 255, 255, 255, $opacity);
+    
+    // Calcular posición centrada
+    $fontSizeInt = 5;
+    $charWidth = imagefontwidth($fontSizeInt) * strlen($text);
+    $charHeight = imagefontheight($fontSizeInt);
+    $x = ($width / 2) - ($charWidth / 2);
+    $y = ($height / 2) - ($charHeight / 2);
+    
+    // Dibujar texto múltiples veces para efecto bold
+    for ($offset = -2; $offset <= 2; $offset++) {
+        imagestring($image, $fontSizeInt, $x + $offset, $y, $text, $textColor);
+        imagestring($image, $fontSizeInt, $x, $y + $offset, $text, $textColor);
+    }
+
+    ob_start();
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            imagejpeg($image, null, 90);
+            break;
+        case IMAGETYPE_PNG:
+            imagepng($image);
+            break;
+        case IMAGETYPE_GIF:
+            imagegif($image);
+            break;
+    }
+    $watermarkedImage = ob_get_clean();
+    imagedestroy($image);
+
+    return response($watermarkedImage, 200)
+        ->header('Content-Type', $contentType)
+        ->header('Cache-Control', 'public, max-age=3600');
+})->where('path', '.*');
 
 // Rutas públicas para inmuebles
 Route::get('inmueble/{inmueble}', [InmueblesController::class, 'publicShow'])->name('inmueble.public.show');

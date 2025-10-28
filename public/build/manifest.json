@@ -1,9 +1,4 @@
 {
-  "resources/image/IVAN.jpg": {
-    "file": "assets/IVAN.700ba807.js",
-    "src": "resources/image/IVAN.jpg",
-    "isEntry": true
-  },
   "resources/image/background-login-3.svg": {
     "file": "assets/background-login-3.66c98ad5.js",
     "src": "resources/image/background-login-3.svg",
@@ -12,6 +7,11 @@
   "resources/image/pic-login-3.svg": {
     "file": "assets/pic-login-3.3a843ab5.js",
     "src": "resources/image/pic-login-3.svg",
+    "isEntry": true
+  },
+  "resources/image/IVAN.jpg": {
+    "file": "assets/IVAN.700ba807.js",
+    "src": "resources/image/IVAN.jpg",
     "isEntry": true
   },
   "resources/js/app.js": {
@@ -25,7 +25,7 @@
     "isEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app.2a28e6b3.css",
+    "file": "assets/app.66ec9047.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -40,7 +40,7 @@
     "isEntry": true
   },
   "resources/sass/app.scss": {
-    "file": "assets/app.3037c263.css",
+    "file": "assets/app.52d83dd3.css",
     "src": "resources/sass/app.scss",
     "isEntry": true
   }
