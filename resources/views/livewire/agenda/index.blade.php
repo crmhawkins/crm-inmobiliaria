@@ -33,6 +33,9 @@
                 initialView: window.innerWidth < 1000 ? 'timeGridDay' : 'dayGridMonth',
                 themeSystem: 'bootstrap',
                 locale: 'es',
+                // Asegurar que se muestren eventos pasados
+                validRange: null, // Permite navegar a fechas pasadas
+                showNonCurrentDates: true, // Mostrar fechas de otros meses
                 views: {
                     timeGridDay: {
                         dayHeaderFormat: {

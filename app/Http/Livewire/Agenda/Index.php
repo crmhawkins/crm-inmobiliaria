@@ -9,20 +9,37 @@ use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, LivewireAlert;
     protected $paginationTheme = 'bootstrap';
     public $eventos;
 
     public function mount()
     {
+        $this->cargarEventos();
+    }
+    
+    private function cargarEventos()
+    {
         if (request()->session()->get('inmobiliaria') == 'sayco') {
-            $this->eventos = Evento::where('inmobiliaria', true)->orWhere('inmobiliaria', null)->get();
+            $this->eventos = Evento::where(function($query) {
+                $query->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
+            })
+            ->orderBy('fecha_inicio', 'desc') // Más recientes primero
+            ->get();
         } else {
-            $this->eventos = Evento::where('inmobiliaria', false)->orWhere('inmobiliaria', null)->get();
+            $this->eventos = Evento::where(function($query) {
+                $query->where('inmobiliaria', false)->orWhereNull('inmobiliaria');
+            })
+            ->orderBy('fecha_inicio', 'desc') // Más recientes primero
+            ->get();
         }
     }
     public function render()
     {
+        // Asegurar que los eventos se carguen en cada render
+        if (empty($this->eventos)) {
+            $this->cargarEventos();
+        }
         return view('livewire.agenda.index');
     }
 
@@ -50,11 +67,7 @@ class Index extends Component
             ]);
 
             // Recargar los eventos
-            if (request()->session()->get('inmobiliaria') == 'sayco') {
-                $this->eventos = Evento::where('inmobiliaria', true)->orWhere('inmobiliaria', null)->get();
-            } else {
-                $this->eventos = Evento::where('inmobiliaria', false)->orWhere('inmobiliaria', null)->get();
-            }
+            $this->cargarEventos();
         } else {
             $this->alert('error', 'No se pudo eliminar el evento.', [
                 'position' => 'center',

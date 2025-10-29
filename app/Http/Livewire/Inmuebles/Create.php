@@ -6,6 +6,7 @@ use App\Models\Caracteristicas;
 use App\Models\Inmuebles;
 use App\Models\TipoVivienda;
 use App\Models\User;
+use App\Events\InmuebleCreated;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 
@@ -107,6 +108,11 @@ class Create extends Component
         ]);
 
         $inmueblesSave = Inmuebles::create($validatedData);
+
+        // Disparar evento para enviar alertas a clientes
+        if ($inmueblesSave) {
+            event(new InmuebleCreated($inmueblesSave));
+        }
 
         if ($inmueblesSave) {
             $this->alert('success', '¡Inmueble registrado correctamente!', [

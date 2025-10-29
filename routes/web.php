@@ -9,8 +9,6 @@ use App\Http\Controllers\TipoViviendaController;
 use App\Http\Controllers\VendedoresController;
 use App\Http\Controllers\DocumentosController;
 use App\Http\Controllers\ContratosController;
-use App\Http\Controllers\VisitasController;
-use App\Http\Controllers\HojaVisitaController;
 use App\Models\Caracteristicas;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -69,7 +67,6 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     // Nuevas rutas para documentos y contratos
     Route::get('inmuebles/{inmueble}/documentos', [InmueblesController::class, 'documentos'])->name('inmuebles.documentos');
     Route::get('inmuebles/{inmueble}/contratos', [InmueblesController::class, 'contratos'])->name('inmuebles.contratos');
-    Route::get('inmuebles/{inmueble}/visitas', [InmueblesController::class, 'visitas'])->name('inmuebles.visitas');
     Route::get('inmuebles/{inmueble}/caracteristicas', [InmueblesController::class, 'caracteristicas'])->name('inmuebles.caracteristicas');
 
     // Documentos
@@ -84,25 +81,6 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::get('contratos/{contrato}/edit', [ContratosController::class, 'edit'])->name('contratos.edit');
     Route::put('contratos/{contrato}', [ContratosController::class, 'update'])->name('contratos.update');
     Route::delete('contratos/{contrato}', [ContratosController::class, 'destroy'])->name('contratos.destroy');
-
-    // Visitas
-    Route::get('visitas', [VisitasController::class, 'index'])->name('visitas.index');
-    Route::get('visitas/create', [VisitasController::class, 'create'])->name('visitas.create');
-    Route::post('visitas/store', [VisitasController::class, 'store'])->name('visitas.store');
-    Route::get('visitas/{visita}', [VisitasController::class, 'show'])->name('visitas.show');
-    Route::get('visitas/{visita}/edit', [VisitasController::class, 'edit'])->name('visitas.edit');
-    Route::put('visitas/{visita}', [VisitasController::class, 'update'])->name('visitas.update');
-    Route::delete('visitas/{visita}', [VisitasController::class, 'destroy'])->name('visitas.destroy');
-    Route::get('visitas/{visita}/download', [VisitasController::class, 'download'])->name('visitas.download');
-
-    // Hojas de Visita
-    Route::get('hojas-visita', [HojaVisitaController::class, 'index'])->name('hojas-visita.index');
-    Route::get('hojas-visita/crear', [HojaVisitaController::class, 'create'])->name('hojas-visita.create');
-    Route::post('hojas-visita/store-signature', [HojaVisitaController::class, 'storeSignature'])->name('hojas-visita.store-signature');
-    Route::post('hojas-visita/store', [HojaVisitaController::class, 'store'])->name('hojas-visita.store');
-    Route::get('hojas-visita/{hojaVisita}', [HojaVisitaController::class, 'show'])->name('hojas-visita.show');
-    Route::get('hojas-visita/{hojaVisita}/download', [HojaVisitaController::class, 'download'])->name('hojas-visita.download');
-    Route::delete('hojas-visita/{hojaVisita}', [HojaVisitaController::class, 'destroy'])->name('hojas-visita.destroy');
 
     // Clientes
     Route::get('clientes', [ClientesController::class, 'index'])->name('clientes.index');
@@ -127,6 +105,7 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
 
     // Agenda
     Route::get('agenda', [AgendaController::class, 'index'])->name('agenda.index');
+    Route::get('agenda/hoja-firma/pdf/{hojaFirma}', [AgendaController::class, 'descargarPDFHojaFirma'])->name('agenda.hoja-firma.pdf');
 
     // Vendedores
     Route::get('vendedores', [VendedoresController::class, 'index'])->name('vendedores.index');

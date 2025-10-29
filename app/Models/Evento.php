@@ -32,4 +32,9 @@ class Evento extends Model
     {
         return $this->belongsTo(Inmuebles::class, 'inmueble_id');
     }
+
+    public function hojasFirma()
+    {
+        return $this->hasMany(HojaFirma::class, 'evento_id');
+    }
 }

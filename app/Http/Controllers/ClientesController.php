@@ -150,12 +150,17 @@ class ClientesController extends Controller
 
    public function show(Clientes $cliente)
     {
-        $intereses = json_decode($cliente->intereses, true);
+        // Si ya es array (con el cast del modelo), usarlo directamente
+        // Si es string JSON, decodificarlo
+        $intereses = is_array($cliente->intereses) ? $cliente->intereses : (json_decode($cliente->intereses ?? '{}', true) ?? []);
 
         $otras_caracteristicas_nombres = [];
         if (!empty($intereses['otras_caracteristicas'])) {
-            $ids = json_decode($intereses['otras_caracteristicas'], true);
-            $otras_caracteristicas_nombres = Caracteristicas::whereIn('id', $ids)->pluck('nombre')->toArray();
+            $caracteristicasRaw = $intereses['otras_caracteristicas'];
+            $ids = is_array($caracteristicasRaw) ? $caracteristicasRaw : (json_decode($caracteristicasRaw, true) ?? []);
+            if (!empty($ids)) {
+                $otras_caracteristicas_nombres = Caracteristicas::whereIn('id', $ids)->pluck('nombre')->toArray();
+            }
         }
 
         return view('clientes.show', compact('cliente', 'intereses', 'otras_caracteristicas_nombres'));

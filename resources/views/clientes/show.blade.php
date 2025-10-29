@@ -51,7 +51,8 @@
                     <p><strong>Disponibilidad:</strong> {{ $intereses['disponibilidad'] ?? '-' }}</p>
 
                     @php
-                        $otras = json_decode($intereses['otras_caracteristicas'] ?? '[]', true);
+                        $caracteristicasRaw = $intereses['otras_caracteristicas'] ?? [];
+                        $otras = is_array($caracteristicasRaw) ? $caracteristicasRaw : (json_decode($caracteristicasRaw, true) ?? []);
                     @endphp
                     <p><strong>Otras características:</strong>
                         @if (!empty($otras_caracteristicas_nombres))

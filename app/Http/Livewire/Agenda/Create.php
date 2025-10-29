@@ -27,12 +27,29 @@ class Create extends Component
 
     public function mount()
     {
-        // Cargar todos los clientes e inmuebles sin filtrar por inmobiliaria
-        $this->clientes = Clientes::all();
-        $this->inmuebles = Inmuebles::all();
+        // Filtrar clientes e inmuebles por inmobiliaria
+        if (request()->session()->get('inmobiliaria') == 'sayco') {
+            $this->clientes = Clientes::where(function($query) {
+                $query->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
+            })->orderBy('nombre_completo')->get();
+            
+            $this->inmuebles = Inmuebles::where(function($query) {
+                $query->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
+            })->orderBy('titulo')->get();
+        } else {
+            $this->clientes = Clientes::where(function($query) {
+                $query->where('inmobiliaria', false)->orWhereNull('inmobiliaria');
+            })->orderBy('nombre_completo')->get();
+            
+            $this->inmuebles = Inmuebles::where(function($query) {
+                $query->where('inmobiliaria', false)->orWhereNull('inmobiliaria');
+            })->orderBy('titulo')->get();
+        }
 
-        // Debug: verificar cuántos inmuebles se cargan
-        \Log::info('Inmuebles cargados: ' . $this->inmuebles->count());
+        \Log::info('Inmuebles cargados para agenda', [
+            'inmobiliaria' => request()->session()->get('inmobiliaria'),
+            'cantidad' => $this->inmuebles->count()
+        ]);
     }
 
     // Renderizado del Componente

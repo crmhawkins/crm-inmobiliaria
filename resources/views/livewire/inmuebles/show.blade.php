@@ -154,40 +154,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-4">
-                <div class="card mb-3">
-                    <h5 class="card-header">
-                        Hojas de visita
-                    </h5>
-                    <div class="card-body">
-                        <ul class="nav nav-tabs" id="myTab" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="home-tab" data-bs-toggle="tab"
-                                    data-bs-target="#home" type="button" role="tab" aria-controls="home"
-                                    aria-selected="true">Crear
-                                    nueva hoja de visita</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile"
-                                    type="button" role="tab" aria-controls="profile" aria-selected="true">Ver
-                                    hojas ya creadas</button>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="myTabContent">
-                            <div class="tab-pane fade show active" id="home" role="tabpanel"
-                                aria-labelledby="home-tab">
-                                @livewire('inmuebles.visita-create', ['inmueble_id' => $identificador], key(time() . 'inmueble-' . $identificador))
-
-                            </div>
-                            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-                                @livewire('inmuebles.visita-index', ['inmueble_id' => $identificador], key(time() . 'inmueble-' . $identificador))
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        $('#lfm').on('click', function() {
-                            var route_prefix = '/laravel-filemanager' || '';
-                            var type = $(this).data('type') || 'images';
+            <script>
+                $('#lfm').on('click', function() {
+                    var route_prefix = '/laravel-filemanager' || '';
+                    var type = $(this).data('type') || 'images';
                             var target_input = document.getElementById('thumbnail');
 
                             window.open(route_prefix + '?type=' + type || 'file', 'FileManager',

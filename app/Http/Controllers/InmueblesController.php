@@ -8,6 +8,7 @@ use App\Models\Inmuebles;
 use App\Models\TipoVivienda;
 use App\Models\Clientes;
 use App\Models\Caracteristicas;
+use App\Events\InmuebleCreated;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -460,6 +461,9 @@ class InmueblesController extends Controller
             'emissions_efficiency_value' => $request->emissions_efficiency_value,
             'mostrar_precio' => $request->boolean('mostrar_precio'),
         ]);
+
+        // Disparar evento para enviar alertas a clientes
+        event(new InmuebleCreated($inmueble));
 
         // Enviar a Fotocasa
         $fotocasaResponse = $this->sendToFotocasa($inmueble);
@@ -1606,6 +1610,9 @@ class InmueblesController extends Controller
 
                     // Crear el inmueble en la base de datos
                     $inmueble = Inmuebles::create($inmuebleData);
+                    
+                    // Disparar evento para enviar alertas a clientes
+                    event(new InmuebleCreated($inmueble));
 
                     // Enviar a Fotocasa
                     $fotocasaResponse = $this->sendToFotocasa($inmueble);
@@ -2083,11 +2090,6 @@ class InmueblesController extends Controller
         return view('inmuebles.contratos', compact('inmueble'));
     }
 
-    public function visitas(Inmuebles $inmueble)
-    {
-        $visitas = $inmueble->hojasVisita;
-        return view('inmuebles.visitas', compact('inmueble', 'visitas'));
-    }
 
     public function caracteristicas(Inmuebles $inmueble)
     {

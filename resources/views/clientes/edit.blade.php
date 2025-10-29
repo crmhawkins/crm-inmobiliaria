@@ -66,7 +66,11 @@
             <div class="card mb-4">
                 <div class="card-header">Intereses del cliente</div>
                 <div class="card-body">
-                    @php $intereses = json_decode($cliente->intereses, true); @endphp
+                    @php
+                        // Si ya es array (con el cast del modelo), usarlo directamente
+                        // Si es string JSON, decodificarlo
+                        $intereses = is_array($cliente->intereses) ? $cliente->intereses : (json_decode($cliente->intereses ?? '{}', true) ?? []);
+                    @endphp
                     <div class="mb-3">
                         <label for="ubicacion" class="form-label">Ubicación</label>
                         <input type="text" name="ubicacion" id="ubicacion" class="form-control"
@@ -138,7 +142,10 @@
                     <div class="mt-3">
                         <label class="form-label">Otras características</label>
                         <div class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
-                            @php $seleccionadas = json_decode($intereses['otras_caracteristicas'] ?? '[]', true); @endphp
+                            @php
+                                $caracteristicasRaw = $intereses['otras_caracteristicas'] ?? $intereses['caracteristicas'] ?? '[]';
+                                $seleccionadas = is_array($caracteristicasRaw) ? $caracteristicasRaw : (json_decode($caracteristicasRaw, true) ?? []);
+                            @endphp
                             @foreach ($caracteristicas as $caracteristica)
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="otras_caracteristicasArray[]"

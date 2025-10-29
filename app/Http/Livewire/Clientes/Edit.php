@@ -57,7 +57,9 @@ class Edit extends Component
             $this->inmobiliaria = true;
         };
 
-        $intereses = json_decode($this->clientes->intereses, true);
+        // Si ya es array (con el cast del modelo), usarlo directamente
+        // Si es string JSON, decodificarlo
+        $intereses = is_array($this->clientes->intereses) ? $this->clientes->intereses : (json_decode($this->clientes->intereses ?? '{}', true) ?? []);
 
         $this->disponibilidad = $intereses["disponibilidad"];
         $this->estado = $intereses["estado"];
@@ -68,10 +70,11 @@ class Edit extends Component
         $this->m2_min = $intereses["m2_min"];
         $this->m2_max = $intereses["m2_max"];
         $this->ubicacion = $intereses["ubicacion"];
-        if ($intereses["otras_caracteristicas"] == null) {
+        if (empty($intereses["otras_caracteristicas"] ?? null)) {
             $this->otras_caracteristicasArray = [];
         } else {
-            $this->otras_caracteristicasArray = json_decode($intereses["otras_caracteristicas"], true);
+            $caracteristicasRaw = $intereses["otras_caracteristicas"];
+            $this->otras_caracteristicasArray = is_array($caracteristicasRaw) ? $caracteristicasRaw : (json_decode($caracteristicasRaw, true) ?? []);
         }
     }
 
