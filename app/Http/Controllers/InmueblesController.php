@@ -9,11 +9,14 @@ use App\Models\TipoVivienda;
 use App\Models\Clientes;
 use App\Models\Caracteristicas;
 use App\Events\InmuebleCreated;
+use App\Services\Idealista\IdealistaPropertiesService;
+use App\Services\Idealista\IdealistaPropertyCreator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class InmueblesController extends Controller
 {
@@ -100,6 +103,109 @@ class InmueblesController extends Controller
         return view('inmuebles.admin-show', compact('inmueble', 'caracteristicas'));
     }
 
+    public function idealistaRecent()
+    {
+        // Obtener los últimos 3 inmuebles subidos a Idealista
+        $inmuebles = Inmuebles::whereNotNull('idealista_property_id')
+            ->whereNotNull('idealista_synced_at')
+            ->with(['tipoVivienda', 'vendedor'])
+            ->orderBy('idealista_synced_at', 'desc')
+            ->limit(3)
+            ->get();
+
+        $idealistaService = app(IdealistaPropertiesService::class);
+        $inmueblesData = [];
+
+        foreach ($inmuebles as $inmueble) {
+            $idealistaData = null;
+            $idealistaImages = [];
+
+            try {
+                // Obtener datos de Idealista
+                $idealistaData = $idealistaService->find($inmueble->idealista_property_id);
+
+                // Obtener imágenes de Idealista
+                try {
+                    $imagesResponse = $idealistaService->listImages($inmueble->idealista_property_id);
+                    if (is_array($imagesResponse)) {
+                        if (isset($imagesResponse['images'])) {
+                            $idealistaImages = $imagesResponse['images'];
+                        } elseif (isset($imagesResponse['data'])) {
+                            $idealistaImages = $imagesResponse['data'];
+                        } elseif (is_array($imagesResponse) && !empty($imagesResponse)) {
+                            $idealistaImages = $imagesResponse;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('No se pudieron obtener imágenes de Idealista', [
+                        'property_id' => $inmueble->idealista_property_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('No se pudieron obtener datos de Idealista', [
+                    'property_id' => $inmueble->idealista_property_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            $inmueblesData[] = [
+                'inmueble' => $inmueble,
+                'idealistaData' => $idealistaData,
+                'idealistaImages' => $idealistaImages,
+            ];
+        }
+
+        return view('inmuebles.idealista-recent', compact('inmueblesData'));
+    }
+
+    public function idealistaPreview($id)
+    {
+        $inmueble = Inmuebles::with(['tipoVivienda', 'vendedor'])->findOrFail($id);
+
+        // Si el inmueble tiene un idealista_property_id, obtener datos de la API de Idealista
+        $idealistaData = null;
+        $idealistaImages = [];
+
+        if ($inmueble->idealista_property_id) {
+            try {
+                $idealistaService = app(\App\Services\Idealista\IdealistaPropertiesService::class);
+                $idealistaData = $idealistaService->find($inmueble->idealista_property_id);
+
+                // Obtener imágenes de Idealista
+                try {
+                    $imagesResponse = $idealistaService->listImages($inmueble->idealista_property_id);
+                    if (is_array($imagesResponse)) {
+                        // La respuesta puede venir en diferentes formatos
+                        if (isset($imagesResponse['images'])) {
+                            $idealistaImages = $imagesResponse['images'];
+                        } elseif (isset($imagesResponse['data'])) {
+                            $idealistaImages = $imagesResponse['data'];
+                        } elseif (is_array($imagesResponse) && !empty($imagesResponse)) {
+                            $idealistaImages = $imagesResponse;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('No se pudieron obtener imágenes de Idealista', [
+                        'property_id' => $inmueble->idealista_property_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error obteniendo datos de Idealista', [
+                    'property_id' => $inmueble->idealista_property_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Decodificar otras_caracteristicas de forma segura
+        $caracteristicas_ids = json_decode($inmueble->otras_caracteristicas ?? '[]', true) ?? [];
+        $caracteristicas = Caracteristicas::whereIn('id', $caracteristicas_ids)->get();
+
+        return view('inmuebles.idealista-preview', compact('inmueble', 'caracteristicas', 'idealistaData', 'idealistaImages'));
+    }
+
     public function publicShow($id)
     {
         $inmueble = Inmuebles::with(['tipoVivienda', 'vendedor'])->findOrFail($id);
@@ -135,17 +241,17 @@ class InmueblesController extends Controller
         ];
 
         $parts = explode(',', $ubicacion);
-        
+
         // Si hay comas, tomar la última parte (generalmente es la zona)
         if (count($parts) > 1) {
             $zone = trim(end($parts));
-            
+
             // Limpiar palabras comunes
             foreach ($removePatterns as $pattern) {
                 $zone = preg_replace($pattern, '', $zone);
                 $zone = trim($zone);
             }
-            
+
             return $zone ?: trim(end($parts));
         }
 
@@ -235,7 +341,11 @@ class InmueblesController extends Controller
     public function create()
     {
         $caracteristicas = Caracteristicas::all();
-        $vendedores = Clientes::where('inmobiliaria', 1)->get();
+        // Incluir vendedores tradicionales (inmobiliaria = 1) Y contactos de Idealista
+        $vendedores = Clientes::where(function($query) {
+            $query->where('inmobiliaria', 1)
+                  ->orWhereNotNull('idealista_contact_id');
+        })->orderBy('nombre_completo')->get();
 
         return view('inmuebles.create', compact('caracteristicas', 'vendedores'));
     }
@@ -252,10 +362,10 @@ class InmueblesController extends Controller
             'tipo_vivienda_id' => 'required|integer|in:1,2,3,4,5,6,7,8,12',
             'building_subtype_id' => 'required|integer|min:1',
             'ubicacion' => 'nullable|string',
-            'cod_postal' => 'nullable|string',
+            'cod_postal' => 'required|string|max:10',
             'referencia_catastral' => 'nullable|string',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'estado' => 'nullable|string',
             'disponibilidad' => 'nullable|string',
             'conservation_status' => 'nullable|string',
@@ -338,7 +448,7 @@ class InmueblesController extends Controller
 
             // Guardar la imagen en storage/app/public/photos/1/
             $ruta = $imagen->storeAs('photos/1', $nombreArchivo, 'public');
-            
+
             // Aplicar marca de agua a la imagen
             $this->applyWatermark(storage_path('app/public/' . $ruta));
 
@@ -360,7 +470,7 @@ class InmueblesController extends Controller
 
                     // Guardar la imagen en storage/app/public/photos/1/
                     $ruta = $file->storeAs('photos/1', $nombreArchivo, 'public');
-                    
+
                     // Aplicar marca de agua a la imagen
                     $this->applyWatermark(storage_path('app/public/' . $ruta));
 
@@ -377,11 +487,11 @@ class InmueblesController extends Controller
         $inmueble = Inmuebles::create([
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
-            'm2' => $request->m2,
-            'm2_construidos' => $request->m2_construidos,
-            'valor_referencia' => $request->valor_referencia,
-            'habitaciones' => $request->habitaciones,
-            'banos' => $request->banos,
+            'm2' => $request->filled('m2') && $request->m2 > 0 ? (float) $request->m2 : null,
+            'm2_construidos' => $request->filled('m2_construidos') && $request->m2_construidos > 0 ? (float) $request->m2_construidos : null,
+            'valor_referencia' => $request->filled('valor_referencia') && $request->valor_referencia > 0 ? (float) $request->valor_referencia : null,
+            'habitaciones' => $request->filled('habitaciones') && $request->habitaciones > 0 ? (int) $request->habitaciones : null,
+            'banos' => $request->filled('banos') && $request->banos > 0 ? (int) $request->banos : null,
             'ubicacion' => $request->ubicacion,
             'cod_postal' => $request->cod_postal,
             'referencia_catastral' => $request->referencia_catastral,
@@ -397,6 +507,7 @@ class InmueblesController extends Controller
             'galeria' => json_encode($galeria),
             'otras_caracteristicas' => json_encode($request->otras_caracteristicas ?? []),
             'inmobiliaria' => session('inmobiliaria') === 'sayco' ? 1 : 0,
+            'vendedor_id' => $request->vendedor_id,
             // Campos requeridos para Fotocasa con valores por defecto
             'tipo_vivienda_id' => $request->tipo_vivienda_id ?? 1, // Flat por defecto
             'building_subtype_id' => $request->building_subtype_id, // Requerido del formulario
@@ -464,6 +575,94 @@ class InmueblesController extends Controller
 
         // Disparar evento para enviar alertas a clientes
         event(new InmuebleCreated($inmueble));
+
+        // Crear en Idealista (solo si tiene los campos mínimos requeridos)
+        try {
+            // Validar que tenga los campos mínimos antes de intentar crear en Idealista
+            if (!$inmueble->cod_postal) {
+                Log::warning('Inmueble sin código postal, omitiendo creación en Idealista', [
+                    'inmueble_id' => $inmueble->id,
+                ]);
+            } elseif (!$inmueble->m2 && !$inmueble->m2_construidos) {
+                Log::warning('Inmueble sin área especificada, omitiendo creación en Idealista', [
+                    'inmueble_id' => $inmueble->id,
+                ]);
+            } else {
+                $idealistaCreator = app(IdealistaPropertyCreator::class);
+                $idealistaService = app(IdealistaPropertiesService::class);
+
+                // Cargar el vendedor si existe para obtener el contactId
+                if ($inmueble->vendedor_id) {
+                    $inmueble->load('vendedor');
+                }
+
+                // Convertir el inmueble al formato de Idealista
+                $idealistaPayload = $idealistaCreator->toIdealistaFormat($inmueble);
+
+                // Log del payload para debugging
+                Log::debug('Payload enviado a Idealista', [
+                    'inmueble_id' => $inmueble->id,
+                    'payload' => $idealistaPayload,
+                ]);
+
+                // Crear la propiedad en Idealista
+                $idealistaResponse = $idealistaService->create($idealistaPayload);
+
+                // Actualizar el inmueble con los datos de Idealista
+                $updateData = [
+                    'idealista_property_id' => $idealistaResponse['propertyId'] ?? null,
+                    'idealista_code' => $idealistaResponse['code'] ?? null,
+                    'idealista_payload' => json_encode($idealistaResponse),
+                    'idealista_synced_at' => now(),
+                ];
+
+                $inmueble->update($updateData);
+
+                // Subir imágenes a Idealista si hay
+                $images = $idealistaCreator->prepareImages($inmueble);
+                if (!empty($images) && $inmueble->idealista_property_id) {
+                    try {
+                        $idealistaService->replaceImages(
+                            $inmueble->idealista_property_id,
+                            ['images' => $images]
+                        );
+                    } catch (\Exception $e) {
+                        Log::warning('Error subiendo imágenes a Idealista', [
+                            'inmueble_id' => $inmueble->id,
+                            'idealista_property_id' => $inmueble->idealista_property_id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                Log::info('Inmueble creado en Idealista', [
+                    'inmueble_id' => $inmueble->id,
+                    'idealista_property_id' => $inmueble->idealista_property_id,
+                ]);
+            }
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            // Capturar respuesta completa de la API
+            $response = $e->response;
+            $errorBody = $response ? $response->body() : 'No response body';
+            $errorJson = $response ? $response->json() : null;
+
+            Log::error('Error creando inmueble en Idealista (HTTP)', [
+                'inmueble_id' => $inmueble->id,
+                'status_code' => $response ? $response->status() : null,
+                'error_message' => $e->getMessage(),
+                'error_body' => $errorBody,
+                'error_json' => $errorJson,
+            ]);
+            // No fallar la creación del inmueble si Idealista falla
+        } catch (\Exception $e) {
+            Log::error('Error creando inmueble en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // No fallar la creación del inmueble si Idealista falla
+        }
 
         // Enviar a Fotocasa
         $fotocasaResponse = $this->sendToFotocasa($inmueble);
@@ -1610,7 +1809,7 @@ class InmueblesController extends Controller
 
                     // Crear el inmueble en la base de datos
                     $inmueble = Inmuebles::create($inmuebleData);
-                    
+
                     // Disparar evento para enviar alertas a clientes
                     event(new InmuebleCreated($inmueble));
 
@@ -2251,6 +2450,134 @@ class InmueblesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error en la búsqueda: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy para búsquedas de Nominatim (evita problemas de CORS)
+     */
+    public function searchNominatim(Request $request): JsonResponse
+    {
+        $query = $request->input('q');
+        $limit = $request->input('limit', 5);
+        $countrycodes = $request->input('countrycodes', 'es');
+        $addressdetails = $request->input('addressdetails', 1);
+
+        if (!$query) {
+            return response()->json([
+                'error' => 'El parámetro "q" es requerido'
+            ], 400);
+        }
+
+        try {
+            $url = 'https://nominatim.openstreetmap.org/search';
+            $response = Http::withHeaders([
+                'User-Agent' => 'CRM-Inmobiliaria/1.0',
+                'Accept' => 'application/json',
+            ])->withoutVerifying()->timeout(10)->get($url, [
+                'format' => 'json',
+                'q' => $query,
+                'countrycodes' => $countrycodes,
+                'limit' => $limit,
+                'addressdetails' => $addressdetails,
+            ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json([
+                'error' => 'Error en la respuesta de Nominatim',
+                'status' => $response->status()
+            ], $response->status());
+
+        } catch (\Exception $e) {
+            Log::error('Error en proxy de Nominatim', [
+                'query' => $query,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Error al buscar la dirección: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy para geocodificación inversa de Nominatim
+     */
+    /**
+     * Endpoint público para servir imágenes
+     * Necesario para que Idealista pueda descargar las imágenes desde URLs públicas
+     */
+    public function servePublicImage(Request $request, string $path)
+    {
+        // Construir la ruta completa del archivo
+        $filePath = storage_path('app/public/' . $path);
+
+        // Verificar que el archivo existe
+        if (!file_exists($filePath) || !is_file($filePath)) {
+            abort(404, 'Imagen no encontrada');
+        }
+
+        // Obtener el tipo MIME
+        $mimeType = mime_content_type($filePath);
+        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+            abort(403, 'Tipo de archivo no permitido');
+        }
+
+        // Leer y devolver el archivo
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=31536000', // Cache por 1 año
+        ]);
+    }
+
+    public function reverseNominatim(Request $request): JsonResponse
+    {
+        $lat = $request->input('lat');
+        $lon = $request->input('lon');
+        $zoom = $request->input('zoom', 18);
+        $addressdetails = $request->input('addressdetails', 1);
+
+        if (!$lat || !$lon) {
+            return response()->json([
+                'error' => 'Los parámetros "lat" y "lon" son requeridos'
+            ], 400);
+        }
+
+        try {
+            $url = 'https://nominatim.openstreetmap.org/reverse';
+            $response = Http::withHeaders([
+                'User-Agent' => 'CRM-Inmobiliaria/1.0',
+                'Accept' => 'application/json',
+            ])->withoutVerifying()->timeout(10)->get($url, [
+                'format' => 'json',
+                'lat' => $lat,
+                'lon' => $lon,
+                'zoom' => $zoom,
+                'addressdetails' => $addressdetails,
+            ]);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json([
+                'error' => 'Error en la respuesta de Nominatim',
+                'status' => $response->status()
+            ], $response->status());
+
+        } catch (\Exception $e) {
+            Log::error('Error en proxy reverso de Nominatim', [
+                'lat' => $lat,
+                'lon' => $lon,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Error en geocodificación inversa: ' . $e->getMessage()
             ], 500);
         }
     }

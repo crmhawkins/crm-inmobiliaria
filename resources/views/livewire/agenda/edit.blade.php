@@ -1,19 +1,55 @@
 <div class="container mx-auto">
-    <div>
-        <button type="button" class="btn btn-success mb-3" wire:click="abrirModalFirma" wire:loading.attr="disabled" onclick="console.log('Botón clickeado');">
-            <i class="fas fa-signature me-2" wire:loading.class="d-none" wire:target="abrirModalFirma"></i>
-            <span wire:loading wire:target="abrirModalFirma" class="spinner-border spinner-border-sm me-2"></span>
-            <span wire:loading.remove wire:target="abrirModalFirma">Hoja de Firma</span>
+    <style>
+        .agenda-form-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        .agenda-header {
+            background: var(--corporate-green-gradient);
+            color: white;
+            padding: 25px 30px;
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .agenda-header i {
+            font-size: 1.6rem;
+        }
+        .signature-card {
+            background: linear-gradient(135deg, var(--corporate-green-lightest) 0%, white 100%);
+            border: 2px solid var(--corporate-green-light);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <div class="mb-4">
+        <button type="button" class="btn btn-success btn-lg shadow-sm" wire:click="abrirModalFirma" wire:loading.attr="disabled" id="btnHojaFirma">
+            <span wire:loading.remove wire:target="abrirModalFirma">
+                <i class="fas fa-signature me-2"></i>
+                Hoja de Firma
+            </span>
+            <span wire:loading wire:target="abrirModalFirma" style="display: none;">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span>Cargando...</span>
+            </span>
         </button>
         <div id="modal-state-indicator" data-show-modal="{{ $showFirmaModal ?? false ? 'true' : 'false' }}" style="display: none;"></div>
     </div>
     <form wire:submit.prevent="update">
         <input type="hidden" name="csrf-token" value="{{ csrf_token() }}">
-        <div class="card mb-3">
-            <h5 class="card-header">
+        <div class="agenda-form-section">
+            <div class="agenda-header">
+                <i class="fas fa-calendar-plus"></i>
                 Añadir cita a la agenda
-            </h5>
-            <div class="card-body">
+            </div>
+            <div class="card-body p-4">
                 <div class="mb-3 row d-flex align-items-center">
                     <label class="col-sm-2 col-form-label">Tipo de cita</label>
                     <div class="col-sm-10">
@@ -46,12 +82,12 @@
                                     placeholder: '-- Elige un cliente --',
                                     allowClear: true
                                 });
-                                
+
                                 // Establecer valor seleccionado
                                 @if($cliente_id)
                                     $('#select2-cliente-edit').val('{{ $cliente_id }}').trigger('change');
                                 @endif
-                                
+
                                 $('#select2-cliente-edit').on('change', function(e) {
                                     var data = $('#select2-cliente-edit').select2('val');
                                     @this.set('cliente_id', data);
@@ -79,12 +115,12 @@
                                     placeholder: '-- Elige un inmueble --',
                                     allowClear: true
                                 });
-                                
+
                                 // Establecer valor seleccionado
                                 @if($inmueble_id)
                                     $('#select2-inmueble-edit').val('{{ $inmueble_id }}').trigger('change');
                                 @endif
-                                
+
                                 $('#select2-inmueble-edit').on('change', function(e) {
                                     var data = $('#select2-inmueble-edit').select2('val');
                                     @this.set('inmueble_id', data);
@@ -176,13 +212,13 @@
                 </button>
             </div>
         </div>
-        
+
         @if(isset($eventos) && $eventos && $eventos->hojasFirma && $eventos->hojasFirma->count() > 0)
-        <div class="mb-3 card">
-            <div class="card-header">
-                <h5>Hoja de Firma Generada</h5>
-            </div>
-            <div class="card-body">
+        <div class="signature-card">
+            <h5 class="mb-3" style="color: var(--corporate-green-dark);">
+                <i class="fas fa-file-signature me-2"></i>Hoja de Firma Generada
+            </h5>
+            <div>
                 @foreach($eventos->hojasFirma as $hojaFirma)
                     <div class="mb-2">
                         @if($hojaFirma->ruta_pdf)
@@ -259,7 +295,7 @@
 <script>
 (function() {
     let modalInstance = null;
-    
+
     function initModal() {
         const modalElement = document.getElementById('hojaFirmaModal');
         if (modalElement) {
@@ -276,7 +312,7 @@
             return null;
         }
     }
-    
+
     function abrirModal() {
         console.log('Intentando abrir modal...');
         const instance = initModal();
@@ -287,34 +323,34 @@
             console.error('No se pudo inicializar el modal');
         }
     }
-    
+
     window.cerrarModal = function() {
         const modalElement = document.getElementById('hojaFirmaModal');
-        
+
         // Cerrar usando Bootstrap si existe la instancia
         if (modalInstance) {
             modalInstance.hide();
         }
-        
+
         // También cerrar manualmente para asegurar
         if (modalElement) {
             // Remover clases de Bootstrap
             modalElement.classList.remove('show');
             modalElement.setAttribute('aria-hidden', 'true');
             modalElement.style.display = 'none';
-            
+
             // Eliminar backdrop si existe
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(function(backdrop) {
                 backdrop.remove();
             });
-            
+
             // Restaurar el scroll del body
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         }
-        
+
         // Llamar al método Livewire para cerrar
         try {
             @this.call('cerrarModalFirma');
@@ -322,7 +358,7 @@
             console.log('Error cerrando modal:', e);
         }
     };
-    
+
     // Escuchar eventos de cierre del modal de Bootstrap
     document.addEventListener('DOMContentLoaded', function() {
         const modalElement = document.getElementById('hojaFirmaModal');
@@ -338,7 +374,7 @@
                 document.body.style.overflow = '';
                 document.body.style.paddingRight = '';
             });
-            
+
             // Cerrar cuando se presiona Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && modalElement.classList.contains('show')) {
@@ -347,7 +383,7 @@
             });
         }
     });
-    
+
     // Escuchar evento de Livewire para limpiar backdrop cuando se cierra el modal
     window.addEventListener('modal-firma-cerrado', function() {
         setTimeout(function() {
@@ -358,7 +394,7 @@
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
-            
+
             const modalElement = document.getElementById('hojaFirmaModal');
             if (modalElement) {
                 modalElement.classList.remove('show');
@@ -367,7 +403,7 @@
             }
         }, 100);
     });
-    
+
     // También escuchar evento de limpieza directa
     window.addEventListener('limpiar-backdrop-modal', function() {
         const backdrops = document.querySelectorAll('.modal-backdrop');
@@ -378,12 +414,12 @@
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
     });
-    
+
     // Escuchar eventos de Livewire para abrir el modal
     document.addEventListener('livewire:load', function() {
         initModal();
     });
-    
+
     // Escuchar cuando Livewire emite que debe abrir el modal (evento personalizado)
     window.addEventListener('modal-firma-abierto', function() {
         console.log('Evento modal-firma-abierto recibido');
@@ -391,7 +427,7 @@
             abrirModal();
         }, 300);
     });
-    
+
     // También escuchar eventos de Livewire directamente usando Livewire.on
     if (typeof Livewire !== 'undefined') {
         document.addEventListener('livewire:initialized', function() {
@@ -404,7 +440,7 @@
             });
         });
     }
-    
+
     // Escuchar actualizaciones de Livewire y verificar si debe abrirse
     document.addEventListener('livewire:update', function() {
         setTimeout(function() {
@@ -419,7 +455,7 @@
             }
         }, 300);
     });
-    
+
     // Inicializar cuando se carga la página
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
@@ -444,22 +480,22 @@
 
     function initCanvas() {
         const canvasEl = document.getElementById('firmaClienteCanvas');
-        
+
         if (!canvasEl || canvasInitialized) return;
-        
+
         canvas = canvasEl;
         ctx = canvas.getContext('2d');
         canvasInitialized = true;
-        
+
         // Ajustar tamaño del canvas - usar un tamaño fijo para mejor compatibilidad
         const container = canvasEl.parentElement;
         const containerWidth = container ? (container.clientWidth - 20) : 600;
         canvas.width = containerWidth > 0 ? containerWidth : 600;
         canvas.height = 250;
-        
+
         // Guardar el contexto después de ajustar el tamaño
         ctx = canvas.getContext('2d');
-        
+
         // Configurar estilo de dibujo - reconfigurar después de ajustar tamaño
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
@@ -490,7 +526,7 @@
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             let x, y;
-            
+
             if (e.touches && e.touches.length > 0) {
                 x = (e.touches[0].clientX - rect.left) * scaleX;
                 y = (e.touches[0].clientY - rect.top) * scaleY;
@@ -498,11 +534,11 @@
                 x = (e.clientX - rect.left) * scaleX;
                 y = (e.clientY - rect.top) * scaleY;
             }
-            
+
             // Asegurar que esté dentro del canvas
             x = Math.max(0, Math.min(x, canvas.width));
             y = Math.max(0, Math.min(y, canvas.height));
-            
+
             return { x, y };
         }
 
@@ -513,7 +549,7 @@
             const pos = getEventPos(e);
             lastX = pos.x;
             lastY = pos.y;
-            
+
             // Marcar el punto inicial
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
@@ -525,14 +561,14 @@
             if (!isDrawing) return;
             e.preventDefault();
             e.stopPropagation();
-            
+
             const pos = getEventPos(e);
-            
+
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
-            
+
             lastX = pos.x;
             lastY = pos.y;
         }
@@ -557,12 +593,12 @@
             e.preventDefault();
             startDrawing(e);
         }, { passive: false });
-        
+
         canvas.addEventListener('touchmove', function(e) {
             e.preventDefault();
             draw(e);
         }, { passive: false });
-        
+
         canvas.addEventListener('touchend', stopDrawing);
         canvas.addEventListener('touchcancel', stopDrawing);
     }
@@ -584,7 +620,7 @@
         if (modal) {
             observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
         }
-        
+
         // Inicializar si el canvas ya está disponible
         setTimeout(function() {
             if (document.getElementById('firmaClienteCanvas')) {
@@ -611,19 +647,19 @@ window.limpiarCanvas = function() {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-    
+
     // Ocultar alerta de firma guardada
     const alerta = document.getElementById('firmaGuardadaAlert');
     if (alerta) {
         alerta.style.display = 'none';
     }
-    
+
     // Deshabilitar botón de generar PDF
     const btnPDF = document.getElementById('btnGenerarPDF');
     if (btnPDF) {
         btnPDF.disabled = true;
     }
-    
+
     // Llamar a Livewire para limpiar
     try {
         @this.call('limpiarFirma');
@@ -640,29 +676,29 @@ window.guardarFirmaCanvas = function() {
         alert('El canvas no está disponible');
         return;
     }
-    
+
     // Verificar que hay algo dibujado
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     let hasContent = false;
-    
+
     for (let i = 0; i < data.length; i += 4) {
         if (data[i] !== 255 || data[i+1] !== 255 || data[i+2] !== 255) {
             hasContent = true;
             break;
         }
     }
-    
+
     if (!hasContent) {
         alert('Por favor, dibuja una firma antes de guardar');
         return;
     }
-    
+
     try {
         const firmaData = canvas.toDataURL('image/png');
         const observaciones = document.getElementById('observacionesTextarea')?.value || '';
-        
+
         // Guardar usando Livewire pasando los datos como parámetros
         @this.call('guardarFirma', firmaData, observaciones).then(function() {
             // Mostrar alerta de éxito
@@ -670,7 +706,7 @@ window.guardarFirmaCanvas = function() {
             if (alerta) {
                 alerta.style.display = 'block';
             }
-            
+
             // Habilitar botón de generar PDF
             const btnPDF = document.getElementById('btnGenerarPDF');
             if (btnPDF) {
@@ -692,29 +728,29 @@ window.guardarFirmaYGenerarPDF = function() {
         alert('El canvas no está disponible');
         return;
     }
-    
+
     // Verificar que hay algo dibujado
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     let hasContent = false;
-    
+
     for (let i = 0; i < data.length; i += 4) {
         if (data[i] !== 255 || data[i+1] !== 255 || data[i+2] !== 255) {
             hasContent = true;
             break;
         }
     }
-    
+
     if (!hasContent) {
         alert('Por favor, dibuja una firma antes de generar el PDF');
         return;
     }
-    
+
     try {
         const firmaData = canvas.toDataURL('image/png');
         const observaciones = document.getElementById('observacionesTextarea')?.value || '';
-        
+
         // Generar PDF pasando los datos como parámetros
         @this.call('guardarFirmasYGenerarPDF', firmaData, observaciones).then(function() {
             // Cerrar modal después de generar
@@ -737,13 +773,13 @@ window.guardarFirmaYGenerarPDF = function() {
     document.addEventListener('livewire:load', function() {
         initializeSelect2();
     });
-    
+
     document.addEventListener('livewire:update', function() {
         setTimeout(function() {
             initializeSelect2();
         }, 100);
     });
-    
+
     function initializeSelect2() {
         // Reinicializar cliente select
         if ($('#select2-cliente-edit').length && !$('#select2-cliente-edit').hasClass('select2-hidden-accessible')) {
@@ -751,19 +787,19 @@ window.guardarFirmaYGenerarPDF = function() {
                 placeholder: '-- Elige un cliente --',
                 allowClear: true
             });
-            
+
             @if($cliente_id)
                 $('#select2-cliente-edit').val('{{ $cliente_id }}').trigger('change');
             @endif
         }
-        
+
         // Reinicializar inmueble select
         if ($('#select2-inmueble-edit').length && !$('#select2-inmueble-edit').hasClass('select2-hidden-accessible')) {
             $('#select2-inmueble-edit').select2({
                 placeholder: '-- Elige un inmueble --',
                 allowClear: true
             });
-            
+
             @if($inmueble_id)
                 $('#select2-inmueble-edit').val('{{ $inmueble_id }}').trigger('change');
             @endif

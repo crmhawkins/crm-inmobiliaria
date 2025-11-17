@@ -35,4 +35,16 @@ return [
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'idealista' => [
+        'client_id' => env('IDEALISTA_CLIENT_ID'),
+        'client_secret' => env('IDEALISTA_CLIENT_SECRET'),
+        'basic_token' => env('IDEALISTA_BASIC_TOKEN'),
+        'feed_key' => env('IDEALISTA_FEED_KEY'),
+        'scope' => env('IDEALISTA_SCOPE', 'read'),
+        'host_template' => env('IDEALISTA_HOST_TEMPLATE', 'https://partners-sandbox.idealista.%s'),
+        'country' => env('IDEALISTA_COUNTRY', 'com'),
+        'timeout' => env('IDEALISTA_TIMEOUT', 15),
+        'verify_ssl' => env('IDEALISTA_VERIFY_SSL', true),
+    ],
+
 ];

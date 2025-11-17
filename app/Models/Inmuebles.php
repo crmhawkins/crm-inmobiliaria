@@ -101,6 +101,10 @@ class Inmuebles extends Model
         'latitude',
         'longitude',
         'mostrar_precio',
+        'idealista_property_id',
+        'idealista_code',
+        'idealista_payload',
+        'idealista_synced_at',
     ];
 
     public function tipoVivienda()
@@ -112,4 +116,8 @@ class Inmuebles extends Model
     {
         return $this->belongsTo(Clientes::class, 'vendedor_id');
     }
+
+    protected $casts = [
+        'idealista_synced_at' => 'datetime',
+    ];
 }

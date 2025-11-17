@@ -1,11 +1,58 @@
 <div class="container mx-auto">
+    <style>
+        .invoice-form-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        .invoice-header {
+            background: var(--corporate-green-gradient);
+            color: white;
+            padding: 25px 30px;
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .invoice-header i {
+            font-size: 1.6rem;
+        }
+        .article-item {
+            background: #f8faf9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #e8f0e8;
+            transition: all 0.3s ease;
+        }
+        .article-item:hover {
+            border-color: var(--corporate-green-light);
+            box-shadow: 0 4px 15px rgba(107, 142, 107, 0.1);
+        }
+        .total-section {
+            background: var(--corporate-green-lightest);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        .total-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--corporate-green-dark);
+        }
+    </style>
     <form wire:submit.prevent="submit">
         <input type="hidden" name="csrf-token" value="{{ csrf_token() }}">
-        <div class="card mb-3">
-            <h5 class="card-header">
+        <div class="invoice-form-section">
+            <div class="invoice-header">
+                <i class="fas fa-file-invoice-dollar"></i>
                 Añadir datos de factura
-            </h5>
-            <div class="card-body">
+            </div>
+            <div class="card-body p-4">
                 <div class="mb-3 row d-flex align-items-center">
                     <label for="cliente" class="col-sm-3 col-form-label"><h5>Cliente:</h5></label>
                     <div x-data="" x-init="$('#select2-cliente-create').select2();

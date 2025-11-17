@@ -1,13 +1,44 @@
 <div class="container mx-auto">
+    <style>
+        .page-header-modern {
+            background: var(--corporate-green-gradient);
+            color: white;
+            padding: 30px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+            box-shadow: 0 4px 15px rgba(107, 142, 107, 0.2);
+        }
+        .page-header-modern h5 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .page-header-modern h5 i {
+            font-size: 1.8rem;
+        }
+        .card-modern {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+    </style>
     <form wire:submit.prevent="submit">
         <input type="hidden" name="csrf-token" value="{{ csrf_token() }}">
         @mobile
         <div class="row justify-content-center">
             <div class="col">
-                <div class="card mb-3">
-                    <h5 class="card-header">
-                        Añadir datos del cliente
-                    </h5>
+                <div class="card card-modern mb-4">
+                    <div class="page-header-modern">
+                        <h5>
+                            <i class="fas fa-user-plus"></i>
+                            Añadir datos del cliente
+                        </h5>
+                    </div>
                     <div class="card-body">
                         <div class="mb-3 row d-flex align-items-center">
                             <label for="nombre_completo" class="col-sm-2 col-form-label">Nombre</label>
@@ -70,10 +101,13 @@
         </div>
         <div class="row justify-content-center">
             <div class="col">
-                <div class="card mb-3">
-                    <h5 class="card-header">
-                        Intereses
-                    </h5>
+                <div class="card card-modern mb-4">
+                    <div class="page-header-modern">
+                        <h5>
+                            <i class="fas fa-heart"></i>
+                            Intereses del cliente
+                        </h5>
+                    </div>
                     <div class="card-body">
                         <div class="mb-3 row d-flex align-items-center">
                             <label for="ubicacion" class="col-sm-12 col-form-label">

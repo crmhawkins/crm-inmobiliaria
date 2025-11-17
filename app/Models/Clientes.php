@@ -20,10 +20,16 @@ class Clientes extends Model
         'intereses',
         'inmuebles_intereses',
         'inmobiliaria',
+        'idealista_contact_id',
+        'telefono_prefijo',
+        'idealista_es_agente',
+        'idealista_es_activo',
     ];
 
     protected $casts = [
         'intereses' => 'array',
+        'idealista_es_agente' => 'boolean',
+        'idealista_es_activo' => 'boolean',
     ];
 
     /**

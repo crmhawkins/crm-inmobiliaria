@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\Idealista\IdealistaClient;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Settings;
-use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,7 +17,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(IdealistaClient::class, function ($app) {
+            return new IdealistaClient(
+                $app->make(HttpFactory::class),
+                $app->make(CacheRepository::class),
+                config('services.idealista', [])
+            );
+        });
     }
 
     /**
@@ -28,8 +34,5 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Paginator::useBootstrapFive();
-        //
-        // $empresa = Settings::whereNull('deleted_at')->first();
-        // View::share('empresa', $empresa);
     }
 }

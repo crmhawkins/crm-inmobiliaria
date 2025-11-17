@@ -15,7 +15,7 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
         integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -34,10 +34,70 @@
     <x-livewire-alert::scripts />
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/sass/app.scss', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('css/corporate.css') }}">
+
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #2d3748;
+        }
+
+        :root {
+            --corporate-green: #6b8e6b;
+            --corporate-green-dark: #5a7c5a;
+            --corporate-green-light: #7fa07f;
+            --corporate-green-lightest: #e8f0e8;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--corporate-green) 0%, var(--corporate-green-dark) 100%);
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(107, 142, 107, 0.2);
+        }
+
+        .page-header h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            padding: 0;
+            border: none !important;
+        }
+
+        .page-header h2 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin: 8px 0 0 0;
+            padding: 0;
+        }
+
+        .content-wrapper {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            min-height: calc(100vh - 200px);
+        }
+
+        @if (Request::session()->get('inmobiliaria') == 'sayco')
+            .page-wrapper {
+                background-color: #f8f9fa !important;
+            }
+        @else
+            .page-wrapper {
+                background-color: #f8f9fa !important;
+            }
+        @endif
+    </style>
 
     @yield('head')
-
-
 </head>
 
 <body>
@@ -47,32 +107,27 @@
     <div id="app">
         @if (Request::session()->get('inmobiliaria') == 'sayco')
             @include('layouts.header-dark')
-            <div class="page-wrapper chiller-theme toggled" style="background-color: #d9d9d9;">
-                <div class="container " style="background-color: #d9d9d9  ; margin-top:30px; min-height:100%;">
-                    <div class="container-fluid shadow-lg rounded-4" style="background-color: #fcfcfc; min-height:100%">
-                    @else
-                        @include('layouts.header')
-                        <div class="page-wrapper chiller-theme toggled" style="background-color: #333;">
-                            <div class="container-fluid"
-                                style="background-color: #333  ; margin-top:30px; min-height:100%;">
-                                <div class="container-fluid shadow-lg rounded-4"
-                                    style="background-color: #fcfcfc; min-height:100%">
+        @else
+            @include('layouts.header')
         @endif
-        <div class="container" style="border-bottom: 1px solid black; margin-bottom:10px;">
-            <br>
-            <div class="row">
-                <h1 style="border-bottom:0px !important">@yield('encabezado')</h1>
-                <h2 style="text-align:left;">@yield('subtitulo')</h2>
+
+        <div class="page-wrapper chiller-theme toggled">
+            <div class="container-fluid py-4">
+                <div class="page-header">
+                    <div class="container">
+                        <h1>@yield('encabezado', 'Dashboard')</h1>
+                        <h2>@yield('subtitulo', 'Resumen general')</h2>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="content-wrapper">
+                        @yield('content')
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="container">
-            @yield('content')
-        </div>
     </div>
-    </div>
-    </div>
-    </div>
-    {{-- </div> --}}
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.3/viewer.min.js"
         integrity="sha512-f8kZwYACKF8unHuRV7j/5ILZfflRncxHp1f6y/PKuuRpCVgpORNZMne1jrghNzTVlXabUXIg1iJ5PvhuAaau6Q=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>

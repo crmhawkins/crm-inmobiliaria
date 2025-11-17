@@ -1,22 +1,88 @@
 <div class="container mx-auto">
+    <style>
+        .form-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        .form-section:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        .section-header {
+            background: var(--corporate-green-gradient);
+            color: white;
+            padding: 20px 30px;
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-header i {
+            font-size: 1.4rem;
+        }
+        .form-section .card-body {
+            padding: 30px;
+        }
+        .form-label-modern {
+            font-weight: 600;
+            color: var(--corporate-green-dark);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .form-control-modern {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        .form-control-modern:focus {
+            border-color: var(--corporate-green);
+            box-shadow: 0 0 0 4px rgba(107, 142, 107, 0.1);
+            outline: none;
+        }
+        .btn-submit-modern {
+            background: var(--corporate-green-gradient);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(107, 142, 107, 0.3);
+        }
+        .btn-submit-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(107, 142, 107, 0.4);
+        }
+    </style>
     <form wire:submit.prevent="submit">
         <input type="hidden" name="csrf-token" value="{{ csrf_token() }}">
-        <div class="row justify-content-center">
-            <div class="col">
-                <div class="card mb-3" style="max-width: 40rem">
-                    <h5 class="card-header">
+        <div class="row justify-content-center g-4">
+            <div class="col-lg-6">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-info-circle"></i>
                         Datos básicos
-                    </h5>
+                    </div>
                     <div class="card-body">
-                        <div class="mb-3 row d-flex align-items-center">
-                            <label for="titulo" class="col-sm-3 col-form-label"> <strong>Título</strong></label>
-                            <div class="col-sm-12">
-                                <input type="text" wire:model="titulo" class="form-control" name="titulo"
-                                    id="titulo" placeholder="Título">
-                                @error('titulo')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
+                        <div class="mb-4">
+                            <label for="titulo" class="form-label-modern">
+                                <i class="fas fa-heading me-2"></i>Título
+                            </label>
+                            <input type="text" wire:model="titulo" class="form-control form-control-modern" name="titulo"
+                                id="titulo" placeholder="Título del inmueble">
+                            @error('titulo')
+                                <div class="text-danger mt-2 small">
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                                </div>
+                            @enderror
                         </div>
 
                         <div class="mb-3 row d-flex align-items-center">
@@ -57,11 +123,12 @@
                     </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card mb-3" style="max-width: 40rem">
-                    <h5 class="card-header">
+            <div class="col-lg-6">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-home"></i>
                         Datos de inmueble
-                    </h5>
+                    </div>
                     <div class="card-body">
                         <div class="mb-3 row d-flex align-items-center">
                             <label for="tipo_vivienda_id" class="col-sm-4 col-form-label"> <strong>Tipo de

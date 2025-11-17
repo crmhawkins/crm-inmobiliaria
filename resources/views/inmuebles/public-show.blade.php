@@ -910,57 +910,71 @@
         </div>
     </footer>
 
-    <!-- Google Maps -->
+    <!-- Leaflet Maps -->
     @if ($inmueble->latitude && $inmueble->longitude)
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossorigin=""/>
+        <!-- Leaflet JavaScript -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
         <script>
-            function initMap() {
-                const location = {
-                    lat: {{ $inmueble->latitude }},
-                    lng: {{ $inmueble->longitude }}
-                };
+            document.addEventListener('DOMContentLoaded', function() {
+                const latitude = {{ $inmueble->latitude }};
+                const longitude = {{ $inmueble->longitude }};
 
-                const map = new google.maps.Map(document.getElementById('map'), {
-                    zoom: 15,
-                    center: location,
-                    styles: [
-                        {
-                            "featureType": "water",
-                            "elementType": "geometry",
-                            "stylers": [{"color": "#e9e9e9"},{"lightness": 17}]
-                        },
-                        {
-                            "featureType": "landscape",
-                            "elementType": "geometry",
-                            "stylers": [{"color": "#f5f5f5"},{"lightness": 20}]
-                        },
-                        {
-                            "featureType": "road.highway",
-                            "elementType": "geometry.fill",
-                            "stylers": [{"color": "#ffffff"},{"lightness": 17}]
-                        }
-                    ]
+                // Inicializar el mapa
+                const map = L.map('map').setView([latitude, longitude], 15);
+
+                // Añadir capa de tiles de OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Crear icono personalizado
+                const customIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            background: #06b6d4;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">
+                            <div style="
+                                width: 12px;
+                                height: 12px;
+                                border-radius: 50%;
+                                background: white;
+                            "></div>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
                 });
 
-                const marker = new google.maps.Marker({
-                    position: location,
-                    map: map,
-                    title: "{{ $inmueble->titulo }}",
-                    icon: {
-                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="20" cy="20" r="16" fill="#06b6d4" stroke="white" stroke-width="3"/>
-                                <circle cx="20" cy="20" r="6" fill="white"/>
-                            </svg>
-                        `),
-                        scaledSize: new google.maps.Size(40, 40),
-                        anchor: new google.maps.Point(20, 20)
-                    }
-                });
+                // Añadir marcador
+                L.marker([latitude, longitude], {
+                    icon: customIcon,
+                    title: "{{ $inmueble->titulo }}"
+                }).addTo(map)
+                .bindPopup("<strong>{{ $inmueble->titulo }}</strong><br>{{ $inmueble->ubicacion_publica ?? $inmueble->ubicacion }}")
+                .openPopup();
+            });
+        </script>
+        <style>
+            #map {
+                z-index: 1;
             }
-        </script>
-        <script async defer
-            src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&callback=initMap">
-        </script>
+        </style>
     @endif
 
     <script>

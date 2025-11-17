@@ -24,7 +24,23 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        return view('seleccion');
+        // Redirigir directamente al dashboard sin selección
+        $user = $request->user();
+
+        // Establecer inmobiliaria por defecto según el usuario o configuración
+        if (!$request->session()->has('inmobiliaria')) {
+            // Si el usuario tiene una inmobiliaria asignada, usarla
+            if ($user->inmobiliaria === 1) {
+                $request->session()->put('inmobiliaria', 'sayco');
+            } elseif ($user->inmobiliaria === 0) {
+                $request->session()->put('inmobiliaria', 'sancer');
+            } else {
+                // Por defecto sayco si no hay preferencia
+                $request->session()->put('inmobiliaria', 'sayco');
+            }
+        }
+
+        return view('agenda.index', compact('user'));
     }
 
     public function home(Request $request)

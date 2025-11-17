@@ -39,12 +39,19 @@ Route::get('/', function () {
 
 Route::get('/seleccion', [App\Http\Controllers\HomeController::class, 'index'])->name('seleccion');
 
-
-
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');
 Route::get('/cambio', [App\Http\Controllers\HomeController::class, 'cambio'])->name('cambio');
+
+// Proxy para Nominatim (evita problemas de CORS) - Accesible sin autenticación
+Route::get('api/nominatim/search', [InmueblesController::class, 'searchNominatim'])->name('nominatim.search');
+Route::get('api/nominatim/reverse', [InmueblesController::class, 'reverseNominatim'])->name('nominatim.reverse');
+
+// Endpoint público para servir imágenes (necesario para Idealista)
+Route::get('storage/images/{path}', [InmueblesController::class, 'servePublicImage'])
+    ->where('path', '.*')
+    ->name('images.public');
 
 // Route::get('/clients', [App\Http\Controllers\ClientController::class, 'index'])->name('clients.index');
 
@@ -54,6 +61,11 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
 
     // Inmuebles
     Route::get('inmuebles', [InmueblesController::class, 'index'])->name('inmuebles.index');
+    Route::get('inmuebles/idealista', function () {
+        return view('inmuebles.idealista');
+    })->name('inmuebles.idealista');
+    Route::get('inmuebles/idealista/recent', [InmueblesController::class, 'idealistaRecent'])->name('inmuebles.idealista-recent');
+    Route::get('inmuebles/{inmueble}/idealista-preview', [InmueblesController::class, 'idealistaPreview'])->name('inmuebles.idealista-preview');
     Route::get('inmuebles/create', [InmueblesController::class, 'create'])->name('inmuebles.create');
     Route::post('inmuebles/store', [InmueblesController::class, 'store'])->name('inmuebles.store');
     Route::get('inmuebles/show/{inmueble}', [InmueblesController::class, 'show'])->name('inmuebles.show');
@@ -160,7 +172,7 @@ Route::get('/storage/photos/{folder}/{filename}', function ($folder, $filename) 
 
     // Configuración de la marca de agua
     $text = 'SAYCO';
-    
+
     // Preservar transparencia si es PNG
     if ($type == IMAGETYPE_PNG) {
         imagealphablending($image, true);
@@ -171,24 +183,24 @@ Route::get('/storage/photos/{folder}/{filename}', function ($folder, $filename) 
     $fontSize = max(150, min($width, $height) / 6); // Tamaño mucho más grande
     $angle = -45; // Diagonal
     $opacity = 30; // Opacidad más baja para que sea muy visible
-    
+
     // Color blanco con opacidad reducida
     $textColor = imagecolorallocatealpha($image, 255, 255, 255, $opacity);
-    
+
     // Intentar usar fuente TTF si está disponible
     $ttfPath = public_path('fonts/arial.ttf');
     $useTTF = function_exists('imagettftext') && file_exists($ttfPath);
-    
+
     if ($useTTF) {
         // Calcular bounding box del texto rotado
         $bbox = imagettfbbox($fontSize, $angle, $ttfPath, $text);
         $textWidth = abs($bbox[4] - $bbox[0]);
         $textHeight = abs($bbox[5] - $bbox[1]);
-        
+
         // Centrar exactamente
         $x = ($width - $textWidth) / 2;
         $y = ($height - $textHeight) / 2 + $textHeight;
-        
+
         // Dibujar el texto con rotación
         imagettftext($image, $fontSize, $angle, $x, $y, $textColor, $ttfPath, $text);
     } else {
@@ -199,14 +211,14 @@ Route::get('/storage/photos/{folder}/{filename}', function ($folder, $filename) 
         $charHeight = imagefontheight($fontSizeInt);
         $textWidth = $charWidth * strlen($text);
         $textHeight = $charHeight;
-        
+
         $centerX = $width / 2;
         $centerY = $height / 2;
-        
+
         // Ajustar posición para texto centrado (sin rotación en built-in)
         $x = $centerX - ($textWidth / 2);
         $y = $centerY - ($textHeight / 2);
-        
+
         // Dibujar texto múltiples veces para efecto bold y tamaño
         for ($offset = -3; $offset <= 3; $offset++) {
             imagestring($image, $fontSizeInt, $x + $offset, $y, $text, $textColor);
@@ -238,7 +250,7 @@ Route::get('/storage/photos/{folder}/{filename}', function ($folder, $filename) 
 // Endpoint para servir imágenes con marca de agua
 Route::get('/images/watermark/{path}', function ($path) {
     $fullPath = storage_path('app/public/photos/' . $path);
-    
+
     if (!file_exists($fullPath)) {
         abort(404);
     }
@@ -285,7 +297,7 @@ Route::get('/images/watermark/{path}', function ($path) {
 
     // Configuración de la marca de agua
     $text = 'SAYCO';
-    
+
     if ($type == IMAGETYPE_PNG) {
         imagealphablending($image, true);
         imagesavealpha($image, true);
@@ -294,14 +306,14 @@ Route::get('/images/watermark/{path}', function ($path) {
     $fontSize = max(120, min($width, $height) / 7);
     $opacity = 40;
     $textColor = imagecolorallocatealpha($image, 255, 255, 255, $opacity);
-    
+
     // Calcular posición centrada
     $fontSizeInt = 5;
     $charWidth = imagefontwidth($fontSizeInt) * strlen($text);
     $charHeight = imagefontheight($fontSizeInt);
     $x = ($width / 2) - ($charWidth / 2);
     $y = ($height / 2) - ($charHeight / 2);
-    
+
     // Dibujar texto múltiples veces para efecto bold
     for ($offset = -2; $offset <= 2; $offset++) {
         imagestring($image, $fontSizeInt, $x + $offset, $y, $text, $textColor);

@@ -26,16 +26,22 @@
                     @endforeach
                 </div>
 
-                <h2>{{ number_format($inmueble->valor_referencia, 0, ',', '.') }} €</h2>
+                <h2>{{ $inmueble->valor_referencia ? number_format($inmueble->valor_referencia, 0, ',', '.') . ' €' : 'Precio no especificado' }}</h2>
                 <p class="text-muted h5 mb-3">
                     {{ $inmueble->tipoVivienda->nombre ?? 'Inmueble' }} en {{ $inmueble->ubicacion }}
                 </p>
 
                 <!-- Iconos destacados -->
                 <div class="mb-3 d-flex flex-wrap gap-4 fs-5">
-                    <div><i class="bi bi-door-open"></i> {{ $inmueble->habitaciones }} habs.</div>
-                    <div><i class="bi bi-badge-wc"></i> {{ $inmueble->banos }} baños</div>
-                    <div><i class="bi bi-aspect-ratio"></i> {{ $inmueble->m2 }} m²</div>
+                    @if($inmueble->habitaciones)
+                        <div><i class="bi bi-door-open"></i> {{ $inmueble->habitaciones }} habs.</div>
+                    @endif
+                    @if($inmueble->banos)
+                        <div><i class="bi bi-badge-wc"></i> {{ $inmueble->banos }} baños</div>
+                    @endif
+                    @if($inmueble->m2)
+                        <div><i class="bi bi-aspect-ratio"></i> {{ $inmueble->m2 }} m²</div>
+                    @endif
                     @if ($inmueble->has_terrace)
                         <div><i class="bi bi-tree"></i> Terraza</div>
                     @endif
