@@ -2505,16 +2505,29 @@ class InmueblesController extends Controller
     }
 
     /**
-     * Proxy para geocodificación inversa de Nominatim
-     */
-    /**
      * Endpoint público para servir imágenes
      * Necesario para que Idealista pueda descargar las imágenes desde URLs públicas
+     *
+     * URL de ejemplo: https://tudominio.com/storage/images/photos/1/imagen.jpg
      */
     public function servePublicImage(Request $request, string $path)
     {
+        // Validar que la ruta no contenga caracteres peligrosos (path traversal)
+        if (strpos($path, '..') !== false || strpos($path, '//') !== false) {
+            abort(403, 'Ruta no permitida');
+        }
+
         // Construir la ruta completa del archivo
         $filePath = storage_path('app/public/' . $path);
+
+        // Normalizar la ruta para evitar path traversal
+        $filePath = realpath($filePath);
+        $publicPath = realpath(storage_path('app/public'));
+
+        // Verificar que el archivo está dentro del directorio público
+        if (!$filePath || strpos($filePath, $publicPath) !== 0) {
+            abort(403, 'Acceso no permitido');
+        }
 
         // Verificar que el archivo existe
         if (!file_exists($filePath) || !is_file($filePath)) {
@@ -2523,16 +2536,23 @@ class InmueblesController extends Controller
 
         // Obtener el tipo MIME
         $mimeType = mime_content_type($filePath);
-        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+
+        if (!in_array($mimeType, $allowedMimes)) {
             abort(403, 'Tipo de archivo no permitido');
         }
 
-        // Leer y devolver el archivo
+        // Leer y devolver el archivo con headers apropiados
         return response()->file($filePath, [
             'Content-Type' => $mimeType,
             'Cache-Control' => 'public, max-age=31536000', // Cache por 1 año
+            'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
         ]);
     }
+
+    /**
+     * Proxy para geocodificación inversa de Nominatim
+     */
 
     public function reverseNominatim(Request $request): JsonResponse
     {
