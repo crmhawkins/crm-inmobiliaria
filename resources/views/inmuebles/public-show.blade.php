@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS for carousel -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS for carousel -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -213,10 +217,16 @@
                 <div class="lg:col-span-2 space-y-8">
                     <!-- Gallery Section -->
                     <div class="bg-white rounded-3xl shadow-xl overflow-hidden image-gallery">
-                        @if ($inmueble->galeria)
-                            @php
+                        @php
+                            $galeria = [];
+                            if ($inmueble->galeria) {
                                 $galeria = json_decode($inmueble->galeria, true);
-                            @endphp
+                                if (!is_array($galeria)) {
+                                    $galeria = [];
+                                }
+                            }
+                        @endphp
+                        @if (count($galeria) > 0)
                             @if (is_array($galeria) && count($galeria) > 0)
                                 <!-- Main Image -->
                                 <div class="relative aspect-[16/9] overflow-hidden image-watermark watermark-protection">
@@ -231,18 +241,49 @@
 
                                 <!-- Thumbnail Gallery -->
                                 @if (count($galeria) > 1)
+                                    @php
+                                        $imagenesArray = array_values($galeria);
+                                        $imagenPrincipal = $imagenesArray[0];
+                                        $imagenesRestantes = array_slice($imagenesArray, 1);
+                                        $imagenesVisibles = array_slice($imagenesRestantes, 0, 3);
+                                        $imagenesOcultas = array_slice($imagenesRestantes, 3);
+                                    @endphp
                                     <div class="p-6">
-                                        <div class="grid grid-cols-6 gap-3">
-                                            @foreach ($galeria as $key => $imageUrl)
-                                                <div class="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-xl image-watermark watermark-protection"
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                            @foreach ($imagenesVisibles as $index => $imageUrl)
+                                                <div class="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-xl image-watermark watermark-protection relative"
                                                     onclick="changeMainImage('{{ $imageUrl }}')">
                                                     <img src="{{ $imageUrl }}"
-                                                        alt="{{ $inmueble->titulo }} - Imagen {{ $key }}"
+                                                        alt="{{ $inmueble->titulo }} - Imagen {{ $index + 2 }}"
                                                         class="w-full h-full object-cover"
                                                         draggable="false"
                                                         oncontextmenu="return false;">
                                                 </div>
                                             @endforeach
+
+                                            @if(count($imagenesOcultas) > 0)
+                                                <div class="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-xl relative"
+                                                    onclick="abrirModalCarrusel()">
+                                                    <div class="relative w-full h-full">
+                                                        @foreach(array_slice($imagenesOcultas, 0, 3) as $index => $img)
+                                                            <div class="absolute w-full h-full" style="top: {{ $index * 8 }}px; left: {{ $index * 8 }}px; z-index: {{ 10 - $index }};">
+                                                                <div class="image-watermark watermark-protection relative w-full h-full">
+                                                                    <img src="{{ $img }}"
+                                                                         class="w-full h-full object-cover"
+                                                                         style="filter: blur(2px); opacity: {{ 1 - ($index * 0.2) }};"
+                                                                         draggable="false"
+                                                                         oncontextmenu="return false;">
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                        <div class="absolute inset-0 flex items-center justify-center" style="z-index: 20;">
+                                                            <div class="bg-primary-500 text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold shadow-lg">
+                                                                +{{ count($imagenesOcultas) }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 @endif
@@ -821,7 +862,7 @@
                                 </a>
                                 <div class="relative">
                                     <input type="text"
-                                        value="https://crm.sayco.com/inmueble/{{ $inmueble->id }}"
+                                        value="https://sayco.herasoft.ai/inmueble/{{ $inmueble->id }}"
                                         class="w-full bg-white/10 backdrop-blur text-white py-4 pl-4 pr-24 rounded-xl font-semibold border border-white/20"
                                         id="share-url"
                                         readonly>
@@ -977,6 +1018,42 @@
         </style>
     @endif
 
+    <!-- Modal carrusel con todas las imágenes -->
+    <div class="modal fade" id="carruselModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">Galería completa ({{ count($galeria) }} imágenes)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="carouselImagenes" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @foreach(array_values($galeria) as $index => $img)
+                                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                    <div class="image-watermark watermark-protection relative" style="max-height: 70vh; display: flex; align-items: center; justify-content: center; background: #000;">
+                                        <img src="{{ $img }}" class="d-block mx-auto" style="max-height: 70vh; object-fit: contain; width: auto;" draggable="false" oncontextmenu="return false;">
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselImagenes" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselImagenes" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <span class="text-white" id="contadorImagen">1 / {{ count($galeria) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function changeMainImage(imageUrl) {
             const mainImage = document.getElementById('main-gallery-image');
@@ -995,7 +1072,22 @@
             if (mainImage) {
                 mainImage.style.transition = 'opacity 0.3s ease';
             }
+
+            // Actualizar contador del carrusel
+            const carousel = document.getElementById('carouselImagenes');
+            if (carousel) {
+                carousel.addEventListener('slid.bs.carousel', function (e) {
+                    const activeIndex = e.to;
+                    const total = {{ count($galeria) }};
+                    document.getElementById('contadorImagen').textContent = (activeIndex + 1) + ' / ' + total;
+                });
+            }
         });
+
+        function abrirModalCarrusel() {
+            const modal = new bootstrap.Modal(document.getElementById('carruselModal'));
+            modal.show();
+        }
 
         function copyShareUrl() {
             const shareUrl = document.getElementById('share-url');
@@ -1015,4 +1107,5 @@
 </body>
 
 </html>
+
 

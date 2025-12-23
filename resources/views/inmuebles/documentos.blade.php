@@ -28,7 +28,7 @@
         <!-- Document List -->
         <div class="bg-white rounded-3xl shadow-xl p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($inmueble->documentos as $documento)
+                @forelse($documentos ?? [] as $documento)
                     <div class="bg-gray-50 rounded-xl p-6 flex flex-col">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-3">

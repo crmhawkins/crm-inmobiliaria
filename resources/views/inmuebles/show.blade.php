@@ -15,16 +15,50 @@
             <div class="col-md-8">
                 <div class="mb-3">
                     @if (isset($imagenes[0]))
-                        <img src="{{ $imagenes[0] }}" class="img-fluid rounded w-100"
-                            style="max-height: 450px; object-fit: cover;">
+                        <img src="{{ $imagenes[0] }}" id="imagenPrincipal" class="img-fluid rounded w-100"
+                            style="max-height: 450px; object-fit: cover; cursor: pointer;"
+                            onclick="mostrarImagen('{{ $imagenes[0] }}')">
                     @endif
                 </div>
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                    @foreach ($imagenes as $img)
-                        <img src="{{ $img }}" class="rounded" width="120" height="90"
-                            style="object-fit: cover;">
-                    @endforeach
-                </div>
+                @if(count($imagenes) > 1)
+                    @php
+                        $imagenesRestantes = array_slice($imagenes, 1);
+                        $imagenesVisibles = array_slice($imagenesRestantes, 0, 3);
+                        $imagenesOcultas = array_slice($imagenesRestantes, 3);
+                    @endphp
+                    <div class="row g-2 mb-4">
+                        @foreach ($imagenesVisibles as $img)
+                            <div class="col-6 col-sm-4 col-md-3">
+                                <img src="{{ $img }}" class="img-fluid rounded w-100"
+                                    style="height: 120px; object-fit: cover; cursor: pointer;"
+                                    onclick="mostrarImagen('{{ $img }}')">
+                            </div>
+                        @endforeach
+
+                        @if(count($imagenesOcultas) > 0)
+                            <div class="col-6 col-sm-4 col-md-3">
+                                <div class="position-relative rounded overflow-hidden"
+                                     style="height: 120px; cursor: pointer;"
+                                     onclick="abrirModalCarrusel()">
+                                    <div class="position-relative h-100" style="display: flex; flex-direction: column;">
+                                        @foreach(array_slice($imagenesOcultas, 0, 3) as $index => $img)
+                                            <div class="position-absolute w-100 h-100" style="top: {{ $index * 5 }}px; left: {{ $index * 5 }}px; z-index: {{ 10 - $index }};">
+                                                <img src="{{ $img }}" class="w-100 h-100"
+                                                     style="object-fit: cover; filter: blur(2px); opacity: {{ 1 - ($index * 0.2) }};">
+                                            </div>
+                                        @endforeach
+                                        <div class="position-absolute top-50 start-50 translate-middle" style="z-index: 20;">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 50px; height: 50px; font-size: 24px; font-weight: bold;">
+                                                +{{ count($imagenesOcultas) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
                 <h2>{{ $inmueble->valor_referencia ? number_format($inmueble->valor_referencia, 0, ',', '.') . ' €' : 'Precio no especificado' }}</h2>
                 <p class="text-muted h5 mb-3">
@@ -91,6 +125,54 @@
         </div>
     </div>
 
+    <!-- Modal para ver imagen en grande -->
+    <div class="modal fade" id="imagenModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 text-center">
+                    <img id="imagenModalImg" src="" class="img-fluid rounded" style="max-height: 80vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal carrusel con todas las imágenes -->
+    <div class="modal fade" id="carruselModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">Galería completa ({{ count($imagenes) }} imágenes)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="carouselImagenes" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @foreach($imagenes as $index => $img)
+                                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                    <img src="{{ $img }}" class="d-block w-100" style="max-height: 70vh; object-fit: contain;">
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselImagenes" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselImagenes" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <span class="text-white" id="contadorImagen">1 / {{ count($imagenes) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const copyButton = document.getElementById('copyButton');
@@ -122,6 +204,38 @@
                     copyButton.innerHTML = originalHtml;
                     copyButton.disabled = false;
                 }, 2000);
+            }
+        });
+
+        function mostrarImagen(url) {
+            document.getElementById('imagenPrincipal').src = url;
+            document.getElementById('imagenModalImg').src = url;
+            const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
+            modal.show();
+        }
+
+        function abrirModalCarrusel() {
+            const modal = new bootstrap.Modal(document.getElementById('carruselModal'));
+            modal.show();
+        }
+
+        // Hacer clic en imagen principal también abre el modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const imgPrincipal = document.getElementById('imagenPrincipal');
+            if (imgPrincipal) {
+                imgPrincipal.addEventListener('click', function() {
+                    mostrarImagen(this.src);
+                });
+            }
+
+            // Actualizar contador del carrusel
+            const carousel = document.getElementById('carouselImagenes');
+            if (carousel) {
+                carousel.addEventListener('slid.bs.carousel', function (e) {
+                    const activeIndex = e.to;
+                    const total = {{ count($imagenes) }};
+                    document.getElementById('contadorImagen').textContent = (activeIndex + 1) + ' / ' + total;
+                });
             }
         });
     </script>

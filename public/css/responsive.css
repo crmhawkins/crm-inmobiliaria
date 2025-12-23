@@ -1,0 +1,180 @@
+/* Estilos responsive globales para el CRM */
+
+/* Mejoras para tablas responsive */
+@media (max-width: 768px) {
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        font-size: 0.9rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 4px;
+        white-space: nowrap;
+    }
+
+    /* Ocultar columnas menos importantes en móvil */
+    .table .d-none-mobile {
+        display: none !important;
+    }
+}
+
+/* Mejoras para formularios */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-row .col,
+    .form-row [class*="col-"] {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        width: 100%;
+        font-size: 16px; /* Previene zoom en iOS */
+    }
+}
+
+/* Cards responsive */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .card-header {
+        padding: 12px 15px;
+        font-size: 1rem;
+    }
+}
+
+/* Botones responsive */
+@media (max-width: 576px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 5px;
+        border-radius: 0.25rem !important;
+    }
+
+    .btn-group .btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .d-flex.gap-2 > * {
+        margin-bottom: 10px;
+    }
+}
+
+/* Mejoras para touch devices */
+@media (hover: none) and (pointer: coarse) {
+    /* Asegurar que los elementos interactivos sean fáciles de tocar */
+    button,
+    .btn,
+    a.btn,
+    input[type="button"],
+    input[type="submit"],
+    .clickable {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 20px;
+    }
+
+    /* Mejorar espaciado entre elementos */
+    .list-group-item {
+        padding: 15px;
+        min-height: 60px;
+    }
+
+    /* Mejorar inputs para touch */
+    input,
+    select,
+    textarea {
+        font-size: 16px; /* Previene zoom automático en iOS */
+        padding: 12px;
+        min-height: 44px;
+    }
+
+    /* Mejorar checkboxes y radio buttons */
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+    }
+
+    .form-check-label {
+        padding-left: 10px;
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* DataTables responsive */
+@media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        text-align: center;
+        margin-top: 15px;
+    }
+}
+
+/* Mejoras para el canvas de firma en móvil */
+@media (max-width: 768px) {
+    #firmaClienteCanvas {
+        height: 200px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #firmaClienteCanvas {
+        height: 180px !important;
+    }
+}
+

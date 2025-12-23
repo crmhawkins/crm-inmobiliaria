@@ -223,14 +223,29 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label><strong>Valor de referencia (€)</strong></label>
-                                <input type="number" name="valor_referencia" value="{{ old('valor_referencia') }}"
+                                <label><strong>Tipo de operación *</strong></label>
+                                <select name="transaction_type_id" id="transaction_type_id" class="form-control" required>
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="1" {{ old('transaction_type_id', 1) == '1' ? 'selected' : '' }}>Venta</option>
+                                    <option value="3" {{ old('transaction_type_id') == '3' ? 'selected' : '' }}>Alquiler</option>
+                                </select>
+                                @error('transaction_type_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label id="precio-label"><strong>Precio de venta (€)</strong></label>
+                                <input type="number" name="valor_referencia" id="valor_referencia" value="{{ old('valor_referencia') }}"
                                     class="form-control" min="0" step="0.01">
                                 @error('valor_referencia')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label><strong>Año de construcción</strong></label>
@@ -1302,19 +1317,22 @@
         }
 
         // Event listener para el cambio de tipo de vivienda
-        document.getElementById('tipo_vivienda_id').addEventListener('change', updateSubtypes);
-
-        // Inicializar subtipos si ya hay un valor seleccionado (en caso de error de validación)
         document.addEventListener('DOMContentLoaded', function() {
             const tipoSelect = document.getElementById('tipo_vivienda_id');
-            if (tipoSelect.value) {
-                updateSubtypes();
 
-                // Restaurar el valor seleccionado anteriormente si existe
-                const subtypeSelect = document.getElementById('building_subtype_id');
-                const oldSubtypeValue = '{{ old('building_subtype_id') }}';
-                if (oldSubtypeValue) {
-                    subtypeSelect.value = oldSubtypeValue;
+            if (tipoSelect) {
+                tipoSelect.addEventListener('change', updateSubtypes);
+
+                // Inicializar subtipos si ya hay un valor seleccionado
+                if (tipoSelect.value) {
+                    updateSubtypes();
+
+                    // Restaurar el valor seleccionado anteriormente si existe
+                    const subtypeSelect = document.getElementById('building_subtype_id');
+                    const oldSubtypeValue = '{{ old('building_subtype_id') }}';
+                    if (oldSubtypeValue) {
+                        subtypeSelect.value = oldSubtypeValue;
+                    }
                 }
             }
 
@@ -1323,17 +1341,18 @@
             const energyCertFields = document.querySelectorAll('.energy-cert-field');
 
             function toggleEnergyCertFields() {
-                const hasCert = certEnergeticoSelect.value === '1';
+                const hasCert = certEnergeticoSelect && certEnergeticoSelect.value === '1';
                 energyCertFields.forEach(field => {
                     field.style.display = hasCert ? '' : 'none';
                 });
             }
 
             // Ejecutar al cargar la página
-            toggleEnergyCertFields();
-
-            // Ejecutar cuando cambie el select
-            certEnergeticoSelect.addEventListener('change', toggleEnergyCertFields);
+            if (certEnergeticoSelect) {
+                toggleEnergyCertFields();
+                // Ejecutar cuando cambie el select
+                certEnergeticoSelect.addEventListener('change', toggleEnergyCertFields);
+            }
         });
     </script>
 
@@ -1922,6 +1941,23 @@
                     galeriaPreview.style.display = 'none';
                 }
             });
+
+            // Cambiar etiqueta del precio según tipo de operación
+            const transactionTypeSelect = document.getElementById('transaction_type_id');
+            const precioLabel = document.getElementById('precio-label');
+
+            function updatePrecioLabel() {
+                const transactionType = transactionTypeSelect.value;
+                if (transactionType === '3') {
+                    precioLabel.innerHTML = '<strong>Precio de alquiler mensual (€/mes)</strong>';
+                } else {
+                    precioLabel.innerHTML = '<strong>Precio de venta (€)</strong>';
+                }
+            }
+
+            transactionTypeSelect.addEventListener('change', updatePrecioLabel);
+            // Ejecutar al cargar la página
+            updatePrecioLabel();
         });
     </script>
 @endsection

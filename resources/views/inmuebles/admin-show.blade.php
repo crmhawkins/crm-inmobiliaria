@@ -50,8 +50,9 @@
                     <div class="card-body">
                         <div class="mb-3">
                             @if (isset($imagenes[0]))
-                                <img src="{{ $imagenes[0] }}" class="img-fluid rounded w-100"
-                                    style="max-height: 450px; object-fit: cover;">
+                                <img src="{{ $imagenes[0] }}" id="imagenPrincipal" class="img-fluid rounded w-100"
+                                    style="max-height: 450px; object-fit: cover; cursor: pointer;"
+                                    onclick="mostrarImagen('{{ $imagenes[0] }}')">
                             @else
                                 <div class="bg-light rounded d-flex align-items-center justify-content-center"
                                      style="height: 300px;">
@@ -60,11 +61,42 @@
                             @endif
                         </div>
                         @if(count($imagenes) > 1)
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (array_slice($imagenes, 1) as $img)
-                                    <img src="{{ $img }}" class="rounded" width="120" height="90"
-                                        style="object-fit: cover;">
+                            @php
+                                $imagenesRestantes = array_slice($imagenes, 1);
+                                $imagenesVisibles = array_slice($imagenesRestantes, 0, 3);
+                                $imagenesOcultas = array_slice($imagenesRestantes, 3);
+                            @endphp
+                            <div class="row g-2">
+                                @foreach ($imagenesVisibles as $img)
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <img src="{{ $img }}" class="img-fluid rounded w-100"
+                                            style="height: 120px; object-fit: cover; cursor: pointer;"
+                                            onclick="mostrarImagen('{{ $img }}')">
+                                    </div>
                                 @endforeach
+
+                                @if(count($imagenesOcultas) > 0)
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="position-relative rounded overflow-hidden"
+                                             style="height: 120px; cursor: pointer;"
+                                             onclick="abrirModalCarrusel()">
+                                            <div class="position-relative h-100" style="display: flex; flex-direction: column;">
+                                                @foreach(array_slice($imagenesOcultas, 0, 3) as $index => $img)
+                                                    <div class="position-absolute w-100 h-100" style="top: {{ $index * 5 }}px; left: {{ $index * 5 }}px; z-index: {{ 10 - $index }};">
+                                                        <img src="{{ $img }}" class="w-100 h-100"
+                                                             style="object-fit: cover; filter: blur(2px); opacity: {{ 1 - ($index * 0.2) }};">
+                                                    </div>
+                                                @endforeach
+                                                <div class="position-absolute top-50 start-50 translate-middle" style="z-index: 20;">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                         style="width: 50px; height: 50px; font-size: 24px; font-weight: bold;">
+                                                        +{{ count($imagenesOcultas) }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -202,6 +234,70 @@
                 </div>
                 @endif
 
+                <!-- Gestión de Idealista -->
+                @if($inmueble->idealista_property_id)
+                <div class="card mb-4 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-building me-2"></i>
+                            Gestión Idealista
+                            <span class="badge bg-success ms-2">Sincronizado</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            <strong>ID Idealista:</strong> {{ $inmueble->idealista_property_id }}<br>
+                            @if($inmueble->idealista_synced_at)
+                                <strong>Sincronizado:</strong> {{ $inmueble->idealista_synced_at->format('d/m/Y H:i') }}
+                            @endif
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('inmuebles.idealista-preview', $inmueble) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-2"></i>Ver en Idealista
+                            </a>
+                            <button class="btn btn-sm btn-outline-success" onclick="updateIdealistaProperty({{ $inmueble->id }})">
+                                <i class="fas fa-sync me-2"></i>Actualizar en Idealista
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="deactivateIdealistaProperty({{ $inmueble->id }})">
+                                <i class="fas fa-pause me-2"></i>Desactivar
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="reactivateIdealistaProperty({{ $inmueble->id }})">
+                                <i class="fas fa-play me-2"></i>Reactivar
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="showCloneModal({{ $inmueble->id }})">
+                                <i class="fas fa-copy me-2"></i>Clonar (Venta/Alquiler)
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="manageIdealistaVideos({{ $inmueble->id }})">
+                                <i class="fas fa-video me-2"></i>Gestionar Videos
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="manageIdealistaVirtualTours({{ $inmueble->id }})">
+                                <i class="fas fa-cube me-2"></i>Tours Virtuales
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="card mb-4 border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-building me-2"></i>
+                            Gestión Idealista
+                            <span class="badge bg-warning ms-2">No sincronizado</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            Este inmueble aún no está sincronizado con Idealista. Se sincronizará automáticamente al actualizar si cumple los requisitos.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('inmuebles.edit', $inmueble) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Editar para sincronizar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Acciones rápidas -->
                 <div class="card">
                     <div class="card-header">
@@ -227,4 +323,237 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para clonar propiedad -->
+    <div class="modal fade" id="cloneModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Clonar Propiedad en Idealista</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Selecciona la operación para la que quieres clonar esta propiedad:</p>
+                    <form id="cloneForm">
+                        <div class="mb-3">
+                            <label class="form-label">Operación *</label>
+                            <select class="form-control" name="operation" required>
+                                <option value="">Selecciona...</option>
+                                <option value="sale">Venta</option>
+                                <option value="rent">Alquiler</option>
+                            </select>
+                            <small class="text-muted">La propiedad se clonará para la operación seleccionada. Esto solo consume un slot en Idealista.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="cloneProperty()">Clonar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPropertyId = null;
+
+        function updateIdealistaProperty(id) {
+            if (!confirm('¿Actualizar esta propiedad en Idealista?')) return;
+
+            fetch(`/admin/inmuebles/${id}/idealista/update`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Propiedad actualizada correctamente en Idealista');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al actualizar: ' + error.message);
+            });
+        }
+
+        function deactivateIdealistaProperty(id) {
+            if (!confirm('¿Desactivar esta propiedad en Idealista?')) return;
+
+            fetch(`/admin/inmuebles/${id}/idealista/deactivate`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Propiedad desactivada correctamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al desactivar: ' + error.message);
+            });
+        }
+
+        function reactivateIdealistaProperty(id) {
+            if (!confirm('¿Reactivar esta propiedad en Idealista?')) return;
+
+            fetch(`/admin/inmuebles/${id}/idealista/reactivate`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Propiedad reactivada correctamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al reactivar: ' + error.message);
+            });
+        }
+
+        function showCloneModal(id) {
+            currentPropertyId = id;
+            const modal = new bootstrap.Modal(document.getElementById('cloneModal'));
+            modal.show();
+        }
+
+        function cloneProperty() {
+            const form = document.getElementById('cloneForm');
+            const formData = new FormData(form);
+            const operation = formData.get('operation');
+
+            if (!operation) {
+                alert('Por favor selecciona una operación');
+                return;
+            }
+
+            fetch(`/admin/inmuebles/${currentPropertyId}/idealista/clone`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ operation })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Propiedad clonada correctamente en Idealista');
+                    bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al clonar: ' + error.message);
+            });
+        }
+
+        function manageIdealistaVideos(id) {
+            window.location.href = `{{ route('inmuebles.idealista-videos') }}?property=${id}`;
+        }
+
+        function manageIdealistaVirtualTours(id) {
+            window.location.href = `{{ route('inmuebles.idealista-virtual-tours') }}?property=${id}`;
+        }
+
+        function mostrarImagen(url) {
+            document.getElementById('imagenPrincipal').src = url;
+            document.getElementById('imagenModalImg').src = url;
+            const modal = new bootstrap.Modal(document.getElementById('imagenModal'));
+            modal.show();
+        }
+
+        function abrirModalCarrusel() {
+            const modal = new bootstrap.Modal(document.getElementById('carruselModal'));
+            modal.show();
+        }
+    </script>
+
+    <!-- Modal para ver imagen en grande -->
+    <div class="modal fade" id="imagenModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 text-center">
+                    <img id="imagenModalImg" src="" class="img-fluid rounded" style="max-height: 80vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal carrusel con todas las imágenes -->
+    <div class="modal fade" id="carruselModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">Galería completa ({{ count($imagenes) }} imágenes)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="carouselImagenes" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @foreach($imagenes as $index => $img)
+                                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                    <img src="{{ $img }}" class="d-block w-100" style="max-height: 70vh; object-fit: contain;">
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselImagenes" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselImagenes" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <span class="text-white" id="contadorImagen">1 / {{ count($imagenes) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hacer clic en imagen principal también abre el modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const imgPrincipal = document.getElementById('imagenPrincipal');
+            if (imgPrincipal) {
+                imgPrincipal.addEventListener('click', function() {
+                    mostrarImagen(this.src);
+                });
+            }
+
+            // Actualizar contador del carrusel
+            const carousel = document.getElementById('carouselImagenes');
+            if (carousel) {
+                carousel.addEventListener('slid.bs.carousel', function (e) {
+                    const activeIndex = e.to;
+                    const total = {{ count($imagenes) }};
+                    document.getElementById('contadorImagen').textContent = (activeIndex + 1) + ' / ' + total;
+                });
+            }
+        });
+    </script>
 @endsection

@@ -12,6 +12,8 @@ use App\Models\Clientes;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use PhpParser\Node\Expr\Empty_;
+use App\Http\Controllers\InmueblesController;
+use Illuminate\Support\Facades\Log;
 
 class Show extends Component
 {
@@ -317,6 +319,39 @@ class Show extends Component
 
         // Alertas de guardado exitoso
         if ($inmueblesSave) {
+            // Recargar el modelo para tener los datos actualizados
+            $inmuebles->refresh();
+
+            // Actualizar en Idealista si está sincronizado
+            if ($inmuebles->idealista_property_id) {
+                try {
+                    $controller = new InmueblesController();
+                    $controller->updateIdealistaProperty(new \Illuminate\Http\Request(), $inmuebles->id);
+                    Log::info('Inmueble actualizado en Idealista desde Show', [
+                        'inmueble_id' => $inmuebles->id
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error actualizando en Idealista desde Show', [
+                        'inmueble_id' => $inmuebles->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Actualizar en Fotocasa si está publicado
+            try {
+                $controller = new InmueblesController();
+                $controller->sendToFotocasa($inmuebles);
+                Log::info('Inmueble actualizado en Fotocasa desde Show', [
+                    'inmueble_id' => $inmuebles->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error actualizando en Fotocasa desde Show', [
+                    'inmueble_id' => $inmuebles->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             $this->alert('success', '¡Inmuebles actualizada correctamente!', [
                 'position' => 'center',
                 'timer' => 3000,

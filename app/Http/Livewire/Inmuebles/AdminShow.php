@@ -9,6 +9,8 @@ use Livewire\Component;
 use App\Models\Inmuebles;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use App\Models\Clientes;
+use App\Http\Controllers\InmueblesController;
+use Illuminate\Support\Facades\Log;
 
 class AdminShow extends Component
 {
@@ -110,6 +112,39 @@ class AdminShow extends Component
             'otras_caracteristicas' => $this->otras_caracteristicas,
             'referencia_catastral' => $this->referencia_catastral,
         ]);
+
+        // Recargar el modelo para tener los datos actualizados
+        $inmuebles->refresh();
+
+        // Actualizar en Idealista si está sincronizado
+        if ($inmuebles->idealista_property_id) {
+            try {
+                $controller = new InmueblesController();
+                $controller->updateIdealistaProperty(new \Illuminate\Http\Request(), $inmuebles->id);
+                Log::info('Inmueble actualizado en Idealista desde AdminShow', [
+                    'inmueble_id' => $inmuebles->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error actualizando en Idealista desde AdminShow', [
+                    'inmueble_id' => $inmuebles->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Actualizar en Fotocasa si está publicado
+        try {
+            $controller = new InmueblesController();
+            $controller->sendToFotocasa($inmuebles);
+            Log::info('Inmueble actualizado en Fotocasa desde AdminShow', [
+                'inmueble_id' => $inmuebles->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error actualizando en Fotocasa desde AdminShow', [
+                'inmueble_id' => $inmuebles->id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         $this->alert('success', '¡Inmueble actualizado correctamente!', [
             'position' => 'center',

@@ -10,6 +10,7 @@ use App\Models\HojaFirma;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class Edit extends Component
@@ -23,13 +24,13 @@ class Edit extends Component
     public $descripcion;
     public $fecha_inicio;
     public $fecha_fin;
-    public $tipo_tarea;
+    public $tipo_tarea = 'opcion_1';
     public $cliente_id;
     public $inmueble_id;
     public $clientes;
     public $inmuebles;
     public $inmobiliaria = null;
-    
+
     // Propiedades para hoja de firma
     public $showFirmaModal = false;
     public $hojaFirmaActual = null;
@@ -40,13 +41,13 @@ class Edit extends Component
     public function mount()
     {
         $this->eventos = Evento::with('hojasFirma')->find($this->identificador);
-        
+
         // Filtrar clientes e inmuebles por inmobiliaria
         if (request()->session()->get('inmobiliaria') == 'sayco') {
             $this->clientes = Clientes::where(function($query) {
                 $query->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
             })->orderBy('nombre_completo')->get();
-            
+
             $this->inmuebles = Inmuebles::where(function($query) {
                 $query->where('inmobiliaria', true)->orWhereNull('inmobiliaria');
             })->orderBy('titulo')->get();
@@ -54,7 +55,7 @@ class Edit extends Component
             $this->clientes = Clientes::where(function($query) {
                 $query->where('inmobiliaria', false)->orWhereNull('inmobiliaria');
             })->orderBy('nombre_completo')->get();
-            
+
             $this->inmuebles = Inmuebles::where(function($query) {
                 $query->where('inmobiliaria', false)->orWhereNull('inmobiliaria');
             })->orderBy('titulo')->get();
@@ -62,27 +63,42 @@ class Edit extends Component
 
         $this->titulo =  $this->eventos->titulo ?? '';
         $this->descripcion =  $this->eventos->descripcion ?? '';
-        
+
         // Formatear fechas para datetime-local input (formato: Y-m-d\TH:i)
         if ($this->eventos->fecha_inicio) {
             $this->fecha_inicio = \Carbon\Carbon::parse($this->eventos->fecha_inicio)->format('Y-m-d\TH:i');
         } else {
             $this->fecha_inicio = '';
         }
-        
+
         if ($this->eventos->fecha_fin) {
             $this->fecha_fin = \Carbon\Carbon::parse($this->eventos->fecha_fin)->format('Y-m-d\TH:i');
         } else {
             $this->fecha_fin = '';
         }
-        
-        $this->tipo_tarea =  $this->eventos->tipo_tarea ?? 'opcion_1';
+
         $this->cliente_id =  $this->eventos->cliente_id;
         $this->inmueble_id =  $this->eventos->inmueble_id;
         $this->inmobiliaria =  $this->eventos->inmobiliaria;
 
-        \Log::info('Evento cargado para edición', [
+        // Determinar tipo_tarea: si tiene cliente_id o inmueble_id, es opcion_1, sino opcion_2
+        if ($this->eventos->tipo_tarea) {
+            // Si ya tiene un tipo_tarea guardado, usarlo
+            $this->tipo_tarea = $this->eventos->tipo_tarea;
+        } else {
+            // Si no tiene tipo_tarea guardado, determinarlo automáticamente
+            // Si tiene cliente_id o inmueble_id, es una cita con cliente
+            if ($this->cliente_id || $this->inmueble_id) {
+                $this->tipo_tarea = 'opcion_1';
+            } else {
+                $this->tipo_tarea = 'opcion_2';
+            }
+        }
+
+        Log::info('Evento cargado para edición', [
             'evento_id' => $this->identificador,
+            'tipo_tarea_guardado' => $this->eventos->tipo_tarea,
+            'tipo_tarea_asignado' => $this->tipo_tarea,
             'cliente_id' => $this->cliente_id,
             'inmueble_id' => $this->inmueble_id,
             'clientes_count' => $this->clientes->count(),
@@ -101,7 +117,7 @@ class Edit extends Component
         if ($this->tipo_tarea == 'opcion_1') {
             $cliente = Clientes::where('id', $this->cliente_id)->first();
             $inmueble = Inmuebles::where('id', $this->inmueble_id)->first();
-            
+
             if ($cliente) {
                 $this->titulo = "Cita con " . $cliente->nombre_completo;
                 $this->descripcion = "Cliente citado: " . $cliente->nombre_completo;
@@ -115,7 +131,7 @@ class Edit extends Component
         if ($this->fecha_inicio && strpos($this->fecha_inicio, 'T') !== false) {
             $this->fecha_inicio = \Carbon\Carbon::parse($this->fecha_inicio)->format('Y-m-d H:i:s');
         }
-        
+
         if ($this->fecha_fin) {
             if (strpos($this->fecha_fin, 'T') !== false) {
                 $this->fecha_fin = \Carbon\Carbon::parse($this->fecha_fin)->format('Y-m-d H:i:s');
@@ -236,7 +252,7 @@ class Edit extends Component
         try {
             // Recargar el evento con relaciones por si acaso
             $this->eventos = Evento::with(['hojasFirma', 'cliente', 'inmueble'])->find($this->identificador);
-            
+
             if (!$this->eventos) {
                 $this->alert('error', 'No se pudo cargar el evento', [
                     'position' => 'top-end',
@@ -245,21 +261,21 @@ class Edit extends Component
                 ]);
                 return;
             }
-            
+
             // Activar el modal
             $this->showFirmaModal = true;
-            
+
             // Emitir evento para que JavaScript abra el modal
             $this->dispatchBrowserEvent('modal-firma-abierto');
-            
+
             // Cargar hoja de firma existente si existe
             $this->hojaFirmaActual = $this->eventos->hojasFirma()->first();
-            
+
             // Obtener cliente automáticamente de la cita
             if ($this->eventos->cliente) {
                 $this->nombreCliente = $this->eventos->cliente->nombre_completo ?? '';
             }
-            
+
             if ($this->hojaFirmaActual) {
                 $this->firmaCliente = $this->hojaFirmaActual->firma_cliente;
                 // Solo usar nombre de la hoja de firma si no hay cliente en el evento
@@ -273,7 +289,7 @@ class Edit extends Component
                 $this->observaciones = '';
             }
         } catch (\Exception $e) {
-            \Log::error('Error al abrir modal de firma: ' . $e->getMessage());
+            Log::error('Error al abrir modal de firma: ' . $e->getMessage());
             $this->alert('error', 'Error al abrir el modal de firma: ' . $e->getMessage(), [
                 'position' => 'top-end',
                 'timer' => 3000,
@@ -289,7 +305,7 @@ class Edit extends Component
         $this->hojaFirmaActual = null;
         $this->dispatchBrowserEvent('modal-firma-cerrado');
     }
-    
+
     public function updatedShowFirmaModal($value)
     {
         // Si se cierra desde Livewire, emitir evento para limpiar backdrop
@@ -334,7 +350,7 @@ class Edit extends Component
 
         try {
             $hojaFirma = $this->hojaFirmaActual ?? new HojaFirma();
-            
+
             if (!$hojaFirma->exists) {
                 $hojaFirma->evento_id = $this->identificador;
             }
@@ -342,24 +358,24 @@ class Edit extends Component
             $hojaFirma->firma_cliente = $this->firmaCliente;
             $hojaFirma->nombre_cliente = $this->nombreCliente;
             $hojaFirma->observaciones = $this->observaciones ?? '';
-            
+
             // Establecer nombre del agente actual
             $user = Auth::user();
             $hojaFirma->nombre_agente = $user->nombre_completo ?? $user->name ?? 'Usuario';
-            
+
             $hojaFirma->save();
             $this->hojaFirmaActual = $hojaFirma;
-            
+
             // Recargar relación
             $this->eventos->refresh();
-            
+
             $this->alert('success', 'Firma guardada correctamente', [
                 'position' => 'top-end',
                 'timer' => 3000,
                 'toast' => true,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error guardando firma: ' . $e->getMessage());
+            Log::error('Error guardando firma: ' . $e->getMessage());
             $this->alert('error', 'Error al guardar la firma: ' . $e->getMessage(), [
                 'position' => 'top-end',
                 'timer' => 5000,
@@ -410,11 +426,11 @@ class Edit extends Component
                 $hojaFirma->firma_cliente = $this->firmaCliente;
                 $hojaFirma->nombre_cliente = $this->nombreCliente;
                 $hojaFirma->observaciones = $this->observaciones ?? '';
-                
+
                 // Establecer nombre del agente actual
                 $user = Auth::user();
                 $hojaFirma->nombre_agente = $user->nombre_completo ?? $user->name ?? '';
-                
+
                 $hojaFirma->fecha_firma = now();
                 $hojaFirma->save();
                 $this->hojaFirmaActual = $hojaFirma;
@@ -431,16 +447,16 @@ class Edit extends Component
 
             // Generar PDF
             $this->generarPDF($this->hojaFirmaActual->id);
-            
+
             $this->alert('success', 'PDF generado correctamente', [
                 'position' => 'center',
                 'timer' => 3000,
                 'toast' => false,
             ]);
-            
+
             $this->cerrarModalFirma();
         } catch (\Exception $e) {
-            \Log::error('Error generando PDF: ' . $e->getMessage());
+            Log::error('Error generando PDF: ' . $e->getMessage());
             $this->alert('error', 'Error al generar el PDF: ' . $e->getMessage(), [
                 'position' => 'center',
                 'timer' => 5000,
@@ -452,7 +468,7 @@ class Edit extends Component
     private function generarPDF($hojaFirmaId)
     {
         $hojaFirma = HojaFirma::find($hojaFirmaId);
-        
+
         if (!$hojaFirma) {
             return;
         }
@@ -468,22 +484,22 @@ class Edit extends Component
                 if (preg_match('/data:image\/(\w+);base64,/', $hojaFirma->firma_cliente, $matches)) {
                     $imageData = $hojaFirma->firma_cliente;
                     $imageType = $matches[1]; // png, jpeg, etc.
-                    
+
                     // Decodificar base64
                     $imageData = str_replace('data:image/' . $imageType . ';base64,', '', $imageData);
                     $imageData = base64_decode($imageData);
-                    
+
                     // Crear directorio temporal en public (accesible para DomPDF)
                     $dirTemp = public_path('temp_firmas');
                     if (!File::exists($dirTemp)) {
                         File::makeDirectory($dirTemp, 0777, true);
                     }
-                    
+
                     // Guardar imagen temporal
                     $nombreArchivoTemp = 'firma_' . $hojaFirmaId . '_' . time() . '.' . $imageType;
                     $rutaFirmaTemporal = $dirTemp . '/' . $nombreArchivoTemp;
                     file_put_contents($rutaFirmaTemporal, $imageData);
-                    
+
                     // Usar solo el nombre del archivo relativo para public_path en la vista
                     $rutaFirmaTemporal = 'temp_firmas/' . $nombreArchivoTemp;
                 } else {
@@ -491,7 +507,7 @@ class Edit extends Component
                     $rutaFirmaTemporal = $hojaFirma->firma_cliente;
                 }
             } catch (\Exception $e) {
-                \Log::error('Error procesando imagen de firma: ' . $e->getMessage());
+                Log::error('Error procesando imagen de firma: ' . $e->getMessage());
                 // Continuar sin la imagen si hay error
                 $rutaFirmaTemporal = null;
             }
@@ -523,7 +539,7 @@ class Edit extends Component
 
         // Actualizar ruta en la base de datos
         $hojaFirma->update(['ruta_pdf' => $rutaPdf]);
-        
+
         // Limpiar archivo temporal de firma si se creó
         if ($rutaFirmaTemporal && strpos($rutaFirmaTemporal, 'temp_firmas/') === 0) {
             try {
@@ -532,7 +548,7 @@ class Edit extends Component
                     File::delete($rutaCompletaTemp);
                 }
             } catch (\Exception $e) {
-                \Log::warning('No se pudo eliminar archivo temporal de firma: ' . $e->getMessage());
+                Log::warning('No se pudo eliminar archivo temporal de firma: ' . $e->getMessage());
             }
         }
     }

@@ -55,14 +55,14 @@
                     <div class="col-sm-10">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="tipo_tarea" id="tipo_tarea_1"
-                                wire:model="tipo_tarea" value="opcion_1">
+                                wire:model="tipo_tarea" value="opcion_1" {{ $tipo_tarea == 'opcion_1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="tipo_tarea_1">
                                 Cita con cliente
                             </label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="tipo_tarea" id="tipo_tarea_2"
-                                wire:model="tipo_tarea" value="opcion_2">
+                                wire:model="tipo_tarea" value="opcion_2" {{ $tipo_tarea == 'opcion_2' ? 'checked' : '' }}>
                             <label class="form-check-label" for="tipo_tarea_2">
                                 Personalizado
                             </label>
@@ -242,7 +242,7 @@
 
 <!-- Modal de Hoja de Firma -->
 <div class="modal fade" id="hojaFirmaModal" tabindex="-1" role="dialog" aria-labelledby="hojaFirmaModalLabel" wire:key="modal-firma-{{ $identificador }}" wire:ignore.self>
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="hojaFirmaModalLabel">Hoja de Firma</h5>
@@ -260,9 +260,9 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div class="border rounded p-2 mb-2" style="background: #fff; position: relative;">
-                        <canvas id="firmaClienteCanvas" style="border: 1px solid #ddd; cursor: crosshair; width: 100%; height: 250px; touch-action: none; background: white; display: block;"></canvas>
-                        <div style="position: absolute; top: 10px; left: 10px; font-size: 12px; color: #999; pointer-events: none;">Desliza el dedo o usa el ratón para firmar</div>
+                    <div class="border rounded p-2 mb-2" style="background: #fff; position: relative; touch-action: none; -ms-touch-action: none; overflow: hidden;">
+                        <canvas id="firmaClienteCanvas" style="border: 1px solid #ddd; cursor: crosshair; width: 100%; height: 250px; touch-action: none !important; -ms-touch-action: none !important; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; background: white; display: block; position: relative; z-index: 10; -webkit-tap-highlight-color: transparent; pointer-events: auto; max-width: 100%;"></canvas>
+                        <div style="position: absolute; top: 10px; left: 10px; font-size: 12px; color: #999; pointer-events: none; z-index: 2;">Desliza el dedo o usa el ratón para firmar</div>
                     </div>
                     <div class="d-flex gap-2 mb-2">
                         <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarCanvas()">
@@ -319,6 +319,43 @@
         if (instance) {
             console.log('Instancia del modal encontrada, mostrando...');
             instance.show();
+
+            // Inicializar canvas después de que el modal se muestre
+            const modalElement = document.getElementById('hojaFirmaModal');
+            if (modalElement) {
+                const handleShown = function() {
+                    console.log('Modal completamente mostrado, inicializando canvas...');
+                    // Disparar evento personalizado para inicializar canvas
+                    window.dispatchEvent(new CustomEvent('modal-firma-shown'));
+                    // También inicializar directamente después de un pequeño delay
+                    setTimeout(function() {
+                        console.log('Inicializando canvas directamente desde abrirModal...');
+                        const canvasEl = document.getElementById('firmaClienteCanvas');
+                        console.log('Canvas element encontrado:', canvasEl);
+                        if (canvasEl) {
+                            // Llamar a initCanvas directamente desde el scope global
+                            if (typeof window.forceInitCanvasSignature === 'function') {
+                                console.log('Llamando a forceInitCanvasSignature...');
+                                window.forceInitCanvasSignature();
+                            } else {
+                                console.log('forceInitCanvasSignature no está disponible aún, esperando...');
+                                setTimeout(function() {
+                                    if (typeof window.forceInitCanvasSignature === 'function') {
+                                        window.forceInitCanvasSignature();
+                                    } else {
+                                        console.error('forceInitCanvasSignature nunca se hizo disponible');
+                                    }
+                                }, 500);
+                            }
+                        } else {
+                            console.log('Canvas no encontrado aún, reintentando...');
+                            setTimeout(handleShown, 200);
+                        }
+                    }, 500);
+                    modalElement.removeEventListener('shown.bs.modal', handleShown);
+                };
+                modalElement.addEventListener('shown.bs.modal', handleShown);
+            }
         } else {
             console.error('No se pudo inicializar el modal');
         }
@@ -481,22 +518,59 @@
     function initCanvas() {
         const canvasEl = document.getElementById('firmaClienteCanvas');
 
-        if (!canvasEl || canvasInitialized) return;
+        if (!canvasEl) {
+            console.log('Canvas no encontrado en initCanvas');
+            return;
+        }
+
+        console.log('Inicializando canvas...', canvasEl);
+
+        // Si ya está inicializado y es el mismo canvas, no reinicializar
+        if (canvasInitialized && canvas === canvasEl) {
+            console.log('Canvas ya inicializado');
+            return;
+        }
+
+        // Si hay un canvas anterior diferente, remover listeners
+        if (canvas && canvas !== canvasEl) {
+            console.log('Canvas cambió, reinicializando...');
+            canvasInitialized = false;
+        }
 
         canvas = canvasEl;
         ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            console.error('No se pudo obtener el contexto 2D del canvas');
+            return;
+        }
+
         canvasInitialized = true;
+        console.log('Canvas inicializado correctamente');
 
         // Ajustar tamaño del canvas - usar un tamaño fijo para mejor compatibilidad
-        const container = canvasEl.parentElement;
+        let container = canvas.parentElement;
         const containerWidth = container ? (container.clientWidth - 20) : 600;
-        canvas.width = containerWidth > 0 ? containerWidth : 600;
-        canvas.height = 250;
+
+        // Obtener el ancho real del contenedor
+        const computedStyle = window.getComputedStyle(container);
+        const padding = parseFloat(computedStyle.paddingLeft) + parseFloat(computedStyle.paddingRight);
+        const actualWidth = container.clientWidth - padding - 4; // 4px para el borde
+
+        // Guardar estos valores para usarlos después de clonar
+        window._canvasWidth = actualWidth > 0 ? actualWidth : 600;
+        window._canvasHeight = 250;
+
+        // Configurar tamaño inicial del canvas
+        canvas.width = window._canvasWidth;
+        canvas.height = window._canvasHeight;
+        canvas.style.width = '100%';
+        canvas.style.height = '250px';
 
         // Guardar el contexto después de ajustar el tamaño
         ctx = canvas.getContext('2d');
 
-        // Configurar estilo de dibujo - reconfigurar después de ajustar tamaño
+        // Configurar estilo de dibujo
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
@@ -527,10 +601,20 @@
             const scaleY = canvas.height / rect.height;
             let x, y;
 
+            // Manejar eventos táctiles
             if (e.touches && e.touches.length > 0) {
-                x = (e.touches[0].clientX - rect.left) * scaleX;
-                y = (e.touches[0].clientY - rect.top) * scaleY;
-            } else {
+                const touch = e.touches[0];
+                x = (touch.clientX - rect.left) * scaleX;
+                y = (touch.clientY - rect.top) * scaleY;
+            }
+            // Manejar eventos changedTouches (para touchend)
+            else if (e.changedTouches && e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                x = (touch.clientX - rect.left) * scaleX;
+                y = (touch.clientY - rect.top) * scaleY;
+            }
+            // Manejar eventos de mouse
+            else {
                 x = (e.clientX - rect.left) * scaleX;
                 y = (e.clientY - rect.top) * scaleY;
             }
@@ -558,7 +642,10 @@
         }
 
         function draw(e) {
-            if (!isDrawing) return;
+            if (!isDrawing) {
+                console.log('draw llamado pero isDrawing es false');
+                return;
+            }
             e.preventDefault();
             e.stopPropagation();
 
@@ -582,60 +669,215 @@
             }
         }
 
-        // Eventos de mouse
+        // Eventos táctiles (para móviles) - mejorado para mejor compatibilidad
+        const touchStartHandler = function(e) {
+            console.log('touchstart detectado en canvas', e.touches.length, 'touches');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            // Solo procesar el primer toque
+            if (e.touches.length > 0) {
+                console.log('Iniciando dibujo táctil');
+                startDrawing(e);
+            }
+        };
+
+        const touchMoveHandler = function(e) {
+            if (isDrawing) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+                // Solo procesar el primer toque
+                if (e.touches.length > 0) {
+                    draw(e);
+                }
+            } else {
+                e.preventDefault();
+            }
+        };
+
+        const touchEndHandler = function(e) {
+            console.log('touchend detectado');
+            e.preventDefault();
+            e.stopPropagation();
+            stopDrawing(e);
+        };
+
+        const touchCancelHandler = function(e) {
+            console.log('touchcancel detectado');
+            e.preventDefault();
+            e.stopPropagation();
+            stopDrawing(e);
+        };
+
+        // Remover listeners anteriores si existen (para evitar duplicados)
+        // Clonar el canvas para remover todos los listeners
+        const canvasWidth = window._canvasWidth || 600;
+        const canvasHeight = window._canvasHeight || 250;
+
+        const newCanvas = canvas.cloneNode(false);
+        const parent = canvas.parentNode;
+        parent.replaceChild(newCanvas, canvas);
+        canvas = newCanvas;
+        ctx = canvas.getContext('2d');
+
+        // Reconfigurar el canvas después de clonarlo
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        canvas.style.width = '100%';
+        canvas.style.height = '250px';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        console.log('Canvas clonado y reconfigurado. Dimensiones:', canvas.width, 'x', canvas.height);
+
+        // Registrar eventos de mouse
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseleave', stopDrawing);
 
-        // Eventos táctiles (para móviles)
+        // Registrar eventos táctiles
+        canvas.addEventListener('touchstart', touchStartHandler, { passive: false });
+        canvas.addEventListener('touchmove', touchMoveHandler, { passive: false });
+        canvas.addEventListener('touchend', touchEndHandler, { passive: false });
+        canvas.addEventListener('touchcancel', touchCancelHandler, { passive: false });
+
+        console.log('Event listeners registrados después de clonar canvas');
+
+        // También prevenir eventos táctiles en el contenedor padre
+        // Reutilizar la variable container ya declarada arriba
+        container = canvas.parentElement;
+        if (container) {
+            container.addEventListener('touchstart', function(e) {
+                if (e.target === canvas || canvas.contains(e.target)) {
+                    // Permitir que el evento llegue al canvas
+                    return;
+                }
+                e.preventDefault();
+            }, { passive: false });
+            container.addEventListener('touchmove', function(e) {
+                if (e.target === canvas || canvas.contains(e.target)) {
+                    return;
+                }
+                e.preventDefault();
+            }, { passive: false });
+        }
+
+        // Verificar que el canvas puede recibir eventos
+        console.log('Canvas element:', canvas);
+        console.log('Canvas parent:', canvas.parentElement);
+        console.log('Canvas computed style touch-action:', window.getComputedStyle(canvas).touchAction);
+        console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+        console.log('Canvas style dimensions:', canvas.style.width, 'x', canvas.style.height);
+        console.log('Event listeners registrados en canvas');
+        console.log('Canvas está listo para dibujar. Prueba tocando la pantalla.');
+
+        // Test: verificar que el canvas está visible y accesible
+        const rect = canvas.getBoundingClientRect();
+        console.log('Canvas bounding rect:', rect);
+        console.log('Canvas visible:', rect.width > 0 && rect.height > 0);
+
+        // Añadir un listener de prueba en modo capture para verificar que los eventos llegan
         canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            startDrawing(e);
-        }, { passive: false });
-
-        canvas.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-            draw(e);
-        }, { passive: false });
-
-        canvas.addEventListener('touchend', stopDrawing);
-        canvas.addEventListener('touchcancel', stopDrawing);
+            console.log('TEST CAPTURE: touchstart capturado en fase capture');
+        }, { passive: false, capture: true });
     }
 
     // Observar cuando se abre el modal
-    const observer = new MutationObserver(function() {
+    const observer = new MutationObserver(function(mutations) {
         const modal = document.getElementById('hojaFirmaModal');
         if (modal && modal.classList.contains('show')) {
+            console.log('Modal abierto detectado, inicializando canvas...');
             setTimeout(function() {
-                canvasInitialized = false;
-                initCanvas();
+                // Resetear el flag solo si el canvas cambió
+                const canvasEl = document.getElementById('firmaClienteCanvas');
+                if (canvasEl) {
+                    if (canvasEl !== canvas) {
+                        console.log('Canvas cambió, reinicializando...');
+                        canvasInitialized = false;
+                    }
+                    if (!canvasInitialized) {
+                        initCanvas();
+                    } else {
+                        console.log('Canvas ya estaba inicializado');
+                    }
+                } else {
+                    console.log('Canvas no encontrado en el DOM');
+                }
             }, 300);
         }
     });
+
+    // Función para forzar inicialización del canvas
+    function forceInitCanvas() {
+        console.log('Forzando inicialización del canvas...');
+        canvasInitialized = false;
+        const canvasEl = document.getElementById('firmaClienteCanvas');
+        if (canvasEl) {
+            console.log('Canvas encontrado, llamando a initCanvas...');
+            initCanvas();
+        } else {
+            console.log('Canvas no encontrado, reintentando en 200ms...');
+            setTimeout(forceInitCanvas, 200);
+        }
+    }
+
+    // Exponer funciones globalmente para acceso desde otros scripts
+    window.initCanvasSignature = initCanvas;
+    window.forceInitCanvasSignature = forceInitCanvas;
 
     // Observar cambios en el DOM
     document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('hojaFirmaModal');
         if (modal) {
             observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+            // Listener directo para cuando el modal se muestra (Bootstrap)
+            modal.addEventListener('shown.bs.modal', function() {
+                console.log('Modal shown.bs.modal event disparado');
+                setTimeout(forceInitCanvas, 100);
+            });
         }
+
+        // Escuchar evento personalizado cuando el modal se muestra
+        window.addEventListener('modal-firma-shown', function() {
+            console.log('Evento modal-firma-shown recibido');
+            setTimeout(forceInitCanvas, 100);
+        });
 
         // Inicializar si el canvas ya está disponible
         setTimeout(function() {
-            if (document.getElementById('firmaClienteCanvas')) {
+            const canvasEl = document.getElementById('firmaClienteCanvas');
+            if (canvasEl) {
+                console.log('Canvas encontrado en DOMContentLoaded, inicializando...');
                 initCanvas();
+            } else {
+                console.log('Canvas no encontrado en DOMContentLoaded');
             }
         }, 500);
     });
 
     // Reinicializar cuando Livewire actualiza
     document.addEventListener('livewire:update', function() {
+        console.log('Livewire update detectado');
         setTimeout(function() {
             const modal = document.getElementById('hojaFirmaModal');
             const canvasEl = document.getElementById('firmaClienteCanvas');
-            if (modal && modal.classList.contains('show') && canvasEl && !canvasInitialized) {
-                initCanvas();
+            if (modal && modal.classList.contains('show') && canvasEl) {
+                console.log('Modal visible y canvas encontrado en livewire:update');
+                // Resetear el flag solo si el canvas cambió
+                if (canvasEl !== canvas) {
+                    console.log('Canvas cambió en livewire:update, reinicializando...');
+                    canvasInitialized = false;
+                }
+                if (!canvasInitialized) {
+                    initCanvas();
+                } else {
+                    console.log('Canvas ya inicializado en livewire:update');
+                }
             }
         }, 400);
     });

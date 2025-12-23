@@ -14,5 +14,9 @@ class DocInmueble extends Model
     protected $fillable = [
         "inmueble_id",
         "rutas",
+        "nombre",
+        "ruta",
+        "tipo",
+        "descripcion",
     ];
 }

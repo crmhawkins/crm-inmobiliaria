@@ -1,0 +1,91 @@
+﻿ID;Nombre;Método;Endpoint;"Status Code";Éxito;"Tiempo (ms)";Respuesta;Error
+1;"Listar propiedades";GET;/v1/properties;200;SÍ;945.61;"{
+    ""message"": ""Successful operation"",
+    ""success"": true,
+    ""properties"": [
+        {
+            ""propertyId"": 85246403,
+            ""type"": ""flat"",
+            ""address"": {
+                ""streetName"": ""Alta"",
+                ""streetNumber"": ""5"",
+                ""visibility"": ""street"",
+                ""postalCode"": ""11201"",
+                ""town"": ""Algeciras"",
+                ""country"": ""Spain"",
+                ""floor"": ""5"",
+                ""door"": ""5K"",
+                ""latitude"": 36.1315531,
+                ""longitude"": -5.4471249
+            },
+            ""reference"": ""Alq Plaza Alta Sar"",
+            ""contactId"": 75414453,
+            ""operation"": {
+                ""type"": ""rent"",
+                ""price"": 500
+            },
+            ""descriptions"": [
+                {
+                    ""language"": ""es"",
+                    ""text"": ""Piso de 2 habitaciones en La Plaza Alta, pleno centro de Algeciras. Está junto a farmacias, supermercados, colegios, etc. \nEl apartamen... (truncado)";
+2;"Obtener información de publicación del cliente";GET;/v1/customer/publishinfo;200;SÍ;389.96;"{
+    ""message"": ""Successful operation"",
+    ""success"": true,
+    ""publishInfo"": {
+        ""publishedAds"": 33,
+        ""maxPublishedAds"": 40
+    },
+    ""status_code"": 200
+}";
+3;"Listar contactos";GET;/v1/contacts;200;SÍ;312.8;"{
+    ""message"": ""Successful operation"",
+    ""success"": true,
+    ""contacts"": [
+        {
+            ""contactId"": 101894560,
+            ""email"": ""sanchez_cerban@hotmail.com"",
+            ""name"": ""Mateo"",
+            ""lastName"": ""Sanchez Cerban"",
+            ""primaryPhonePrefix"": ""+34"",
+            ""primaryPhoneNumber"": ""699493816"",
+            ""active"": true,
+            ""agent"": true,
+            ""agentEmail"": ""sanchez_cerban@hotmail.com""
+        },
+        {
+            ""contactId"": 102907890,
+            ""email"": ""test@example.com"",
+            ""name"": ""Test Contact"",
+            ""primaryPhonePrefix"": ""34"",
+            ""primaryPhoneNumber"": ""600000000"",
+            ""active"": true,
+            ""agent"": false
+        },
+        {
+            ""contactId"": 75237134,
+            ""email"": ""updated@example.com"",
+            ""name"": ""Updated Contact"",
+            ""primaryPhonePrefix"": ""34"",
+            ""primaryPhoneNumber"": ""600000001"",
+            ""active"": false,
+            ""agent"": fa... (truncado)";
+4;"Obtener propiedad por ID";GET;/v1/properties/1;404;NO;307.02;"{
+    ""message"": ""Property Not Found"",
+    ""success"": false,
+    ""status_code"": 404
+}";
+5;"Listar imágenes de propiedad";GET;/v1/properties/1/images;404;NO;275.25;"{
+    ""message"": ""Property Not Found"",
+    ""success"": false,
+    ""status_code"": 404
+}";
+6;"Listar videos de propiedad";GET;/v1/properties/1/videos;404;NO;313.03;"{
+    ""message"": ""Property Not Found"",
+    ""success"": false,
+    ""status_code"": 404
+}";
+7;"Listar tours virtuales de propiedad";GET;/v1/properties/1/virtualtours;404;NO;268.17;"{
+    ""message"": ""Property Not Found"",
+    ""success"": false,
+    ""status_code"": 404
+}";

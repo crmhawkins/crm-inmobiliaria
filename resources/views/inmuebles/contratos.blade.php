@@ -27,7 +27,7 @@
         <!-- Contracts List -->
         <div class="bg-white rounded-3xl shadow-xl p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                @forelse($inmueble->contratos as $contrato)
+                @forelse($contratos ?? [] as $contrato)
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-3">

@@ -11,7 +11,19 @@ class ContratosController extends Controller
     public function create(Request $request)
     {
         $inmueble = Inmuebles::findOrFail($request->inmueble);
-        return view('inmuebles.contratos.create', compact('inmueble'));
+
+        // Cargar clientes según la inmobiliaria
+        if (request()->session()->get('inmobiliaria') == 'sayco') {
+            $clientes = \App\Models\Clientes::where('inmobiliaria', true)
+                ->orWhereNull('inmobiliaria')
+                ->get();
+        } else {
+            $clientes = \App\Models\Clientes::where('inmobiliaria', false)
+                ->orWhereNull('inmobiliaria')
+                ->get();
+        }
+
+        return view('inmuebles.contratos.create', compact('inmueble', 'clientes'));
     }
 
     public function store(Request $request)

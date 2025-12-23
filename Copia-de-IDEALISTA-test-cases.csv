@@ -1,0 +1,15 @@
+"Idealista","","","","PARTNER","","","","","","","","","","","","","","","","","","","",""
+"Test","Test title","Test description","Expected result","Actual Result","contactId","JSON sent","Comments","","","","","","","","","","","","","","","","",""
+"Contact01","New contact","Create new contact.
+Send all the fields you have in your CRM","201","","","","","","","","","","","","","","","","","","","","",""
+"Contact02","New contact
+Basic validation error - email missing","Create a new contact.
+Don’t send an email","400 - error message describing that email field is required","","","","","","","","","","","","","","","","","","","","",""
+"","","","","","","","","","","","","","","","","","","","","","","","",""
+"Contact03","New contact
+Basic validation error - email format","Create a new contact.
+Send an invalid email, for example ‘test@test’","400 - error message describing that email format is incorrect","","","","","","","","","","","","","","","","","","","","",""
+"","","","","","","","","","","","","","","","","","","","","","","","",""
+"Contact04","Update contact","Update the information of a contact previously created","200","","","","","","","","","","","","","","","","","","","","",""
+"Contact05","Find contact","Find a contact previously created using the endpoint by id","200","","","","","","","","","","","","","","","","","","","","",""
+"Contact06","Find all contacts","Find all contacts using the find all endpoint. Make sure to send proper page and size values","200","","","","","","","","","","","","","","","","","","","","",""

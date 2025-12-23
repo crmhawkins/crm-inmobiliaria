@@ -40,7 +40,7 @@ class HomeController extends Controller
             }
         }
 
-        return view('agenda.index', compact('user'));
+        return redirect()->route('dashboard.index');
     }
 
     public function home(Request $request)

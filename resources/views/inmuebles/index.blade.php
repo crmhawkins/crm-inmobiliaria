@@ -36,11 +36,16 @@
 
         <div class="row">
             <!-- FILTROS -->
-            <div class="col-md-3">
+            <div class="col-12 col-md-3 mb-4 mb-md-0">
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h5>Filtros de búsqueda</h5>
-
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Filtros de búsqueda</h5>
+                            <button type="button" class="btn btn-sm btn-outline-secondary d-md-none" onclick="toggleFilters()">
+                                <i class="bi bi-chevron-down" id="filter-toggle-icon"></i>
+                            </button>
+                        </div>
+                        <div id="filters-container">
                         <div class="mb-3">
                             <label>Ubicación</label>
                             <input type="text" class="form-control" id="filter-ubicacion" placeholder="Madrid, Barcelona...">
@@ -119,12 +124,13 @@
                         <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
                             <i class="bi bi-arrow-clockwise me-1"></i> Limpiar filtros
                         </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- RESULTADOS -->
-            <div class="col-md-9">
+            <div class="col-12 col-md-9">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <h5 class="mb-0">Resultados</h5>
@@ -601,5 +607,81 @@
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
         }
+
+        // Toggle filters en móvil
+        function toggleFilters() {
+            const container = document.getElementById('filters-container');
+            const icon = document.getElementById('filter-toggle-icon');
+            if (container && icon) {
+                if (container.style.display === 'none') {
+                    container.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    container.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            }
+        }
+
+        // Ocultar filtros en móvil por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth < 768) {
+                const container = document.getElementById('filters-container');
+                if (container) {
+                    container.style.display = 'none';
+                }
+            }
+        });
+
+        // Manejar resize
+        window.addEventListener('resize', function() {
+            const container = document.getElementById('filters-container');
+            const icon = document.getElementById('filter-toggle-icon');
+            if (window.innerWidth >= 768) {
+                if (container) container.style.display = 'block';
+            } else {
+                if (container && container.style.display === 'none') {
+                    if (icon) {
+                        icon.classList.remove('bi-chevron-up');
+                        icon.classList.add('bi-chevron-down');
+                    }
+                }
+            }
+        });
     </script>
+
+    <style>
+        @media (max-width: 767px) {
+            .inmueble-card {
+                margin-bottom: 15px;
+            }
+
+            .card {
+                margin-bottom: 15px;
+            }
+
+            .btn-sm {
+                min-height: 44px;
+                padding: 10px 16px;
+            }
+
+            #filters-container {
+                display: none;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .btn, button, a.btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+
+            input, select, textarea {
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+    </style>
 @endsection

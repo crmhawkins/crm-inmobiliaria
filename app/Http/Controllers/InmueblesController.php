@@ -11,6 +11,10 @@ use App\Models\Caracteristicas;
 use App\Events\InmuebleCreated;
 use App\Services\Idealista\IdealistaPropertiesService;
 use App\Services\Idealista\IdealistaPropertyCreator;
+use App\Services\Idealista\IdealistaContactsService;
+use App\Services\Idealista\IdealistaVideosService;
+use App\Services\Idealista\IdealistaVirtualToursService;
+use App\Services\Idealista\IdealistaCustomerService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -338,6 +342,74 @@ class InmueblesController extends Controller
         return true;
     }
 
+    public function edit(Inmuebles $inmueble)
+    {
+        $caracteristicas = Caracteristicas::all();
+        $tipos_vivienda = TipoVivienda::all();
+
+        // Incluir vendedores tradicionales (inmobiliaria = 1) Y contactos de Idealista
+        $vendedores = Clientes::where(function($query) {
+            $query->where('inmobiliaria', 1)
+                  ->orWhereNotNull('idealista_contact_id');
+        })->get();
+
+        return view('inmuebles.edit', compact('inmueble', 'caracteristicas', 'tipos_vivienda', 'vendedores'));
+    }
+
+    public function update(Request $request, Inmuebles $inmueble)
+    {
+        $validated = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'm2' => 'nullable|numeric|min:0',
+            'm2_construidos' => 'nullable|numeric|min:0',
+            'valor_referencia' => 'nullable|numeric|min:0',
+            'habitaciones' => 'nullable|integer|min:0',
+            'banos' => 'nullable|integer|min:0',
+            'tipo_vivienda_id' => 'required|integer',
+            'building_subtype_id' => 'nullable|integer',
+            'transaction_type_id' => 'required|integer|in:1,3',
+            'ubicacion' => 'nullable|string',
+            'cod_postal' => 'nullable|string|max:10',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'vendedor_id' => 'nullable|integer|exists:clientes,id',
+        ]);
+
+        $inmueble->update($validated);
+
+        // Actualizar en Idealista si está sincronizado
+        if ($inmueble->idealista_property_id) {
+            try {
+                $this->updateIdealistaProperty($request, $inmueble->id);
+                Log::info('Inmueble actualizado en Idealista desde update', [
+                    'inmueble_id' => $inmueble->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error actualizando en Idealista desde update', [
+                    'inmueble_id' => $inmueble->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Actualizar en Fotocasa si está publicado
+        try {
+            $this->sendToFotocasa($inmueble);
+            Log::info('Inmueble actualizado en Fotocasa desde update', [
+                'inmueble_id' => $inmueble->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error actualizando en Fotocasa desde update', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return redirect()->route('inmuebles.admin-show', $inmueble)
+            ->with('success', 'Inmueble actualizado correctamente');
+    }
+
     public function create()
     {
         $caracteristicas = Caracteristicas::all();
@@ -378,7 +450,7 @@ class InmueblesController extends Controller
             'galeria.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max per image
             'otras_caracteristicas' => 'nullable|array',
             // Campos Fotocasa
-            'transaction_type_id' => 'nullable|integer|min:1',
+            'transaction_type_id' => 'required|integer|in:1,3',
             'visibility_mode_id' => 'nullable|integer|in:1,2,3',
             'floor_id' => 'nullable|integer|in:1,3,4,6,7,8,9,10,11,12,13,14,15,16,22,31',
             'orientation_id' => 'nullable|integer|in:1,2,3,4,5,6,7,8',
@@ -2281,18 +2353,44 @@ class InmueblesController extends Controller
 
     public function documentos(Inmuebles $inmueble)
     {
-        return view('inmuebles.documentos', compact('inmueble'));
+        // Cargar los documentos del inmueble
+        $documentos = \App\Models\DocInmueble::where('inmueble_id', $inmueble->id)->get();
+
+        // Pasar los documentos a la vista
+        return view('inmuebles.documentos', compact('inmueble', 'documentos'));
     }
 
     public function contratos(Inmuebles $inmueble)
     {
-        return view('inmuebles.contratos', compact('inmueble'));
+        // Cargar los contratos del inmueble
+        $contratos = \App\Models\ContratoArras::where('inmueble_id', $inmueble->id)->get();
+
+        // Pasar los contratos a la vista
+        return view('inmuebles.contratos', compact('inmueble', 'contratos'));
     }
 
 
     public function caracteristicas(Inmuebles $inmueble)
     {
         return view('inmuebles.caracteristicas', compact('inmueble'));
+    }
+
+    public function visitas(Inmuebles $inmueble)
+    {
+        // Obtener las visitas relacionadas con este inmueble desde la tabla eventos
+        // Las visitas pueden estar identificadas por tipo_tarea = 'visita' o similar
+        $visitas = \App\Models\Evento::where('inmueble_id', $inmueble->id)
+            ->where(function($query) {
+                $query->where('tipo_tarea', 'visita')
+                      ->orWhere('tipo_tarea', 'Visita')
+                      ->orWhere('titulo', 'like', '%visita%')
+                      ->orWhere('titulo', 'like', '%Visita%');
+            })
+            ->with(['cliente', 'inmueble'])
+            ->orderBy('fecha_inicio', 'desc')
+            ->get();
+
+        return view('inmuebles.visitas.index', compact('inmueble', 'visitas'));
     }
 
     public function destroy(Inmuebles $inmueble)
@@ -2600,5 +2698,809 @@ class InmueblesController extends Controller
                 'error' => 'Error en geocodificación inversa: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * ============================================
+     * MÉTODOS PARA GESTIÓN COMPLETA DE IDEALISTA
+     * ============================================
+     */
+
+    /**
+     * Actualiza una propiedad en Idealista
+     */
+    public function updateIdealistaProperty(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        try {
+            $propertyCreator = app(IdealistaPropertyCreator::class);
+            $payload = $propertyCreator->toIdealistaFormat($inmueble);
+
+            $propertiesService = app(IdealistaPropertiesService::class);
+            $response = $propertiesService->update($inmueble->idealista_property_id, $payload);
+
+            // Actualizar el payload guardado en el CRM
+            $inmueble->update([
+                'idealista_payload' => json_encode($payload),
+                'idealista_synced_at' => now(),
+            ]);
+
+            Log::info('Propiedad actualizada en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'idealista_property_id' => $inmueble->idealista_property_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Propiedad actualizada en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error actualizando propiedad en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la propiedad en Idealista: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Desactiva una propiedad en Idealista
+     */
+    public function deactivateIdealistaProperty($id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        try {
+            $propertiesService = app(IdealistaPropertiesService::class);
+            $response = $propertiesService->deactivate($inmueble->idealista_property_id);
+
+            Log::info('Propiedad desactivada en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'idealista_property_id' => $inmueble->idealista_property_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Propiedad desactivada en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error desactivando propiedad en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al desactivar la propiedad en Idealista: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reactiva una propiedad en Idealista
+     */
+    public function reactivateIdealistaProperty($id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        try {
+            $propertiesService = app(IdealistaPropertiesService::class);
+            $response = $propertiesService->reactivate($inmueble->idealista_property_id);
+
+            Log::info('Propiedad reactivada en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'idealista_property_id' => $inmueble->idealista_property_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Propiedad reactivada en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error reactivando propiedad en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al reactivar la propiedad en Idealista: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clona una propiedad en Idealista para otra operación (venta/alquiler)
+     */
+    public function cloneIdealistaProperty(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        $request->validate([
+            'operation' => 'required|in:sale,rent'
+        ]);
+
+        try {
+            $propertiesService = app(IdealistaPropertiesService::class);
+            $payload = [
+                'operation' => $request->operation
+            ];
+
+            $response = $propertiesService->cloneProperty($inmueble->idealista_property_id, $payload);
+
+            Log::info('Propiedad clonada en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'idealista_property_id' => $inmueble->idealista_property_id,
+                'operation' => $request->operation,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Propiedad clonada en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error clonando propiedad en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al clonar la propiedad en Idealista: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lista todos los contactos de Idealista
+     */
+    public function listIdealistaContacts(Request $request)
+    {
+        try {
+            $contactsService = app(IdealistaContactsService::class);
+            $page = $request->input('page', 1);
+            $size = $request->input('size', 50);
+
+            $response = $contactsService->list($page, $size);
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error listando contactos de Idealista', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al listar contactos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Crea un contacto en Idealista
+     */
+    public function createIdealistaContact(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'nullable|string',
+        ]);
+
+        try {
+            $contactsService = app(IdealistaContactsService::class);
+            $payload = $request->only(['name', 'email', 'phone']);
+
+            $response = $contactsService->create($payload);
+
+            // Si el contacto se creó correctamente, actualizar el cliente en el CRM
+            if (isset($response['contactId'])) {
+                $cliente = Clientes::where('email', $request->email)->first();
+                if ($cliente) {
+                    $cliente->update([
+                        'idealista_contact_id' => $response['contactId']
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Contacto creado en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error creando contacto en Idealista', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear contacto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lista todos los videos de una propiedad en Idealista
+     */
+    public function listIdealistaVideos($id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        try {
+            $videosService = app(IdealistaVideosService::class);
+            $response = $videosService->list($inmueble->idealista_property_id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error listando videos de Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al listar videos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Crea un video para una propiedad en Idealista
+     */
+    public function createIdealistaVideo(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        $request->validate([
+            'url' => 'required|url',
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        try {
+            $videosService = app(IdealistaVideosService::class);
+            $payload = $request->only(['url', 'title', 'description']);
+
+            $response = $videosService->create($inmueble->idealista_property_id, $payload);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video creado en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error creando video en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear video: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Elimina un video de una propiedad en Idealista
+     */
+    public function deleteIdealistaVideo(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        $request->validate([
+            'video_id' => 'required|integer',
+        ]);
+
+        try {
+            $videosService = app(IdealistaVideosService::class);
+            $response = $videosService->delete($inmueble->idealista_property_id, $request->video_id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video eliminado de Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error eliminando video de Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar video: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Desactiva un tour virtual en Idealista
+     */
+    public function deactivateIdealistaVirtualTour(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        $request->validate([
+            'type' => 'required|in:3d,virtual'
+        ]);
+
+        try {
+            $virtualToursService = app(IdealistaVirtualToursService::class);
+            $payload = $request->only(['type', 'url', 'provider']);
+
+            $response = $virtualToursService->deactivate($inmueble->idealista_property_id, $payload);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tour virtual desactivado correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error desactivando tour virtual en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al desactivar tour virtual: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lista los tours virtuales de una propiedad en Idealista
+     */
+    public function listIdealistaVirtualTours($id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        try {
+            $virtualToursService = app(IdealistaVirtualToursService::class);
+            $response = $virtualToursService->find($inmueble->idealista_property_id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error listando tours virtuales de Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al listar tours virtuales: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Crea un tour virtual para una propiedad en Idealista
+     */
+    public function createIdealistaVirtualTour(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        if (!$inmueble->idealista_property_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este inmueble no está sincronizado con Idealista'
+            ], 400);
+        }
+
+        $request->validate([
+            'url' => 'required|url',
+            'type' => 'required|in:3d,virtual',
+            'provider' => 'nullable|string',
+        ]);
+
+        try {
+            $virtualToursService = app(IdealistaVirtualToursService::class);
+            $payload = $request->only(['url', 'type', 'provider']);
+
+            $response = $virtualToursService->create($inmueble->idealista_property_id, $payload);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tour virtual creado en Idealista correctamente',
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error creando tour virtual en Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear tour virtual: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtiene información de publicación del cliente en Idealista
+     */
+    public function getIdealistaPublicationInfo()
+    {
+        try {
+            $customerService = app(IdealistaCustomerService::class);
+            $response = $customerService->getPublicationInfo();
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error obteniendo información de publicación de Idealista', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener información: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lista todas las propiedades de Idealista (con filtros)
+     */
+    public function listIdealistaProperties(Request $request)
+    {
+        try {
+            $state = $request->input('state'); // active, inactive, pending
+            $forceSync = $request->input('force_sync', false); // Para forzar sincronización completa
+
+            // Obtener propiedades de la BD local
+            $query = Inmuebles::whereNotNull('idealista_property_id');
+
+            if ($state) {
+                // Mapear estado de Idealista a campo local si existe
+                // Por ahora filtramos por sincronización reciente
+            }
+
+            $localProperties = $query->get();
+            $syncedPropertyIds = $localProperties->pluck('idealista_property_id')->toArray();
+
+            // Si hay propiedades sin sincronizar o se fuerza la sincronización, actualizar desde API
+            // Pero respetando rate limits: solo sincronizar máximo 10 propiedades por petición
+            $propertiesService = app(IdealistaPropertiesService::class);
+            $propertiesToSync = [];
+            $syncedCount = 0;
+            $maxSyncPerRequest = 10; // Límite para respetar rate limits
+
+            if ($forceSync || count($syncedPropertyIds) === 0) {
+                // Obtener lista desde API (máximo 50)
+                $response = $propertiesService->list(1, 50, $state);
+
+                // Extraer propiedades de la respuesta
+                $apiProperties = [];
+                if (isset($response['properties']) && is_array($response['properties'])) {
+                    $apiProperties = $response['properties'];
+                } elseif (isset($response['data']['properties']) && is_array($response['data']['properties'])) {
+                    $apiProperties = $response['data']['properties'];
+                } elseif (isset($response['data']['data']['properties']) && is_array($response['data']['data']['properties'])) {
+                    $apiProperties = $response['data']['data']['properties'];
+                }
+
+                // Identificar propiedades que no están en BD local o necesitan actualización
+                foreach ($apiProperties as $apiProperty) {
+                    $propertyId = $apiProperty['propertyId'] ?? null;
+                    if (!$propertyId) continue;
+
+                    $localProperty = Inmuebles::where('idealista_property_id', $propertyId)->first();
+
+                    // Si no existe o necesita actualización (más de 24 horas sin sincronizar)
+                    if (!$localProperty ||
+                        !$localProperty->idealista_synced_at ||
+                        $localProperty->idealista_synced_at->lt(now()->subHours(24))) {
+
+                        if ($syncedCount < $maxSyncPerRequest) {
+                            $propertiesToSync[] = $apiProperty;
+                            $syncedCount++;
+                        }
+                    }
+                }
+
+                // Sincronizar propiedades (una por una para respetar rate limits)
+                foreach ($propertiesToSync as $apiProperty) {
+                    try {
+                        $this->syncPropertyFromIdealista($apiProperty);
+                        // Pequeña pausa para respetar rate limits
+                        usleep(200000); // 0.2 segundos entre peticiones
+                    } catch (\Exception $e) {
+                        Log::warning('Error sincronizando propiedad de Idealista', [
+                            'property_id' => $apiProperty['propertyId'] ?? null,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Continuar con la siguiente propiedad
+                    }
+                }
+            }
+
+            // Recargar propiedades de BD local después de la sincronización
+            $localProperties = $query->get();
+
+            // Convertir a formato similar al de la API para la vista
+            $properties = $localProperties->map(function ($property) {
+                $payload = $property->idealista_payload ? json_decode($property->idealista_payload, true) : [];
+
+                return [
+                    'propertyId' => $property->idealista_property_id,
+                    'reference' => $property->idealista_code ?? $property->titulo,
+                    'type' => $this->mapBuildingTypeToIdealista($property->tipo_vivienda_id),
+                    'state' => $payload['state'] ?? 'unknown',
+                    'address' => [
+                        'streetName' => $this->extractStreetName($property->ubicacion),
+                        'streetNumber' => $this->extractStreetNumber($property->ubicacion),
+                        'town' => $this->extractTown($property->ubicacion),
+                        'postalCode' => $property->cod_postal ?? '',
+                        'latitude' => $property->latitude ?? 0,
+                        'longitude' => $property->longitude ?? 0,
+                    ],
+                    'operation' => [
+                        'type' => $property->transaction_type_id == 3 ? 'rent' : 'sale',
+                        'price' => $property->valor_referencia ?? 0,
+                    ],
+                    'features' => [
+                        'rooms' => $property->habitaciones ?? 0,
+                        'bathroomNumber' => $property->banos ?? 0,
+                        'areaConstructed' => $property->m2_construidos ?? $property->m2 ?? 0,
+                    ],
+                    'descriptions' => $payload['descriptions'] ?? [],
+                    'contactId' => $payload['contactId'] ?? null,
+                    '_local_id' => $property->id, // ID local para enlaces
+                ];
+            })->toArray();
+
+            $totalProperties = count($properties);
+            $activeProperties = count(array_filter($properties, fn($p) => ($p['state'] ?? '') === 'active'));
+            $inactiveProperties = count(array_filter($properties, fn($p) => ($p['state'] ?? '') === 'inactive'));
+
+            // Si es una petición AJAX, devolver JSON
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'properties' => $properties,
+                        'synced' => $syncedCount,
+                        'total' => $totalProperties
+                    ]
+                ]);
+            }
+
+            return view('inmuebles.idealista-list', compact('properties', 'totalProperties', 'activeProperties', 'inactiveProperties', 'state', 'syncedCount'));
+
+        } catch (\Exception $e) {
+            Log::error('Error listando propiedades de Idealista', [
+                'error' => $e->getMessage()
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al listar propiedades: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('inmuebles.idealista')
+                ->with('error', 'Error al listar propiedades: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sincronizar una propiedad desde Idealista a BD local
+     */
+    private function syncPropertyFromIdealista(array $apiProperty): void
+    {
+        $propertyId = $apiProperty['propertyId'] ?? null;
+        if (!$propertyId) return;
+
+        $localProperty = Inmuebles::where('idealista_property_id', $propertyId)->first();
+
+        $data = [
+            'idealista_property_id' => $propertyId,
+            'idealista_code' => $apiProperty['reference'] ?? null,
+            'idealista_payload' => json_encode($apiProperty),
+            'idealista_synced_at' => now(),
+        ];
+
+        // Actualizar campos básicos si están disponibles
+        if (isset($apiProperty['address'])) {
+            $address = $apiProperty['address'];
+            $data['ubicacion'] = trim(($address['streetName'] ?? '') . ' ' . ($address['streetNumber'] ?? '') . ', ' . ($address['town'] ?? ''));
+            $data['cod_postal'] = $address['postalCode'] ?? null;
+            $data['latitude'] = $address['latitude'] ?? null;
+            $data['longitude'] = $address['longitude'] ?? null;
+        }
+
+        if (isset($apiProperty['operation'])) {
+            $operation = $apiProperty['operation'];
+            $data['transaction_type_id'] = ($operation['type'] ?? '') === 'rent' ? 3 : 1;
+            $data['valor_referencia'] = $operation['price'] ?? null;
+        }
+
+        if (isset($apiProperty['features'])) {
+            $features = $apiProperty['features'];
+            $data['habitaciones'] = $features['rooms'] ?? null;
+            $data['banos'] = $features['bathroomNumber'] ?? null;
+            $data['m2_construidos'] = $features['areaConstructed'] ?? null;
+            if (!isset($data['m2_construidos'])) {
+                $data['m2'] = $features['areaConstructed'] ?? null;
+            }
+        }
+
+        if ($localProperty) {
+            $localProperty->update($data);
+        } else {
+            // Crear nueva propiedad si no existe
+            $data['titulo'] = $apiProperty['reference'] ?? 'Propiedad Idealista ' . $propertyId;
+            $data['descripcion'] = '';
+            if (isset($apiProperty['descriptions']) && is_array($apiProperty['descriptions'])) {
+                $esDescription = collect($apiProperty['descriptions'])->firstWhere('language', 'es');
+                $data['descripcion'] = $esDescription['text'] ?? '';
+            }
+            $data['tipo_vivienda_id'] = $this->mapIdealistaTypeToBuildingType($apiProperty['type'] ?? 'flat');
+            $data['estado'] = 'disponible';
+            $data['disponibilidad'] = 'disponible';
+
+            Inmuebles::create($data);
+        }
+    }
+
+    /**
+     * Mapear tipo de Idealista a building_type_id
+     */
+    private function mapIdealistaTypeToBuildingType(string $type): int
+    {
+        $mapping = [
+            'flat' => 1,
+            'house' => 2,
+            'studio' => 1,
+            'penthouse' => 1,
+            'duplex' => 1,
+        ];
+        return $mapping[strtolower($type)] ?? 1;
+    }
+
+    /**
+     * Mapear building_type_id a tipo de Idealista
+     */
+    private function mapBuildingTypeToIdealista(?int $typeId): string
+    {
+        $mapping = [
+            1 => 'flat',
+            2 => 'house',
+        ];
+        return $mapping[$typeId] ?? 'flat';
+    }
+
+    /**
+     * Extraer nombre de calle de ubicación
+     */
+    private function extractStreetName(?string $ubicacion): string
+    {
+        if (!$ubicacion) return '';
+        $parts = explode(',', $ubicacion);
+        $streetPart = trim($parts[0] ?? '');
+        // Remover número si está al final
+        $streetPart = preg_replace('/\s+\d+$/', '', $streetPart);
+        return $streetPart;
+    }
+
+    /**
+     * Extraer número de calle de ubicación
+     */
+    private function extractStreetNumber(?string $ubicacion): string
+    {
+        if (!$ubicacion) return '';
+        preg_match('/\b(\d+)\b/', $ubicacion, $matches);
+        return $matches[1] ?? '';
+    }
+
+    /**
+     * Extraer ciudad de ubicación
+     */
+    private function extractTown(?string $ubicacion): string
+    {
+        if (!$ubicacion) return '';
+        $parts = explode(',', $ubicacion);
+        return trim($parts[count($parts) - 1] ?? '');
     }
 }

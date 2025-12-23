@@ -117,6 +117,16 @@ class Inmuebles extends Model
         return $this->belongsTo(Clientes::class, 'vendedor_id');
     }
 
+    public function documentos()
+    {
+        return $this->hasMany(\App\Models\DocInmueble::class, 'inmueble_id');
+    }
+
+    public function contratos()
+    {
+        return $this->hasMany(\App\Models\ContratoArras::class, 'inmueble_id');
+    }
+
     protected $casts = [
         'idealista_synced_at' => 'datetime',
     ];

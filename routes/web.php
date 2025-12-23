@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::user()) {
-        return Redirect::route('agenda.index');
+        return Redirect::route('dashboard.index');
     } else {
         return Redirect::route('login');
     }
@@ -43,6 +43,9 @@ Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');
 Route::get('/cambio', [App\Http\Controllers\HomeController::class, 'cambio'])->name('cambio');
+
+// Dashboard moderno
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard.index')->middleware('is.admin');
 
 // Proxy para Nominatim (evita problemas de CORS) - Accesible sin autenticación
 Route::get('api/nominatim/search', [InmueblesController::class, 'searchNominatim'])->name('nominatim.search');
@@ -62,10 +65,40 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     // Inmuebles
     Route::get('inmuebles', [InmueblesController::class, 'index'])->name('inmuebles.index');
     Route::get('inmuebles/idealista', function () {
-        return view('inmuebles.idealista');
+        return view('inmuebles.idealista-management');
     })->name('inmuebles.idealista');
     Route::get('inmuebles/idealista/recent', [InmueblesController::class, 'idealistaRecent'])->name('inmuebles.idealista-recent');
     Route::get('inmuebles/{inmueble}/idealista-preview', [InmueblesController::class, 'idealistaPreview'])->name('inmuebles.idealista-preview');
+
+    // Rutas para gestión completa de Idealista
+    Route::post('inmuebles/{inmueble}/idealista/update', [InmueblesController::class, 'updateIdealistaProperty'])->name('inmuebles.idealista-update');
+    Route::post('inmuebles/{inmueble}/idealista/deactivate', [InmueblesController::class, 'deactivateIdealistaProperty'])->name('inmuebles.idealista-deactivate');
+    Route::post('inmuebles/{inmueble}/idealista/reactivate', [InmueblesController::class, 'reactivateIdealistaProperty'])->name('inmuebles.idealista-reactivate');
+    Route::post('inmuebles/{inmueble}/idealista/clone', [InmueblesController::class, 'cloneIdealistaProperty'])->name('inmuebles.idealista-clone');
+    Route::get('inmuebles/idealista/list', [InmueblesController::class, 'listIdealistaProperties'])->name('inmuebles.idealista-list');
+
+    // Rutas para contactos de Idealista
+    Route::get('inmuebles/idealista/contacts', [InmueblesController::class, 'listIdealistaContacts'])->name('inmuebles.idealista-contacts');
+    Route::post('inmuebles/idealista/contacts', [InmueblesController::class, 'createIdealistaContact'])->name('inmuebles.idealista-contacts-create');
+
+    // Rutas para videos de Idealista
+    Route::get('inmuebles/idealista/videos', function () {
+        return view('inmuebles.idealista-videos');
+    })->name('inmuebles.idealista-videos');
+    Route::get('inmuebles/{inmueble}/idealista/videos', [InmueblesController::class, 'listIdealistaVideos'])->name('inmuebles.idealista-videos-list');
+    Route::post('inmuebles/{inmueble}/idealista/videos', [InmueblesController::class, 'createIdealistaVideo'])->name('inmuebles.idealista-videos-create');
+    Route::delete('inmuebles/{inmueble}/idealista/videos', [InmueblesController::class, 'deleteIdealistaVideo'])->name('inmuebles.idealista-videos-delete');
+
+    // Rutas para tours virtuales de Idealista
+    Route::get('inmuebles/idealista/virtual-tours', function () {
+        return view('inmuebles.idealista-virtual-tours');
+    })->name('inmuebles.idealista-virtual-tours');
+    Route::get('inmuebles/{inmueble}/idealista/virtual-tours', [InmueblesController::class, 'listIdealistaVirtualTours'])->name('inmuebles.idealista-virtual-tours-list');
+    Route::post('inmuebles/{inmueble}/idealista/virtual-tours', [InmueblesController::class, 'createIdealistaVirtualTour'])->name('inmuebles.idealista-virtual-tours-create');
+    Route::post('inmuebles/{inmueble}/idealista/virtual-tours/deactivate', [InmueblesController::class, 'deactivateIdealistaVirtualTour'])->name('inmuebles.idealista-virtual-tours-deactivate');
+
+    // Ruta para información de publicación del cliente
+    Route::get('inmuebles/idealista/publication-info', [InmueblesController::class, 'getIdealistaPublicationInfo'])->name('inmuebles.idealista-publication-info');
     Route::get('inmuebles/create', [InmueblesController::class, 'create'])->name('inmuebles.create');
     Route::post('inmuebles/store', [InmueblesController::class, 'store'])->name('inmuebles.store');
     Route::get('inmuebles/show/{inmueble}', [InmueblesController::class, 'show'])->name('inmuebles.show');
@@ -76,9 +109,10 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::post('inmuebles/import-json', [InmueblesController::class, 'importFromJson'])->name('inmuebles.import-json');
     Route::post('inmuebles/search', [InmueblesController::class, 'search'])->name('inmuebles.search');
 
-    // Nuevas rutas para documentos y contratos
+    // Nuevas rutas para documentos, contratos, visitas y características
     Route::get('inmuebles/{inmueble}/documentos', [InmueblesController::class, 'documentos'])->name('inmuebles.documentos');
     Route::get('inmuebles/{inmueble}/contratos', [InmueblesController::class, 'contratos'])->name('inmuebles.contratos');
+    Route::get('inmuebles/{inmueble}/visitas', [InmueblesController::class, 'visitas'])->name('inmuebles.visitas');
     Route::get('inmuebles/{inmueble}/caracteristicas', [InmueblesController::class, 'caracteristicas'])->name('inmuebles.caracteristicas');
 
     // Documentos

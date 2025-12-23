@@ -18,7 +18,12 @@ class IdealistaApiService
             'json' => $body,
         ]));
 
-        return $response->throw()->json();
+        $json = $response->throw()->json();
+
+        // Agregar status code a la respuesta
+        $json['status_code'] = $response->status();
+
+        return $json;
     }
 
     private function headers(): array

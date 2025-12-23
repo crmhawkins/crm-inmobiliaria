@@ -19,13 +19,17 @@ class IdealistaClient
     ) {
         $this->config = $this->config ?: config('services.idealista', []);
 
-        if (empty($this->config['client_id']) || empty($this->config['client_secret'])) {
-            throw new RuntimeException('Faltan las credenciales de Idealista en services.idealista.');
-        }
+        // No validar en el constructor para permitir que la app arranque
+        // La validación se hará cuando se necesite el token
     }
 
     public function getAccessToken(bool $forceRefresh = false): string
     {
+        // Validar credenciales cuando se necesite el token
+        if (empty($this->config['client_id']) || empty($this->config['client_secret'])) {
+            throw new RuntimeException('Faltan las credenciales de Idealista en services.idealista. Configura IDEALISTA_CLIENT_ID e IDEALISTA_CLIENT_SECRET en tu archivo .env');
+        }
+
         $cacheKey = $this->cacheKey();
 
         if (! $forceRefresh) {

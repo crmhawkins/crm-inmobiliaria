@@ -1,0 +1,87 @@
+{
+    "tests": [
+        {
+            "id": "Contact01",
+            "nombre": "New contact",
+            "metodo": "POST",
+            "endpoint": "/v1/contacts",
+            "query": {},
+            "body": {
+                "name": "Test Contact Full",
+                "email": "test.contact@example.com",
+                "primaryPhoneNumber": "699493816",
+                "lastName": "Test Lastname"
+            },
+            "expected_status": 201,
+            "description": "Create new contact. Send all the fields you have in your CRM"
+        },
+        {
+            "id": "Contact02",
+            "nombre": "New contact - Basic validation error - email missing",
+            "metodo": "POST",
+            "endpoint": "/v1/contacts",
+            "query": {},
+            "body": {
+                "name": "Test Contact",
+                "primaryPhoneNumber": "699493816"
+            },
+            "expected_status": 400,
+            "description": "Create a new contact. Don't send an email",
+            "expected_error": "email field is required"
+        },
+        {
+            "id": "Contact03",
+            "nombre": "New contact - Basic validation error - email format",
+            "metodo": "POST",
+            "endpoint": "/v1/contacts",
+            "query": {},
+            "body": {
+                "name": "Test Contact",
+                "email": "test@test",
+                "primaryPhoneNumber": "699493816"
+            },
+            "expected_status": 400,
+            "description": "Create a new contact. Send an invalid email, for example 'test@test'",
+            "expected_error": "email format is incorrect"
+        },
+        {
+            "id": "Contact04",
+            "nombre": "Update contact",
+            "metodo": "PUT",
+            "endpoint": "/v1/contacts/{contactId}",
+            "query": {},
+            "body": {
+                "name": "Updated Contact Name",
+                "email": "updated@example.com",
+                "primaryPhoneNumber": "699493817"
+            },
+            "expected_status": 200,
+            "description": "Update the information of a contact previously created",
+            "note": "Requires a valid contactId from Contact01"
+        },
+        {
+            "id": "Contact05",
+            "nombre": "Find contact",
+            "metodo": "GET",
+            "endpoint": "/v1/contacts/{contactId}",
+            "query": {},
+            "body": null,
+            "expected_status": 200,
+            "description": "Find a contact previously created using the endpoint by id",
+            "note": "Requires a valid contactId from Contact01"
+        },
+        {
+            "id": "Contact06",
+            "nombre": "Find all contacts",
+            "metodo": "GET",
+            "endpoint": "/v1/contacts",
+            "query": {
+                "page": 1,
+                "size": 10
+            },
+            "body": null,
+            "expected_status": 200,
+            "description": "Find all contacts using the find all endpoint. Make sure to send proper page and size values"
+        }
+    ]
+}

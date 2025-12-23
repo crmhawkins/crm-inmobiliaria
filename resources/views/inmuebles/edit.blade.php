@@ -75,9 +75,24 @@
                     @enderror
                 </div>
 
+                <!-- Tipo de operación -->
+                <div>
+                    <label for="transaction_type_id" class="block text-sm font-medium text-gray-700 mb-2">Tipo de operación *</label>
+                    <select name="transaction_type_id" id="transaction_type_id" required
+                        class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="1" {{ old('transaction_type_id', $inmueble->transaction_type_id ?? 1) == '1' ? 'selected' : '' }}>Venta</option>
+                        <option value="3" {{ old('transaction_type_id', $inmueble->transaction_type_id ?? 1) == '3' ? 'selected' : '' }}>Alquiler</option>
+                    </select>
+                    @error('transaction_type_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Precio -->
                 <div>
-                    <label for="valor_referencia" class="block text-sm font-medium text-gray-700 mb-2">Precio (€)</label>
+                    <label for="valor_referencia" id="precio-label" class="block text-sm font-medium text-gray-700 mb-2">
+                        Precio de {{ old('transaction_type_id', $inmueble->transaction_type_id ?? 1) == '3' ? 'alquiler mensual (€/mes)' : 'venta (€)' }}
+                    </label>
                     <input type="number" name="valor_referencia" id="valor_referencia" value="{{ old('valor_referencia', $inmueble->valor_referencia) }}"
                         class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     @error('valor_referencia')
@@ -171,4 +186,25 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cambiar etiqueta del precio según tipo de operación
+        const transactionTypeSelect = document.getElementById('transaction_type_id');
+        const precioLabel = document.getElementById('precio-label');
+
+        function updatePrecioLabel() {
+            const transactionType = transactionTypeSelect.value;
+            if (transactionType === '3') {
+                precioLabel.innerHTML = 'Precio de alquiler mensual (€/mes)';
+            } else {
+                precioLabel.innerHTML = 'Precio de venta (€)';
+            }
+        }
+
+        transactionTypeSelect.addEventListener('change', updatePrecioLabel);
+        // Ejecutar al cargar la página
+        updatePrecioLabel();
+    });
+</script>
 @endsection

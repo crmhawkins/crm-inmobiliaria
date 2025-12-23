@@ -1,0 +1,9 @@
+Idealista;;;;PARTNER;;;;;;;;;;;;;;;;;;;
+Test;Test title;Test description;Expected result;Actual Result;JSON sent;Comments;;;;;;;;;;;;;;;;;
+Image01;New images;Create images for an existing property. Send exactly two images in the request;202;;;;;;;;;;;;;;;;;;;;
+Image02;Find all images;Find all images for a property that has images;200;;;;;;;;;;;;;;;;;;;;
+Image03;Update order;Call the same endpoint of test ‘Image01’ swapping the order of the images in the body of the request;202 - calling the find all images endpoint will return the images with the new order;;;;;;;;;;;;;;;;;;;;
+Image04;Update label;Call the same endpoint of test ‘Image01’ changing the label of the images in the body of the request;202 - calling the find all images endpoint will return the images with the new labels;;;;;;;;;;;;;;;;;;;;
+Image05;Delete single image;Delete a single image for the property used in the test ‘Image01’. To do that, call the same endpoint but stop sending the image you want to be deleted in the body of the request;202 - calling the find all images endpoint will not return the deleted image;;;;;;;;;;;;;;;;;;;;
+Image06;Delete all images;Delete all the images of a property using the delete all endpoint;200 - calling the find all images endpoint will return an empty list;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;

@@ -35,6 +35,7 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/sass/app.scss', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/corporate.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 
     <style>
         * {
@@ -86,6 +87,71 @@
             min-height: calc(100vh - 200px);
         }
 
+        /* Responsive para móvil y tablet */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 20px 0;
+                margin-bottom: 20px;
+                border-radius: 0 0 15px 15px;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .page-header h2 {
+                font-size: 0.95rem;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+                border-radius: 12px;
+                min-height: auto;
+            }
+
+            .container-fluid {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .page-header {
+                padding: 15px 0;
+                margin-bottom: 15px;
+            }
+
+            .page-header h1 {
+                font-size: 1.25rem;
+            }
+
+            .page-header h2 {
+                font-size: 0.85rem;
+            }
+
+            .content-wrapper {
+                padding: 12px;
+                border-radius: 10px;
+            }
+        }
+
+        /* Mejoras para touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            button, .btn, a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            input, select, textarea {
+                font-size: 16px; /* Previene zoom en iOS */
+            }
+        }
+
         @if (Request::session()->get('inmobiliaria') == 'sayco')
             .page-wrapper {
                 background-color: #f8f9fa !important;
@@ -105,12 +171,7 @@
         $user = Auth::user();
     @endphp
     <div id="app">
-        @if (Request::session()->get('inmobiliaria') == 'sayco')
-            @include('layouts.header-dark')
-        @else
-            @include('layouts.header')
-        @endif
-
+        @include('layouts.header')
         <div class="page-wrapper chiller-theme toggled">
             <div class="container-fluid py-4">
                 <div class="page-header">
@@ -141,6 +202,151 @@
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
         integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous">
+    </script>
+    <!-- Interceptar Bootstrap ANTES de que se cargue -->
+    <script>
+    (function() {
+        'use strict';
+
+        // Función para eliminar elementos de Bootstrap inmediatamente
+        function killBootstrapNavbar() {
+            // Eliminar TODOS los elementos con estas clases/ids, PERO NO los nuestros
+            const selectors = [
+                '.navbar-collapse',
+                '#navbarSupportedContent',
+                '[class*="navbar-collapse"]',
+                '[id*="navbarSupported"]'
+            ];
+
+            selectors.forEach(function(selector) {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(function(el) {
+                        if (el && el.parentNode) {
+                            // NO eliminar si está dentro de nuestros elementos personalizados
+                            if (!el.closest('.main-header') &&
+                                !el.closest('.mobile-overlay') &&
+                                !el.closest('.header-menu-desktop')) {
+                                try {
+                                    el.remove();
+                                } catch(e) {
+                                    el.outerHTML = '';
+                                }
+                            }
+                        }
+                    });
+                } catch(e) {}
+            });
+        }
+
+        // Ejecutar inmediatamente
+        killBootstrapNavbar();
+
+        // Ejecutar cada 10ms para ser más agresivo
+        setInterval(killBootstrapNavbar, 10);
+
+        // Observar cambios en el DOM
+        const observer = new MutationObserver(function(mutations) {
+            let shouldKill = false;
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        if (node.classList) {
+                            if (node.classList.contains('navbar-collapse') ||
+                                node.classList.contains('collapse') ||
+                                node.id === 'navbarSupportedContent') {
+                                shouldKill = true;
+                            }
+                        }
+                        if (node.id && node.id.includes('navbar')) {
+                            shouldKill = true;
+                        }
+                    }
+                });
+            });
+            if (shouldKill) {
+                killBootstrapNavbar();
+            }
+        });
+
+        if (document.body) {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class', 'id']
+            });
+        }
+
+        // Interceptar cuando Bootstrap se carga
+        window.addEventListener('load', function() {
+            killBootstrapNavbar();
+            setInterval(killBootstrapNavbar, 10);
+        });
+
+        // Interceptar DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                killBootstrapNavbar();
+                setInterval(killBootstrapNavbar, 10);
+            });
+        }
+    })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <!-- Interceptar Bootstrap después de que se carga -->
+    <script>
+    (function() {
+        'use strict';
+
+        // Sobrescribir la función de inicialización de Collapse de Bootstrap
+        if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Collapse) {
+            const OriginalCollapse = window.bootstrap.Collapse;
+            window.bootstrap.Collapse = function(element, config) {
+                // Si el elemento tiene clases de navbar, NO inicializar
+                if (element) {
+                    const hasNavbarClass = element.classList && (
+                        element.classList.contains('navbar-collapse') ||
+                        element.id === 'navbarSupportedContent'
+                    );
+                    if (hasNavbarClass) {
+                        return null;
+                    }
+                }
+                return new OriginalCollapse(element, config);
+            };
+        }
+
+        // Función para eliminar elementos
+        function killBootstrapNavbar() {
+            const selectors = [
+                '.navbar-collapse',
+                '#navbarSupportedContent',
+                '[class*="navbar-collapse"]',
+                '[id*="navbarSupported"]',
+                'nav[class*="collapse"]'
+            ];
+
+            selectors.forEach(function(selector) {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(function(el) {
+                        if (el && el.parentNode) {
+                            try {
+                                el.remove();
+                            } catch(e) {
+                                el.outerHTML = '';
+                            }
+                        }
+                    });
+                } catch(e) {}
+            });
+        }
+
+        killBootstrapNavbar();
+        setInterval(killBootstrapNavbar, 10);
+    })();
     </script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

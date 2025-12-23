@@ -198,6 +198,39 @@ class Edit extends Component
 
         // Alertas de guardado exitoso
         if ($inmueblesSave) {
+            // Recargar el modelo para tener los datos actualizados
+            $inmuebles->refresh();
+
+            // Actualizar en Idealista si está sincronizado
+            if ($inmuebles->idealista_property_id) {
+                try {
+                    $controller = new \App\Http\Controllers\InmueblesController();
+                    $controller->updateIdealistaProperty(new \Illuminate\Http\Request(), $inmuebles->id);
+                    \Illuminate\Support\Facades\Log::info('Inmueble actualizado en Idealista desde Edit', [
+                        'inmueble_id' => $inmuebles->id
+                    ]);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Error actualizando en Idealista desde Edit', [
+                        'inmueble_id' => $inmuebles->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Actualizar en Fotocasa si está publicado
+            try {
+                $controller = new \App\Http\Controllers\InmueblesController();
+                $controller->sendToFotocasa($inmuebles);
+                \Illuminate\Support\Facades\Log::info('Inmueble actualizado en Fotocasa desde Edit', [
+                    'inmueble_id' => $inmuebles->id
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error actualizando en Fotocasa desde Edit', [
+                    'inmueble_id' => $inmuebles->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             $this->alert('success', '¡Inmuebles actualizada correctamente!', [
                 'position' => 'center',
                 'timer' => 3000,
