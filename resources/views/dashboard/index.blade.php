@@ -247,23 +247,6 @@
         </div>
 
         <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stat-card idealista">
-                <div class="card-body p-4">
-                    <div class="stat-icon idealista">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="stat-number">{{ number_format($inmueblesIdealista) }}</div>
-                    <div class="stat-label">En Idealista</div>
-                    @if($idealistaStats)
-                        <div class="stat-change">
-                            <i class="fas fa-info-circle"></i> {{ $idealistaStats['publishedAds'] ?? 0 }} publicados
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
             <div class="stat-card">
                 <div class="card-body p-4">
                     <div class="stat-icon clientes">
@@ -326,13 +309,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="chart-card">
-                        <h6 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Inmuebles por Tipo</h6>
-                        <canvas id="inmueblesPorTipoChart"></canvas>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-4">
+                <div class="col-md-12 mb-4">
                     <div class="chart-card">
                         <h6 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Inmuebles por Estado</h6>
                         <canvas id="inmueblesPorEstadoChart"></canvas>
@@ -461,32 +438,6 @@
                     }
                 }
             }
-        }
-    });
-
-    // Gráfico de inmuebles por tipo
-    const inmueblesPorTipoData = @json($inmueblesPorTipo);
-    const ctxTipo = document.getElementById('inmueblesPorTipoChart').getContext('2d');
-    new Chart(ctxTipo, {
-        type: 'doughnut',
-        data: {
-            labels: inmueblesPorTipoData.map(item => item.tipoVivienda?.nombre || 'Sin tipo'),
-            datasets: [{
-                data: inmueblesPorTipoData.map(item => item.total),
-                backgroundColor: [
-                    '#6b8e6b',
-                    '#5a7c5a',
-                    '#7fa07f',
-                    '#FF6B35',
-                    '#FF8C42',
-                    '#007bff',
-                    '#28a745'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true
         }
     });
 
