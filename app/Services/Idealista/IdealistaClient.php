@@ -120,7 +120,13 @@ class IdealistaClient
         $template = $this->config['host_template'] ?? 'https://partners-sandbox.idealista.%s';
         $country = $this->config['country'] ?? 'com';
 
-        return rtrim(sprintf($template, $country), '/');
+        // Si el template contiene %s, usar sprintf para reemplazarlo
+        if (strpos($template, '%s') !== false) {
+            return rtrim(sprintf($template, $country), '/');
+        }
+
+        // Si no contiene %s, usar la URL directamente
+        return rtrim($template, '/');
     }
 
     private function buildBasicCredentials(): string

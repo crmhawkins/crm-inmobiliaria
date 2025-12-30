@@ -15,6 +15,7 @@ use App\Services\Idealista\IdealistaContactsService;
 use App\Services\Idealista\IdealistaVideosService;
 use App\Services\Idealista\IdealistaVirtualToursService;
 use App\Services\Idealista\IdealistaCustomerService;
+use App\Services\Fotocasa\FotocasaClient;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -751,7 +752,11 @@ class InmueblesController extends Controller
         return redirect()->route('inmuebles.index')->with('success', 'Inmueble creado correctamente.');
     }
 
-    public function sendToFotocasa(Inmuebles $inmueble)
+    /**
+     * Construye el payload para Fotocasa a partir de un inmueble
+     * Método público para uso en servicios externos
+     */
+    public function buildFotocasaPayload(Inmuebles $inmueble): array
     {
         // Usar directamente el tipo_vivienda_id como TypeId de Fotocasa
         $fotocasaTypeId = $inmueble->tipo_vivienda_id;
@@ -1102,6 +1107,14 @@ class InmueblesController extends Controller
             "PropertyDocument" => $this->getPropertyDocumentsFromJson($inmueble)
         ];
 
+        return $payload;
+    }
+
+    public function sendToFotocasa(Inmuebles $inmueble)
+    {
+        // Construir el payload
+        $payload = $this->buildFotocasaPayload($inmueble);
+
         // Log del payload antes de enviar (para debugging)
         Log::info('Payload enviado a Fotocasa', [
             'inmueble_id' => $inmueble->id,
@@ -1110,52 +1123,28 @@ class InmueblesController extends Controller
             'property_documents' => $payload['PropertyDocument']
         ]);
 
-        // Petición HTTP a Fotocasa
-        $url = 'https://imports.gw.fotocasa.pro/api/property';
-
+        // Usar el servicio centralizado de Fotocasa
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Api-Key' => env('API_KEY'),
-            ])->withOptions([
-                'verify' => false, // Deshabilitar verificación SSL para desarrollo
-                'timeout' => 30,   // Timeout de 30 segundos
-            ])->post($url, $payload);
+            $fotocasaClient = new FotocasaClient();
+            $response = $fotocasaClient->createOrUpdateProperty($payload);
 
-            // Log de la respuesta de Fotocasa
-            Log::info('Respuesta de Fotocasa', [
-                'inmueble_id' => $inmueble->id,
-                'status_code' => $response->status(),
-                'response_body' => $response->body(),
-                'response_json' => $response->json()
+            return response()->json([
+                'success' => true,
+                'data' => $response
             ]);
-
-            // Retorna JSON con la respuesta de la API o error
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $response->json()
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'status' => $response->status(),
-                    'message' => $response->body()
-                ], $response->status());
-            }
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error en petición a Fotocasa API', [
                 'error' => $e->getMessage(),
                 'inmueble_id' => $inmueble->id,
-                'url' => $url
             ]);
 
+            $statusCode = $e->getCode() ?: 500;
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status' => $statusCode,
                 'message' => 'Error de conexión con Fotocasa API: ' . $e->getMessage()
-            ], 500);
+            ], $statusCode);
         }
     }
 
@@ -1803,54 +1792,29 @@ class InmueblesController extends Controller
             'property_documents_empty' => empty($payload['PropertyDocument'])
         ]);
 
-        // Petición HTTP a Fotocasa
-        $url = 'https://imports.gw.fotocasa.pro/api/property';
-
+        // Usar el servicio centralizado de Fotocasa
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Api-Key' => env('API_KEY'),
-            ])->withOptions([
-                'verify' => false, // Deshabilitar verificación SSL para desarrollo
-                'timeout' => 30,   // Timeout de 30 segundos
-            ])->post($url, $payload);
+            $fotocasaClient = new FotocasaClient();
+            $response = $fotocasaClient->createOrUpdateProperty($payload);
 
-            // Log de la respuesta de Fotocasa
-            Log::info('Respuesta de Fotocasa', [
-                'inmueble_id' => $inmueble->id,
-                'original_id' => $originalId,
-                'status_code' => $response->status(),
-                'response_body' => $response->body(),
-                'response_json' => $response->json()
+            return response()->json([
+                'success' => true,
+                'data' => $response
             ]);
-
-            // Retorna JSON con la respuesta de la API o error
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $response->json()
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'status' => $response->status(),
-                    'message' => $response->body()
-                ], $response->status());
-            }
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error en petición a Fotocasa API', [
                 'error' => $e->getMessage(),
                 'inmueble_id' => $inmueble->id,
                 'original_id' => $originalId,
-                'url' => $url
             ]);
 
+            $statusCode = $e->getCode() ?: 500;
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status' => $statusCode,
                 'message' => 'Error de conexión con Fotocasa API: ' . $e->getMessage()
-            ], 500);
+            ], $statusCode);
         }
     }
 
