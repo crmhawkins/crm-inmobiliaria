@@ -105,6 +105,10 @@ class Inmuebles extends Model
         'idealista_code',
         'idealista_payload',
         'idealista_synced_at',
+        'idealista_sync_error',
+        'idealista_last_sync_error_at',
+        'fotocasa_sync_error',
+        'fotocasa_last_sync_error_at',
     ];
 
     public function tipoVivienda()
@@ -129,5 +133,7 @@ class Inmuebles extends Model
 
     protected $casts = [
         'idealista_synced_at' => 'datetime',
+        'idealista_last_sync_error_at' => 'datetime',
+        'fotocasa_last_sync_error_at' => 'datetime',
     ];
 }

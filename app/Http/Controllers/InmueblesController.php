@@ -649,14 +649,30 @@ class InmueblesController extends Controller
         // Disparar evento para enviar alertas a clientes
         event(new InmuebleCreated($inmueble));
 
+        // Variables para rastrear errores de sincronización
+        $idealistaError = null;
+        $fotocasaError = null;
+
         // Crear en Idealista (solo si tiene los campos mínimos requeridos)
         try {
             // Validar que tenga los campos mínimos antes de intentar crear en Idealista
             if (!$inmueble->cod_postal) {
+                $errorMessage = 'Inmueble sin código postal. Se requiere código postal para sincronizar con Idealista.';
+                $idealistaError = $errorMessage;
+                $inmueble->update([
+                    'idealista_sync_error' => $errorMessage,
+                    'idealista_last_sync_error_at' => now(),
+                ]);
                 Log::warning('Inmueble sin código postal, omitiendo creación en Idealista', [
                     'inmueble_id' => $inmueble->id,
                 ]);
             } elseif (!$inmueble->m2 && !$inmueble->m2_construidos) {
+                $errorMessage = 'Inmueble sin área especificada. Se requiere m2 o m2_construidos para sincronizar con Idealista.';
+                $idealistaError = $errorMessage;
+                $inmueble->update([
+                    'idealista_sync_error' => $errorMessage,
+                    'idealista_last_sync_error_at' => now(),
+                ]);
                 Log::warning('Inmueble sin área especificada, omitiendo creación en Idealista', [
                     'inmueble_id' => $inmueble->id,
                 ]);
@@ -687,6 +703,8 @@ class InmueblesController extends Controller
                     'idealista_code' => $idealistaResponse['code'] ?? null,
                     'idealista_payload' => json_encode($idealistaResponse),
                     'idealista_synced_at' => now(),
+                    'idealista_sync_error' => null,
+                    'idealista_last_sync_error_at' => null,
                 ];
 
                 $inmueble->update($updateData);
@@ -718,16 +736,40 @@ class InmueblesController extends Controller
             $response = $e->response;
             $errorBody = $response ? $response->body() : 'No response body';
             $errorJson = $response ? $response->json() : null;
+            $statusCode = $response ? $response->status() : null;
+
+            $errorMessage = "Error HTTP {$statusCode}: " . $e->getMessage();
+            if ($errorJson && isset($errorJson['message'])) {
+                $errorMessage .= "\n" . $errorJson['message'];
+            }
+            if ($errorJson && isset($errorJson['errors'])) {
+                $errorMessage .= "\nErrores: " . json_encode($errorJson['errors'], JSON_UNESCAPED_UNICODE);
+            }
+
+            $idealistaError = $errorMessage;
+
+            $inmueble->update([
+                'idealista_sync_error' => $errorMessage,
+                'idealista_last_sync_error_at' => now(),
+            ]);
 
             Log::error('Error creando inmueble en Idealista (HTTP)', [
                 'inmueble_id' => $inmueble->id,
-                'status_code' => $response ? $response->status() : null,
+                'status_code' => $statusCode,
                 'error_message' => $e->getMessage(),
                 'error_body' => $errorBody,
                 'error_json' => $errorJson,
             ]);
             // No fallar la creación del inmueble si Idealista falla
         } catch (\Exception $e) {
+            $errorMessage = get_class($e) . ": " . $e->getMessage();
+            $idealistaError = $errorMessage;
+
+            $inmueble->update([
+                'idealista_sync_error' => $errorMessage,
+                'idealista_last_sync_error_at' => now(),
+            ]);
+
             Log::error('Error creando inmueble en Idealista', [
                 'inmueble_id' => $inmueble->id,
                 'error' => $e->getMessage(),
@@ -742,14 +784,51 @@ class InmueblesController extends Controller
         //dd($fotocasaResponse);
         // Si hay error en Fotocasa, logearlo pero continuar
         if ($fotocasaResponse->getStatusCode() !== 200) {
+            $responseContent = $fotocasaResponse->getContent();
+            $responseData = json_decode($responseContent, true);
+
+            $errorMessage = "Error HTTP {$fotocasaResponse->getStatusCode()}: " . ($responseData['message'] ?? 'Error desconocido');
+            if (isset($responseData['errors'])) {
+                $errorMessage .= "\nErrores: " . json_encode($responseData['errors'], JSON_UNESCAPED_UNICODE);
+            }
+
+            $fotocasaError = $errorMessage;
+
+            $inmueble->update([
+                'fotocasa_sync_error' => $errorMessage,
+                'fotocasa_last_sync_error_at' => now(),
+            ]);
+
             Log::warning('Error sending to Fotocasa', [
                 'inmueble_id' => $inmueble->id,
                 'status' => $fotocasaResponse->getStatusCode(),
-                'response' => $fotocasaResponse->getContent()
+                'response' => $responseContent
+            ]);
+        } else {
+            // Limpiar errores si la sincronización fue exitosa
+            $inmueble->update([
+                'fotocasa_sync_error' => null,
+                'fotocasa_last_sync_error_at' => null,
             ]);
         }
 
-        return redirect()->route('inmuebles.index')->with('success', 'Inmueble creado correctamente.');
+        // Preparar mensaje de éxito con advertencias si hay errores
+        $message = 'Inmueble creado correctamente.';
+        if ($idealistaError || $fotocasaError) {
+            $message .= ' Sin embargo, hubo problemas al sincronizar:';
+            if ($idealistaError) {
+                $message .= ' Idealista falló.';
+            }
+            if ($fotocasaError) {
+                $message .= ' Fotocasa falló.';
+            }
+            $message .= ' Puedes ver los detalles y reintentar desde la página de detalle del inmueble.';
+        }
+
+        return redirect()->route('inmuebles.admin-show', $inmueble)
+            ->with('success', $message)
+            ->with('idealista_error', $idealistaError)
+            ->with('fotocasa_error', $fotocasaError);
     }
 
     /**
@@ -1145,6 +1224,221 @@ class InmueblesController extends Controller
                 'status' => $statusCode,
                 'message' => 'Error de conexión con Fotocasa API: ' . $e->getMessage()
             ], $statusCode);
+        }
+    }
+
+    /**
+     * Reintentar sincronización con Idealista
+     */
+    public function retrySyncToIdealista(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        try {
+            // Validar que tenga los campos mínimos
+            if (!$inmueble->cod_postal) {
+                $errorMessage = 'Inmueble sin código postal. Se requiere código postal para sincronizar con Idealista.';
+                $inmueble->update([
+                    'idealista_sync_error' => $errorMessage,
+                    'idealista_last_sync_error_at' => now(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 400);
+            }
+
+            if (!$inmueble->m2 && !$inmueble->m2_construidos) {
+                $errorMessage = 'Inmueble sin área especificada. Se requiere m2 o m2_construidos para sincronizar con Idealista.';
+                $inmueble->update([
+                    'idealista_sync_error' => $errorMessage,
+                    'idealista_last_sync_error_at' => now(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 400);
+            }
+
+            $idealistaCreator = app(IdealistaPropertyCreator::class);
+            $idealistaService = app(IdealistaPropertiesService::class);
+
+            // Cargar el vendedor si existe para obtener el contactId
+            if ($inmueble->vendedor_id) {
+                $inmueble->load('vendedor');
+            }
+
+            // Convertir el inmueble al formato de Idealista
+            $idealistaPayload = $idealistaCreator->toIdealistaFormat($inmueble);
+
+            // Crear la propiedad en Idealista
+            $idealistaResponse = $idealistaService->create($idealistaPayload);
+
+            // Actualizar el inmueble con los datos de Idealista
+            $updateData = [
+                'idealista_property_id' => $idealistaResponse['propertyId'] ?? null,
+                'idealista_code' => $idealistaResponse['code'] ?? null,
+                'idealista_payload' => json_encode($idealistaResponse),
+                'idealista_synced_at' => now(),
+                'idealista_sync_error' => null,
+                'idealista_last_sync_error_at' => null,
+            ];
+
+            $inmueble->update($updateData);
+
+            // Subir imágenes a Idealista si hay
+            $images = $idealistaCreator->prepareImages($inmueble);
+            if (!empty($images) && $inmueble->idealista_property_id) {
+                try {
+                    $idealistaService->replaceImages(
+                        $inmueble->idealista_property_id,
+                        ['images' => $images]
+                    );
+                } catch (\Exception $e) {
+                    Log::warning('Error subiendo imágenes a Idealista', [
+                        'inmueble_id' => $inmueble->id,
+                        'idealista_property_id' => $inmueble->idealista_property_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            Log::info('Inmueble re-sincronizado con Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'idealista_property_id' => $inmueble->idealista_property_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inmueble sincronizado correctamente con Idealista',
+                'data' => [
+                    'idealista_property_id' => $inmueble->idealista_property_id,
+                    'idealista_code' => $inmueble->idealista_code,
+                ]
+            ]);
+
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            $response = $e->response;
+            $errorBody = $response ? $response->body() : 'No response body';
+            $errorJson = $response ? $response->json() : null;
+            $statusCode = $response ? $response->status() : null;
+
+            $errorMessage = "Error HTTP {$statusCode}: " . $e->getMessage();
+            if ($errorJson && isset($errorJson['message'])) {
+                $errorMessage .= "\n" . $errorJson['message'];
+            }
+            if ($errorJson && isset($errorJson['errors'])) {
+                $errorMessage .= "\nErrores: " . json_encode($errorJson['errors'], JSON_UNESCAPED_UNICODE);
+            }
+
+            $inmueble->update([
+                'idealista_sync_error' => $errorMessage,
+                'idealista_last_sync_error_at' => now(),
+            ]);
+
+            Log::error('Error re-sincronizando inmueble con Idealista (HTTP)', [
+                'inmueble_id' => $inmueble->id,
+                'status_code' => $statusCode,
+                'error_message' => $e->getMessage(),
+                'error_body' => $errorBody,
+                'error_json' => $errorJson,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage
+            ], $statusCode ?: 500);
+
+        } catch (\Exception $e) {
+            $errorMessage = get_class($e) . ": " . $e->getMessage();
+
+            $inmueble->update([
+                'idealista_sync_error' => $errorMessage,
+                'idealista_last_sync_error_at' => now(),
+            ]);
+
+            Log::error('Error re-sincronizando inmueble con Idealista', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage
+            ], 500);
+        }
+    }
+
+    /**
+     * Reintentar sincronización con Fotocasa
+     */
+    public function retrySyncToFotocasa(Request $request, $id)
+    {
+        $inmueble = Inmuebles::findOrFail($id);
+
+        try {
+            $fotocasaResponse = $this->sendToFotocasa($inmueble);
+
+            if ($fotocasaResponse->getStatusCode() !== 200) {
+                $responseContent = $fotocasaResponse->getContent();
+                $responseData = json_decode($responseContent, true);
+
+                $errorMessage = "Error HTTP {$fotocasaResponse->getStatusCode()}: " . ($responseData['message'] ?? 'Error desconocido');
+                if (isset($responseData['errors'])) {
+                    $errorMessage .= "\nErrores: " . json_encode($responseData['errors'], JSON_UNESCAPED_UNICODE);
+                }
+
+                $inmueble->update([
+                    'fotocasa_sync_error' => $errorMessage,
+                    'fotocasa_last_sync_error_at' => now(),
+                ]);
+
+                Log::warning('Error re-sincronizando con Fotocasa', [
+                    'inmueble_id' => $inmueble->id,
+                    'status' => $fotocasaResponse->getStatusCode(),
+                    'response' => $responseContent
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], $fotocasaResponse->getStatusCode());
+            } else {
+                // Limpiar errores si la sincronización fue exitosa
+                $inmueble->update([
+                    'fotocasa_sync_error' => null,
+                    'fotocasa_last_sync_error_at' => null,
+                ]);
+
+                Log::info('Inmueble re-sincronizado con Fotocasa', [
+                    'inmueble_id' => $inmueble->id,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Inmueble sincronizado correctamente con Fotocasa'
+                ]);
+            }
+        } catch (\Exception $e) {
+            $errorMessage = get_class($e) . ": " . $e->getMessage();
+
+            $inmueble->update([
+                'fotocasa_sync_error' => $errorMessage,
+                'fotocasa_last_sync_error_at' => now(),
+            ]);
+
+            Log::error('Error re-sincronizando inmueble con Fotocasa', [
+                'inmueble_id' => $inmueble->id,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage
+            ], 500);
         }
     }
 

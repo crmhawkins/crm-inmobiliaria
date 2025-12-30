@@ -40,6 +40,77 @@
             </div>
         </div>
 
+        <!-- Mensajes flash y errores de sincronización -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <!-- Panel de errores de sincronización -->
+        @if($inmueble->idealista_sync_error || $inmueble->fotocasa_sync_error || session('idealista_error') || session('fotocasa_error'))
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Errores de Sincronización
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            @if($inmueble->idealista_sync_error || session('idealista_error'))
+                                <div class="alert alert-warning mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="alert-heading">
+                                                <i class="fas fa-building me-2"></i>Error al sincronizar con Idealista
+                                            </h6>
+                                            <p class="mb-2 small">
+                                                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ $inmueble->idealista_sync_error ?? session('idealista_error') }}</pre>
+                                            </p>
+                                            @if($inmueble->idealista_last_sync_error_at)
+                                                <small class="text-muted">
+                                                    Último error: {{ $inmueble->idealista_last_sync_error_at->format('d/m/Y H:i:s') }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-warning ms-3" onclick="retrySyncIdealista({{ $inmueble->id }})">
+                                            <i class="fas fa-redo me-1"></i>Reintentar
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($inmueble->fotocasa_sync_error || session('fotocasa_error'))
+                                <div class="alert alert-warning mb-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="alert-heading">
+                                                <i class="fas fa-home me-2"></i>Error al sincronizar con Fotocasa
+                                            </h6>
+                                            <p class="mb-2 small">
+                                                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ $inmueble->fotocasa_sync_error ?? session('fotocasa_error') }}</pre>
+                                            </p>
+                                            @if($inmueble->fotocasa_last_sync_error_at)
+                                                <small class="text-muted">
+                                                    Último error: {{ $inmueble->fotocasa_last_sync_error_at->format('d/m/Y H:i:s') }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-warning ms-3" onclick="retrySyncFotocasa({{ $inmueble->id }})">
+                                            <i class="fas fa-redo me-1"></i>Reintentar
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="row">
             <!-- Galería principal -->
             <div class="col-md-8">
@@ -276,6 +347,37 @@
                         </div>
                     </div>
                 </div>
+                @elseif($inmueble->idealista_sync_error)
+                <div class="card mb-4 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-building me-2"></i>
+                            Gestión Idealista
+                            <span class="badge bg-danger ms-2">Error de sincronización</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger mb-3">
+                            <h6 class="alert-heading">Error al sincronizar con Idealista</h6>
+                            <p class="mb-2 small">
+                                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ $inmueble->idealista_sync_error }}</pre>
+                            </p>
+                            @if($inmueble->idealista_last_sync_error_at)
+                                <small class="text-muted">
+                                    Último error: {{ $inmueble->idealista_last_sync_error_at->format('d/m/Y H:i:s') }}
+                                </small>
+                            @endif
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-sm btn-warning" onclick="retrySyncIdealista({{ $inmueble->id }})">
+                                <i class="fas fa-redo me-2"></i>Reintentar sincronización
+                            </button>
+                            <a href="{{ route('inmuebles.edit', $inmueble) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Editar inmueble
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 @else
                 <div class="card mb-4 border-secondary">
                     <div class="card-header bg-secondary text-white">
@@ -288,6 +390,75 @@
                     <div class="card-body">
                         <p class="small text-muted mb-3">
                             Este inmueble aún no está sincronizado con Idealista. Se sincronizará automáticamente al actualizar si cumple los requisitos.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('inmuebles.edit', $inmueble) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Editar para sincronizar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Gestión de Fotocasa -->
+                @if($inmueble->external_id)
+                <div class="card mb-4 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-home me-2"></i>
+                            Gestión Fotocasa
+                            <span class="badge bg-success ms-2">Sincronizado</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            <strong>ID Externo:</strong> {{ $inmueble->external_id }}
+                        </p>
+                    </div>
+                </div>
+                @elseif($inmueble->fotocasa_sync_error)
+                <div class="card mb-4 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-home me-2"></i>
+                            Gestión Fotocasa
+                            <span class="badge bg-danger ms-2">Error de sincronización</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger mb-3">
+                            <h6 class="alert-heading">Error al sincronizar con Fotocasa</h6>
+                            <p class="mb-2 small">
+                                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ $inmueble->fotocasa_sync_error }}</pre>
+                            </p>
+                            @if($inmueble->fotocasa_last_sync_error_at)
+                                <small class="text-muted">
+                                    Último error: {{ $inmueble->fotocasa_last_sync_error_at->format('d/m/Y H:i:s') }}
+                                </small>
+                            @endif
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-sm btn-warning" onclick="retrySyncFotocasa({{ $inmueble->id }})">
+                                <i class="fas fa-redo me-2"></i>Reintentar sincronización
+                            </button>
+                            <a href="{{ route('inmuebles.edit', $inmueble) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Editar inmueble
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="card mb-4 border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-home me-2"></i>
+                            Gestión Fotocasa
+                            <span class="badge bg-warning ms-2">No sincronizado</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            Este inmueble aún no está sincronizado con Fotocasa. Se sincronizará automáticamente al actualizar si cumple los requisitos.
                         </p>
                         <div class="d-grid gap-2">
                             <a href="{{ route('inmuebles.edit', $inmueble) }}" class="btn btn-sm btn-outline-primary">
@@ -472,6 +643,72 @@
 
         function manageIdealistaVirtualTours(id) {
             window.location.href = `{{ route('inmuebles.idealista-virtual-tours') }}?property=${id}`;
+        }
+
+        function retrySyncIdealista(id) {
+            if (!confirm('¿Reintentar la sincronización con Idealista?')) return;
+
+            const button = document.querySelector(`button[onclick="retrySyncIdealista(${id})"]`);
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Reintentando...';
+
+            fetch(`{{ url('/admin/inmuebles') }}/${id}/retry-sync/idealista`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Inmueble sincronizado correctamente con Idealista');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                alert('Error al reintentar sincronización: ' + error.message);
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        function retrySyncFotocasa(id) {
+            if (!confirm('¿Reintentar la sincronización con Fotocasa?')) return;
+
+            const button = document.querySelector(`button[onclick*="retrySyncFotocasa(${id})"]`);
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Reintentando...';
+
+            fetch(`{{ url('/admin/inmuebles') }}/${id}/retry-sync/fotocasa`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Inmueble sincronizado correctamente con Fotocasa');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                alert('Error al reintentar sincronización: ' + error.message);
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
         }
 
         function mostrarImagen(url) {

@@ -103,6 +103,8 @@ Route::group(['middleware' => 'is.admin', 'prefix' => 'admin'], function () {
     Route::post('inmuebles/store', [InmueblesController::class, 'store'])->name('inmuebles.store');
     Route::get('inmuebles/show/{inmueble}', [InmueblesController::class, 'show'])->name('inmuebles.show');
     Route::get('inmuebles/admin-show/{inmueble}', [InmueblesController::class, 'adminShow'])->name('inmuebles.admin-show');
+    Route::post('inmuebles/{inmueble}/retry-sync/idealista', [InmueblesController::class, 'retrySyncToIdealista'])->name('inmuebles.retry-sync-idealista');
+    Route::post('inmuebles/{inmueble}/retry-sync/fotocasa', [InmueblesController::class, 'retrySyncToFotocasa'])->name('inmuebles.retry-sync-fotocasa');
     Route::get('inmuebles/edit/{inmueble}', [InmueblesController::class, 'edit'])->name('inmuebles.edit');
     Route::put('inmuebles/update/{inmueble}', [InmueblesController::class, 'update'])->name('inmuebles.update');
     Route::delete('inmuebles/destroy/{inmueble}', [InmueblesController::class, 'destroy'])->name('inmuebles.destroy');
