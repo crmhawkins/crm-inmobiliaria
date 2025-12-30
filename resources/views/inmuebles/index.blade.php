@@ -203,8 +203,8 @@
                                         {{ Str::limit($inmueble->descripcion, 100) }}</p>
 
                                     <div class="d-flex gap-2 mt-auto">
-                                        <a href="#" class="btn btn-outline-primary btn-sm flex-fill">
-                                            <i class="bi bi-envelope me-1"></i>Contactar
+                                        <a href="{{ route('inmuebles.edit', $inmueble->id) }}" class="btn btn-outline-primary btn-sm flex-fill">
+                                            <i class="bi bi-pencil me-1"></i>Editar
                                         </a>
                                         <a href="{{ route('inmuebles.show', $inmueble->id) }}"
                                             class="btn btn-primary btn-sm flex-fill">Ver más</a>
@@ -401,8 +401,8 @@
                             </p>
 
                             <div class="d-flex gap-2 mt-auto">
-                                <a href="#" class="btn btn-outline-primary btn-sm flex-fill">
-                                    <i class="bi bi-envelope me-1"></i>Contactar
+                                <a href="/admin/inmuebles/edit/${inmueble.id}" class="btn btn-outline-primary btn-sm flex-fill">
+                                    <i class="bi bi-pencil me-1"></i>Editar
                                 </a>
                                 <a href="/admin/inmuebles/admin-show/${inmueble.id}" class="btn btn-primary btn-sm flex-fill">Ver más</a>
                             </div>
